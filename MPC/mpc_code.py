@@ -4,18 +4,23 @@ from casadi import *
 import matplotlib.pyplot as plt
 from simulation_code import simulate, plot_dataset
 
-# setting matrix_weights' variables
+'''--------------Defining Setup parammeters-----------------'''
 
-step_horizon = 0.2  # time between steps in seconds
-N = 10               # number of look ahead steps
-rob_diam = 0.3      # diameter of the robot
-sim_time = 20       # simulation time
+step_horizon = 0.2              # time between steps in seconds
+N = 3                           # number of look ahead steps
+sim_time = 20                   # simulation time
 
 v_max = 0.6   ;   v_min = -0.6
 w_max = pi/4  ;   w_min = -pi/4
 
-init_st= np.array([0, 0, 0])
-targ_st = np.array([2, 2, pi])
+init_st = np.array([0, 0, 0])
+targ_st = np.array([6, 6, pi])
+rob_rad = 0.3                  # diameter of the robot
+
+obst_st = np.array([4, 4, 0])
+obst_rad = 0.3
+
+'''---------------------------------------------------------'''
 
 def shift_timestep(step_horizon, t0, state_init, u, f):
     f_value = f(state_init, u[:, 0])
@@ -53,11 +58,8 @@ X = SX.sym('X', n_states, N + 1)
 U = SX.sym('U', n_controls, N)
 P = SX.sym('P', n_states + n_states)
 
-# state weights matrix (Q_X, Q_Y, Q_THETA)
-Q = diagcat(1, 5, 0.1)
-
-# controls weights matrix
-R = diagcat(0.5, 0.05)
+# State, Control weight matrices
+Q = diagcat(1, 5, 0.1); R = diagcat(0.5, 0.05)
 
 # discretization model (e.g. x2 = f(x1, v, t) = x1 + v * dt)
 # rot_3d_z = vertcat( horzcat(cos(theta), -sin(theta), 0),
@@ -81,15 +83,18 @@ cost_fn = 0                 # cost function
 g = X[:, 0] - P[:n_states]  # constraints in the equation
 
 
-# runge kutta
+# obtain optimized and estimated state from MS, RK
 for k in range(N):
     st = X[:, k]
     U_k = U[:, k]
     cost_fn = cost_fn + (st - P[n_states:]).T @ Q @ (st - P[n_states:]) + U_k.T @ R @ U_k
-    st_next = X[:, k+1]
-    st_next_RK4 = rk4_integrator(st, U_k)
-    g = vertcat(g, st_next - st_next_RK4)         # Multiple shooting constraints on State
+    st_opt = X[:, k+1]
+    st_est = rk4_integrator(st, U_k)
+    g = vertcat(g, st_opt - st_est)                # add equality constraints on predicted state (MS)
 
+for k in range(N +1): 
+    robX = X[0,k] ; robY = X[1,k]                   # inequality constrains on distance to obstace (obstace avoidance)
+    g = vertcat(g , -sqrt( power(robX - obst_st[0], 2) + power(robY - obst_st[1], 2) + rob_rad + obst_rad))
 
 OPT_variables = vertcat( X.reshape((-1, 1)),  U.reshape((-1, 1)) )
 nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
@@ -99,36 +104,57 @@ opts = {'ipopt'     : { 'max_iter': 100, 'print_level': 0, 'acceptable_tol': 1e-
 
 solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
 
-lbx = DM.zeros((n_states*(N+1) + n_controls*N, 1))
-ubx = DM.zeros((n_states*(N+1) + n_controls*N, 1))
-lbg = DM.zeros((n_states*(N+1), 1))
-ubg = DM.zeros((n_states*(N+1), 1))
-#TODO play around here
-lbx[0: n_states*(N+1): n_states] = -8       # X lower bound
-lbx[1: n_states*(N+1): n_states] = -8       # Y lower bound
-lbx[2: n_states*(N+1): n_states] = -inf     # theta lower bound
-lbx[n_states*(N+1)  :: n_controls] = v_min  # v lower bound for all V
-lbx[n_states*(N+1)+1:: n_controls] = w_min  # v lower bound for all V
+st_size = n_states * (N+1)
+U_size = n_controls * N
 
-ubx[0: n_states*(N+1): n_states] = 8        # X upper bound
-ubx[1: n_states*(N+1): n_states] = 8        # Y upper bound
-ubx[2: n_states*(N+1): n_states] = inf      # theta upper bound
-ubx[n_states*(N+1)  :: n_controls] = v_max  # v upper bound for all V
-ubx[n_states*(N+1)+1:: n_controls] = w_max  # v upper bound for all V
+'''----------------Defining constraints---------------------'''
 
-args = { 'lbg': lbg,  # constraints lower bound
-         'ubg': ubg,  # constraints upper bound
+
+# Bounds on State, Controls 
+lbx = DM.zeros((st_size + U_size, 1))
+ubx = DM.zeros((st_size + U_size, 1))
+# Bounds on obstace avoidance
+lbg = DM.zeros((st_size + (N+1) , 1))
+ubg = DM.zeros((st_size + (N+1), 1))
+
+lbx[0: st_size: n_states] = -8          # X lower bound
+lbx[1: st_size: n_states] = -8          # Y lower bound
+lbx[2: st_size: n_states] = -inf        # theta lower bound
+lbx[st_size : : n_controls] = v_min     # v lower bound
+lbx[st_size + 1: : n_controls] = w_min  # w lower bound
+
+ubx[0: st_size: n_states] = 8           # X upper bound
+ubx[1: st_size: n_states] = 8           # Y upper bound
+ubx[2: st_size: n_states] = inf         # theta upper bound
+ubx[st_size : : n_controls] = v_max     # v upper bound
+ubx[st_size +1 : : n_controls] = w_max  # w upper bound
+
+lbg[0: st_size] = 0                     # pred_st - optim_st = 0                  
+lbg[st_size: st_size+ (N+1)] = -inf     # -inf < Euclidian - sum(radii) 
+
+ubg[0: st_size] = 0
+ubg[st_size: st_size+ (N+1)] = 0        # Euclidian - sum(radii) < 0
+print("\nSt, U lower bound \n", lbx)
+print("\nSt, U uppper bound \n", ubx)
+
+print("\nG(x) lower bound \n", lbg)
+print("\nG(x) uppper bound \n", ubg)
+
+args = { 'lbg': lbg,                    # constraints lower bound
+         'ubg': ubg,                    # constraints upper bound
          'lbx': lbx,
          'ubx': ubx}
 
+'''---------------------------------------------------------'''
+
 t0 = 0
-state_init = DM(init_st)           # initial state
-state_target = DM(targ_st)   # target state
+state_init = DM(init_st)                # initial state
+state_target = DM(targ_st)              # target state
 
 # xx = DM(state_init)
 t_step = np.array([])
 
-u0 = DM.zeros((n_controls, N))  # initial control
+u0 = DM.zeros((n_controls, N))          # initial control
 X0 = repmat(state_init, 1, N+1)         # initial state full
 
 
@@ -137,8 +163,8 @@ cat_states = DM2Arr(X0)
 cat_controls = DM2Arr(u0[:, 0])
 times = np.array([[0]])
 
-# Simulation
-###############################################################################
+
+'''------------------Simulation-----------------------------'''
 
 if __name__ == '__main__':
     main_loop = time()  # return time in sec
@@ -183,4 +209,7 @@ if __name__ == '__main__':
 
     # simulate
     plot_dataset( ctrl_data = DM2Arr(u), state_data = state_init, timestamp = t_step)
-    simulate(cat_states, cat_controls, times, step_horizon, N, np.append(init_st, targ_st), rob_diam, save=False)
+    simulate(cat_states, cat_controls, times, step_horizon, N, 
+             np.append(init_st, targ_st), rob_rad,
+             obst_st, obst_rad,             
+             save=False)
