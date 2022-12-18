@@ -1,0 +1,3 @@
+[submodule "crazyflie_nmpc"]
+	path = crazyflie_nmpc
+	url = git@github.com:bcbarbara/crazyflie_nmpc.git

@@ -4,23 +4,23 @@ from casadi import *
 import matplotlib.pyplot as plt
 from simulation_code import simulate, plot_dataset
 
-'''--------------Defining Setup parammeters-----------------'''
+'''----------------Defining Setup parammeters-----------------'''
 
-step_horizon = 0.2              # time between steps in seconds
-N = 3                           # number of look ahead steps
-sim_time = 20                   # simulation time
+step_horizon = 0.1              # time between steps in seconds
+N = 10                          # number of look ahead steps
+sim_time = 30                   # simulation time
 
 v_max = 0.6   ;   v_min = -0.6
 w_max = pi/4  ;   w_min = -pi/4
 
 init_st = np.array([0, 0, 0])
-targ_st = np.array([6, 6, pi])
+targ_st = np.array([4, 4, 0])
 rob_rad = 0.3                  # diameter of the robot
 
-obst_st = np.array([4, 4, 0])
+obst_st = np.array([1.7, 3, 0])
 obst_rad = 0.3
 
-'''---------------------------------------------------------'''
+'''-----------------------------------------------------------'''
 
 def shift_timestep(step_horizon, t0, state_init, u, f):
     f_value = f(state_init, u[:, 0])
@@ -30,7 +30,6 @@ def shift_timestep(step_horizon, t0, state_init, u, f):
     u0 = horzcat( u[:, 1:], reshape(u[:, -1], -1, 1))
 
     return t0, next_state, u0
-
 
 def DM2Arr(dm):
     return np.array(dm.full())
@@ -90,11 +89,11 @@ for k in range(N):
     cost_fn = cost_fn + (st - P[n_states:]).T @ Q @ (st - P[n_states:]) + U_k.T @ R @ U_k
     st_opt = X[:, k+1]
     st_est = rk4_integrator(st, U_k)
-    g = vertcat(g, st_opt - st_est)                # add equality constraints on predicted state (MS)
+    g = vertcat(g, st_opt - st_est)                 # add equality constraints on predicted state (MS)
 
 for k in range(N +1): 
     robX = X[0,k] ; robY = X[1,k]                   # inequality constrains on distance to obstace (obstace avoidance)
-    g = vertcat(g , -sqrt( power(robX - obst_st[0], 2) + power(robY - obst_st[1], 2) + rob_rad + obst_rad))
+    g = vertcat(g , (-sqrt( power(robX - obst_st[0], 2) + power(robY - obst_st[1], 2)) + rob_rad + obst_rad))
 
 OPT_variables = vertcat( X.reshape((-1, 1)),  U.reshape((-1, 1)) )
 nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
@@ -107,7 +106,7 @@ solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
 st_size = n_states * (N+1)
 U_size = n_controls * N
 
-'''----------------Defining constraints---------------------'''
+'''------------------Defining constraints---------------------'''
 
 
 # Bounds on State, Controls 
@@ -145,7 +144,7 @@ args = { 'lbg': lbg,                    # constraints lower bound
          'lbx': lbx,
          'ubx': ubx}
 
-'''---------------------------------------------------------'''
+'''-----------------------------------------------------------'''
 
 t0 = 0
 state_init = DM(init_st)                # initial state
@@ -164,7 +163,7 @@ cat_controls = DM2Arr(u0[:, 0])
 times = np.array([[0]])
 
 
-'''------------------Simulation-----------------------------'''
+'''--------------------Simulation-----------------------------'''
 
 if __name__ == '__main__':
     main_loop = time()  # return time in sec
