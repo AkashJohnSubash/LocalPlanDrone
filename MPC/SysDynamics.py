@@ -1,52 +1,85 @@
 from casadi import *
-# discretization model (e.g. x2 = f(x1, v, t) = x1 + v * dt)
-# rot_3d_z = vertcat( horzcat(cos(theta), -sin(theta), 0),
-#                     horzcat(sin(theta),  cos(theta), 0),
-#                     horzcat(         0,           0, 1) )
 
-# Mecanum wheel transfer function which can be found here: 
-# https://www.researchgate.net/publication/334319114_Model_Predictive_Control_for_a_Mecanum-wheeled_robot_in_Dynamical_Environments
-# J = (wheel_radius/4) * DM([ [         1,         1,          1,         1],
-#                             [        -1,         1,          1,        -1],
-#                             [-1/(Lx+Ly), 1/(Lx+Ly), -1/(Lx+Ly), 1/(Lx+Ly)] ])
-# RHS = states + J @ controls * step_horizon  # Euler discretization
-# RHS = rot_3d_z @ J @ controls
-# maps controls from [va, vb, vc, vd].T to [vx, vy, omega].T
+#TODO evaluate the advantage of quarternion
+# def eul2quart():
+#     # Convert euler angles to quarternion
+#     qw = cos(phi) * cos(th) * cos(psi) + sin(phi) * sin(th) * sin(psi)
+#     qx = -cos(phi) * cos(th) * cos(phi) + sin(psi) * sin(th) * cos(phi)
+#     qy = -cos(psi) * sin(th) * cos(phi) - sin(psi) * cos(th) * sin(phi)
+#     qz = -sin(psi) * cos(th) * cos(phi) - cos(psi) * sin(th) * sin(phi)
+#     quart = vertcat(qw, qx, qy, qz)
+#     fp = Function('e2q', [ang], [quart])
+#     return fp
 
-# # state symbolic variables
-# x = SX.sym('x');        y = SX.sym('y');            z = SX.sym('z')     # (in inertial frame)
-# psi = SX.sym('psi');    theta = SX.sym('theta');    phi = SX.sym('phi') # Roll, pitch, yaw respectively (in inertial frame)
-# u = SX.sym('u');        v = SX.sym('v');            w = SX.sym('w')     # linear velocities w.r.t x,y,z ()
-# p = SX.sym('p');        q = SX.sym('q');            r = SX.sym('r')     # angular velocities w.r.t psi, theta, phi
-# states = vertcat(x, y, z, psi, theta, phi, u, v, w, p, q ,r)
-# 2D DEBUG
-x = SX.sym('x');        y = SX.sym('y');            theta = SX.sym('theta')     # (in inertial frame)
-states = vertcat(x, y, theta)
+'-------------------Symbolic variables---------------------------'
+# State symbols
+xq = SX.sym('xq');  yq = SX.sym('yq');  zq = SX.sym('zq')                       # (in inertial frame)
+q1 = SX.sym('q1');  q2 = SX.sym('q2');  q3 = SX.sym('q3');  q4 = SX.sym('q4')   # quarternion angle representation
+u = SX.sym('u');    v = SX.sym('v');    w = SX.sym('w')                         # linear velocities (in body frame)
+p = SX.sym('p');    q = SX.sym('q');    r = SX.sym('r')                         # angular velocities w.r.t psi, theta, phi
 
-# # control symbolic variables (Motor RPM)
-# w1 = SX.sym('w1');        w2 = SX.sym('w2');        w3 = SX.sym('w3');        w4 = SX.sym('w4')
-# controls = vertcat( w1, w2, w3, w4) 
-#2D DEBUG
-v = SX.sym('v');        w = SX.sym('w')
-controls = vertcat( v, w) 
+pos = vertcat(xq, yq, zq)       #TODO make static ?
+ang = vertcat(q1, q2, q3, q4)
+linVel = vertcat(u, v, w)
+angVel = vertcat(p, q, r)
+state = vertcat(pos, ang, linVel, angVel)
+
+# Control symbols (Motor RPM)
+w1 = SX.sym('w1');  w2 = SX.sym('w2');  w3 = SX.sym('w3');  w4 = SX.sym('w4')
+controls = vertcat( w1, w2, w3, w4) 
+
+'----------------------------parameters--------------------------------'
+g0  = 9.8066     # [m.s^2] accerelation of gravity
+mq  = 33e-3      # [kg] total mass (with one marker)
+Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
+Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
+Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
+Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
+Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
+dq  = 65e-3      # [m] distance between motors' center
+l   = dq/2       # [m] distance between motors' center and the axis of rotation
+
 
 class SysDyn():
     
     def __init__(self, N):
-
-
-        self.stSize = states.numel()
+        
+        self.stSize = state.numel()
         self.ctrlSize = controls.numel()
 
         # matrices containing all States, Controls, Paramters over all time steps +1
         self.St = SX.sym('St', self.stSize, N + 1)
         self.U = SX.sym('U', self.ctrlSize, N)
         self.P = SX.sym('P', self.stSize + self.stSize)
+        
+        self.hov_w = np.sqrt((mq*g0)/(4*Ct))
+        #self.max_thrust = 22
 
     def TransferFunction(self):
-        # Transfer function : input (Ctrl)- output(State) mapping
-        fnc_op = vertcat(v*cos(theta), v*sin(theta), w)
-        fp = Function('f', [states, controls], [fnc_op])
+        # Transfer function : input (Ctrl)-> output(State) mapping
+        # Rate of change of position
+        dxq = u*(2*q1**2 + 2*q2**2 - 1) - v*(2*q1*q4 - 2*q2*q3) + w*(2*q1*q3 + 2*q2*q4)
+        dyq = v*(2*q1**2 + 2*q3**2 - 1) + u*(2*q1*q4 + 2*q2*q3) - w*(2*q1*q2 - 2*q3*q4)
+        dzq = w*(2*q1**2 + 2*q4**2 - 1) - u*(2*q1*q3 - 2*q2*q4) + v*(2*q1*q2 + 2*q3*q4)
+        
+        # Rate of change of angles (in qaurternion)
+        dq1 = - (q2*p)/2 - (q3*q)/2 - (q4*r)/2
+        dq2 =   (q1*p)/2 - (q4*q)/2 + (q3*r)/2
+        dq3 =   (q4*p)/2 + (q1*q)/2 - (q2*r)/2
+        dq4 =   (q2*q)/2 - (q3*p)/2 + (q1*r)/2        
+
+        # Rate of change of velocity
+        du = v*r - w*q + g0*(2*q1*q3 - 2*q2*q4)
+        dv = w*p - u*r - g0*(2*q1*q2 + 2*q3*q4)
+        dw = u*q - v*p - g0*(2*q1**2 + 2*q4**2 - 1) + (Ct*(w1**2 + w2**2 + w3**2 + w4**2))/mq
+        
+        # Rate of change of angular velocity
+        dp = -(Ct*l*(w1**2 + w2**2 - w3**2 - w4**2) - Iyy*q*r + Izz*q*r)/Ixx
+        dq = -(Ct*l*(w1**2 - w2**2 - w3**2 + w4**2) + Ixx*p*r - Izz*p*r)/Iyy
+        dr = -(Cd*  (w1**2 - w2**2 + w3**2 - w4**2) - Ixx*p*q + Iyy*p*q)/Izz
+        
+        f_op = vertcat(dxq, dyq, dzq, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
+        fp = Function('f', [state, controls], [f_op])
         return fp 
 
     def TimeStep(step_horizon, t0, state_init, u, f):
@@ -58,6 +91,22 @@ class SysDyn():
 
         return t0, next_state, u0
 
+    # # DEBUG ERROR
+    # def eulRotTrans(self):
+    #     Rx = vertcat([1,           0,          0],
+    #                  [0,    cos(phi),   sin(phi)],
+    #                  [0,   -sin(phi),   cos(phi)])
+
+    #     Ry = vertcat([cos(th),      0,  -sin(th)],
+    #                  [      0,      1,         0],
+    #                  [sin(th),      0,   cos(th)])
+        
+    #     Rz = vertcat([cos(psi),     sin(psi),   0],
+    #                  [-sin(psi),    cos(psi),   0],
+    #                  [0,                   0,   1])
+    #     f_op = Rx ** Ry ** Rz ** ang
+    #     print(f_op)
+    #     fp = Function('euRot', [ang], f_op)
 
 class Predictor:
 

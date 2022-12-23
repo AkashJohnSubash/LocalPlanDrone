@@ -40,7 +40,7 @@ def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst
         # get variables
         x = cat_states[0, 0, i]
         y = cat_states[1, 0, i]
-        th = cat_states[2, 0, i]
+        th = cat_states[3, 0, i]
 
         # update path
         if i == 0:
@@ -66,8 +66,8 @@ def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst
 
     # create figure and axes
     fig, ax = plt.subplots(figsize=(6, 6))
-    min_scale = min(ref_st[0], ref_st[1], ref_st[3], ref_st[4]) - 2
-    max_scale = max(ref_st[0], ref_st[1], ref_st[3], ref_st[4]) + 2
+    min_scale = min(ref_st[0], ref_st[1], ref_st[13], ref_st[14]) - 2
+    max_scale = max(ref_st[0], ref_st[1], ref_st[13], ref_st[14]) + 2
     ax.set_xlim(left = min_scale, right = max_scale)
     ax.set_ylim(bottom = min_scale, top = max_scale)
 
@@ -85,7 +85,7 @@ def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst
     bot_boundary = plt.Circle(current_triangle[0], bot_rad, color='y', fill = False, linestyle = '--')
     ax.add_artist(bot_boundary)
     # target state
-    target_triangle = create_triangle(ref_st[3:])
+    target_triangle = create_triangle(ref_st[13:16])
     target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
     target_state = target_state[0]
 

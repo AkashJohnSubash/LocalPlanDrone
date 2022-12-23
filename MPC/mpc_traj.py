@@ -8,20 +8,21 @@ import common as tool
 '''----------------Defining Setup parammeters-----------------'''
 
 hznStep = 0.2                   # time between steps in seconds
-hznLen = 10                     # number of look ahead steps
-sim_time = 30                   # simulation time
+hznLen = 3                     # number of look ahead steps
+sim_time = 20                   # simulation time
 
-v_max = 0.6   ;   v_min = -0.6
+v_max = 1   ;   v_min = -1
 w_max = pi/4  ;   w_min = -pi/4
-                   #x,  y,  z,  phi,th, psi, u,  v,  w,  p,  q,  r
+max_thrust = 22
+                   #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 #init_st = np.array([0,  0,  0,  0,  0,  0])
-init_st = np.array([0,  0,  0])             # 2D DEBUG
+init_st = np.array([0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])            # 2D DEBUG
 #targ_st = np.array([4,  4,  4,  0,  0,  0])
-targ_st = np.array([4,  4,  pi])            # 2D DEBUG
+targ_st = np.array([4,  4,  4, pi, pi, pi,  0,  0,  0,  0,  0,  0,  0])            # 2D DEBUG
 rob_rad = 0.3                  # radius of the robot sphere
 
-#obst_st = np.array([1.7, 3, 3,  0,   0,  0])
-obst_st = np.array([1.7, 3, pi]) # 2D DEBUG
+#obst_st = np.array([1.7,  3,   3,  0,   0,  0])
+obst_st = np.array([1.7, 2.5, 2.5,  0,   0,  0]) # 2D DEBUG
 obst_rad = 0.3                 # radius of the obstacle sphere
 
 '''-----------------------------------------------------------'''
@@ -34,12 +35,11 @@ TF_fp = SysObj.TransferFunction()
 
 # State, Control weight matrices
 # TODO investigate effect of weights
-Q = diagcat(1, 5, 0.5) 
-R = diagcat(0.5, 0.05)
+Q = diagcat(1, 1.5, 1, 1e-5, 1e-5, 1e-5, 1e-5, 0.5, 0.5, 0.5, 1e-5, 1e-5, 1e-5) 
+R = diagcat(0.05, 0.05, 0.05, 0.05)
 
 cost_fn = 0                  # cost function
 g = ST[:, 0] - P[:n_states]  # constraints in the equation
-
 
 # obtain optimized and estimated state from MS, RK
 for k in range(hznLen):
@@ -47,12 +47,15 @@ for k in range(hznLen):
     U_k = U[:, k]
     cost_fn = cost_fn + (st - P[n_states:]).T @ Q @ (st - P[n_states:]) + U_k.T @ R @ U_k
     st_opt = ST[:, k+1]
-    st_est = Pred.rk4_integrator(TF_fp, st, U_k, hznStep)          # generates discrete system dynamics model from TF
-    g = vertcat(g, st_opt - st_est)                     # add equality constraints on predicted state (MS)
+    st_est = Pred.rk4_integrator(TF_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
+    g = vertcat(g, st_opt - st_est)                                 # add equality constraints on predicted state (MS)
+    print(f'DEBUG1 : iter {k}, optim state{st_opt}')
 
 for k in range(hznLen +1): 
-    robX = ST[0,k] ; robY = ST[1,k]                       # inequality constrains on distance to obstace (obstace avoidance)
-    g = vertcat(g , (-sqrt( power(robX - obst_st[0], 2) + power(robY - obst_st[1], 2)) + rob_rad + obst_rad))
+    # inequality path constraints (obstacle avoidance)
+    g = vertcat(g , (-sqrt( power(ST[0,k] - obst_st[0], 2)  +
+                            power(ST[1,k] - obst_st[1], 2)  + 
+                            power(ST[2,k] - obst_st[2], 2)) + rob_rad + obst_rad))
 
 OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
 nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
@@ -75,28 +78,31 @@ ubx = DM.zeros((st_size + U_size, 1))
 lbg = DM.zeros((st_size + (hznLen+1) , 1))
 ubg = DM.zeros((st_size + (hznLen+1), 1))
 
-lbx[0: st_size: n_states] = -8          # X lower bound
-lbx[1: st_size: n_states] = -8          # Y lower bound
-lbx[2: st_size: n_states] = -inf        # theta lower bound
-lbx[st_size : : n_controls] = v_min     # v lower bound
-lbx[st_size + 1: : n_controls] = w_min  # w lower bound
+lbx[0:  st_size: n_states] = -10;           ubx[0: st_size: n_states] = 10                  # x lower, upper bounds
+lbx[1:  st_size: n_states] = -10;           ubx[1: st_size: n_states] = 10                  # y bounds
+lbx[2:  st_size: n_states] = -10;           ubx[2: st_size: n_states] = 10                  # z bounds
+lbx[3:  st_size: n_states] = -inf;          ubx[3:  st_size: n_states] = inf                # qw bounds TODO find appropriate val
+lbx[4:  st_size: n_states] = -inf;          ubx[4:  st_size: n_states] = inf                # qx bounds
+lbx[5:  st_size: n_states] = -inf;          ubx[5:  st_size: n_states] = inf                # qy bounds
+lbx[6:  st_size: n_states] = -inf;          ubx[6:  st_size: n_states] = inf                # qz bounds
+lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
+lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
+lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
+lbx[10: st_size: n_states] = w_min;         ubx[10: st_size: n_states] = w_max              # p bounds
+lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max              # q bounds
+lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max              # r bounds
 
-ubx[0: st_size: n_states] = 8           # X upper bound
-ubx[1: st_size: n_states] = 8           # Y upper bound
-ubx[2: st_size: n_states] = inf         # theta upper bound
-ubx[st_size : : n_controls] = v_max     # v upper bound
-ubx[st_size +1 : : n_controls] = w_max  # w upper bound
+lbx[st_size    : : n_controls] = 0;         ubx[st_size : : n_controls] = max_thrust        # w1 bounds
+lbx[st_size +1 : : n_controls] = 0;         ubx[st_size : : n_controls] = max_thrust        # w2 bounds
+lbx[st_size +2 : : n_controls] = 0;         ubx[st_size : : n_controls] = max_thrust        # w3 bounds
+lbx[st_size +3 : : n_controls] = 0;         ubx[st_size : : n_controls] = max_thrust        # w4 bounds
 
-lbg[0: st_size] = 0                     # pred_st - optim_st = 0                  
-lbg[st_size: st_size+ (hznLen+1)] = -inf     # -inf < Euclidian - sum(radii) 
-
-ubg[0: st_size] = 0
-ubg[st_size: st_size+ (hznLen+1)] = 0        # Euclidian - sum(radii) < 0
-print("\nSt, U lower bound \n", lbx)
-print("\nSt, U uppper bound \n", ubx)
-
-print("\nG(x) lower bound \n", lbg)
-print("\nG(x) uppper bound \n", ubg)
+lbg[0: st_size] = 0;                        ubg[0: st_size] = 0                             # pred_st - optim_st = 0                  
+lbg[st_size: st_size+ (hznLen+1)] = -inf;   ubg[st_size: st_size+ (hznLen+1)] = 0           # -inf < Euclidian - sum(radii) < 0
+# print("\nSt, U lower bound \n", lbx)
+# print("\nSt, U uppper bound \n", ubx)
+# print("\nG(x) lower bound \n", lbg)
+# print("\nG(x) uppper bound \n", ubg)
 
 args = { 'lbg': lbg,                    # constraints lower bound
          'ubg': ubg,                    # constraints upper bound
@@ -112,8 +118,8 @@ state_target = DM(targ_st)              # target state
 # xx = DM(state_init)
 t_step = np.array([])
 
-u0 = DM.zeros((n_controls, hznLen))          # initial control
-X0 = repmat(state_init, 1, hznLen+1)         # initial state full
+u0 = DM.zeros((n_controls, hznLen))      # initial control
+X0 = repmat(state_init, 1, hznLen+1)     # initial state full
 
 
 mpc_iter = 0
@@ -132,6 +138,7 @@ if __name__ == '__main__':
         t1 = time()
         args['p'] = vertcat( state_init,  state_target)
         # optimization variable current state
+        #print("DEBUG4", X0, u0)
         args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
                                 reshape(u0, n_controls*hznLen, 1))
 
@@ -143,7 +150,7 @@ if __name__ == '__main__':
         cat_states = np.dstack(( cat_states, tool.DM2Arr(X0)))
         cat_controls = np.vstack(( cat_controls, tool.DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
-        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
+        t0, st0, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
         # data = vertcat(data, [t0, state_init, u0])
         # print(f'Time : {t0}, State {state_init}, Control {u0}')
         X0 = horzcat(   X0[:, 1:],
@@ -158,7 +165,7 @@ if __name__ == '__main__':
         mpc_iter = mpc_iter + 1
 
     main_loop_time = time()
-    ss_error = norm_2(state_init - state_target)
+    ss_error = norm_2(st0 - state_target)
 
     print('\n\n')
     print('Total time: ', main_loop_time - main_loop)
@@ -166,7 +173,7 @@ if __name__ == '__main__':
     print('final error: ', ss_error)
 
     # simulate
-    plot_dataset( ctrl_data = tool.DM2Arr(u), state_data = state_init, timestamp = t_step)
+    plot_dataset( ctrl_data = tool.DM2Arr(u), state_data = st0, timestamp = t_step)
     simulate(cat_states, cat_controls, times, hznStep, hznLen, 
              np.append(init_st, targ_st), rob_rad,
              obst_st, obst_rad,             
