@@ -5,11 +5,18 @@ from matplotlib import animation
 from time import time
 
 def plot_dataset(ctrl_data = [], state_data = [], timestamp = []):
-    fig, axs  = plt.subplots(2, 1, figsize=(7, 15))
-    v_lastIdx = len(ctrl_data[0,:])
-    w_lastIdx = len(ctrl_data[1,:])
-    axs[0].stairs(ctrl_data[0,:][: v_lastIdx], timestamp[: v_lastIdx+ 1], label='v (m/s)', color='b' )
-    axs[1].stairs(ctrl_data[1,:][: w_lastIdx], timestamp[: w_lastIdx+ 1], label='w (rad/s)', color='g')
+    fig, axs  = plt.subplots(4, 1, figsize=(7, 15))
+    w1_len = len(ctrl_data[0,:])
+    w2_len = len(ctrl_data[1,:])
+    w3_len = len(ctrl_data[2,:])
+    w4_len = len(ctrl_data[3,:])
+    print("\n\nDEBUG3\n", ctrl_data)
+
+    print("\n\nDEBUG3\n", state_data)
+    axs[0].stairs(ctrl_data[0,:][: w1_len], timestamp[: w1_len+ 1], label='w1 (rad/s)', color='b' )
+    axs[1].stairs(ctrl_data[1,:][: w2_len], timestamp[: w2_len+ 1], label='w2 (rad/s)', color='g')
+    axs[2].stairs(ctrl_data[2,:][: w3_len], timestamp[: w3_len+ 1], label='w3 (rad/s)', color='y' )
+    axs[3].stairs(ctrl_data[3,:][: w4_len], timestamp[: w4_len+ 1], label='w4 (rad/s)', color='r')
     axs[0].set_title('Control Inputs')
     for ax in axs:
          ax.legend()
@@ -78,19 +85,19 @@ def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst
     horizon, = ax.plot([], [], 'x-g', alpha=0.5)
     
     # current state
-    current_triangle = create_triangle(ref_st[:3])
+    current_triangle = create_triangle([ref_st[0], ref_st[1], ref_st[3]])
     current_state = ax.fill(current_triangle[:, 0], current_triangle[:, 1], color='y')
     current_state = current_state[0]
     # current state's boundary circle # TODO around mid-point
     bot_boundary = plt.Circle(current_triangle[0], bot_rad, color='y', fill = False, linestyle = '--')
     ax.add_artist(bot_boundary)
     # target state
-    target_triangle = create_triangle(ref_st[13:16])
+    target_triangle = create_triangle([ref_st[13], ref_st[14], ref_st[16]])
     target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
     target_state = target_state[0]
 
     # obstace state
-    obst_triangle = create_triangle(obst_coord)
+    obst_triangle = create_triangle([obst_coord[0], obst_coord[1], obst_coord[3] ])
     obst_state = ax.fill(obst_triangle[:, 0], obst_triangle[:, 1], color='b')
     obst_state = obst_state[0]
     # obstace boundary circle

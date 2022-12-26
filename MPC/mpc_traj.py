@@ -7,8 +7,8 @@ import common as tool
 
 '''----------------Defining Setup parammeters-----------------'''
 
-hznStep = 0.2                   # time between steps in seconds
-hznLen = 3                     # number of look ahead steps
+hznStep = 0.1                   # time between steps in seconds
+hznLen = 5                     # number of look ahead steps
 sim_time = 20                   # simulation time
 
 v_max = 1   ;   v_min = -1
@@ -18,11 +18,11 @@ max_thrust = 22
 #init_st = np.array([0,  0,  0,  0,  0,  0])
 init_st = np.array([0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])            # 2D DEBUG
 #targ_st = np.array([4,  4,  4,  0,  0,  0])
-targ_st = np.array([4,  4,  4, pi, pi, pi,  0,  0,  0,  0,  0,  0,  0])            # 2D DEBUG
+targ_st = np.array([4,  4,  4, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0])            # 2D DEBUG
 rob_rad = 0.3                  # radius of the robot sphere
 
 #obst_st = np.array([1.7,  3,   3,  0,   0,  0])
-obst_st = np.array([1.7, 2.5, 2.5,  0,   0,  0]) # 2D DEBUG
+obst_st = np.array([8, 8, 8,  0,   0,  0]) # 2D DEBUG
 obst_rad = 0.3                 # radius of the obstacle sphere
 
 '''-----------------------------------------------------------'''
@@ -49,7 +49,7 @@ for k in range(hznLen):
     st_opt = ST[:, k+1]
     st_est = Pred.rk4_integrator(TF_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
     g = vertcat(g, st_opt - st_est)                                 # add equality constraints on predicted state (MS)
-    print(f'DEBUG1 : iter {k}, optim state{st_opt}')
+    # print(f'DEBUG1 : iter {k}, optim state{st_opt}')
 
 for k in range(hznLen +1): 
     # inequality path constraints (obstacle avoidance)
@@ -144,8 +144,8 @@ if __name__ == '__main__':
 
         sol = solver(   x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
 
-        u = reshape(sol['x'][n_states * (hznLen+ 1):], n_controls, hznLen)
-        X0 = reshape(sol['x'][: n_states * (hznLen+ 1)], n_states, hznLen+1)
+        X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
+        u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
 
         cat_states = np.dstack(( cat_states, tool.DM2Arr(X0)))
         cat_controls = np.vstack(( cat_controls, tool.DM2Arr(u[:, 0])))
@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     # simulate
     plot_dataset( ctrl_data = tool.DM2Arr(u), state_data = st0, timestamp = t_step)
-    simulate(cat_states, cat_controls, times, hznStep, hznLen, 
-             np.append(init_st, targ_st), rob_rad,
-             obst_st, obst_rad,             
-             save=False)
+    # simulate(cat_states, cat_controls, times, hznStep, hznLen, 
+    #          np.append(init_st, targ_st), rob_rad,
+    #          obst_st, obst_rad,             
+    #          save=False)
