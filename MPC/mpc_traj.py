@@ -173,7 +173,7 @@ if __name__ == '__main__':
     print('final error: ', ss_error)
 
     # simulate
-    plot_dataset( ctrl_data = tool.DM2Arr(u), state_data = st0, timestamp = t_step)
+    plot_dataset( cat_controls, t_step)
     # simulate(cat_states, cat_controls, times, hznStep, hznLen, 
     #          np.append(init_st, targ_st), rob_rad,
     #          obst_st, obst_rad,             

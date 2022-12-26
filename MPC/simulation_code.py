@@ -4,26 +4,33 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from time import time
 
-def plot_dataset(ctrl_data = [], state_data = [], timestamp = []):
-    fig, axs  = plt.subplots(4, 1, figsize=(7, 15))
-    w1_len = len(ctrl_data[0,:])
-    w2_len = len(ctrl_data[1,:])
-    w3_len = len(ctrl_data[2,:])
-    w4_len = len(ctrl_data[3,:])
-    print("\n\nDEBUG3\n", ctrl_data)
+# redefnition #TODO put in config .yml
+n_state    = 13
+n_control = 4
 
-    print("\n\nDEBUG3\n", state_data)
-    axs[0].stairs(ctrl_data[0,:][: w1_len], timestamp[: w1_len+ 1], label='w1 (rad/s)', color='b' )
-    axs[1].stairs(ctrl_data[1,:][: w2_len], timestamp[: w2_len+ 1], label='w2 (rad/s)', color='g')
-    axs[2].stairs(ctrl_data[2,:][: w3_len], timestamp[: w3_len+ 1], label='w3 (rad/s)', color='y' )
-    axs[3].stairs(ctrl_data[3,:][: w4_len], timestamp[: w4_len+ 1], label='w4 (rad/s)', color='r')
-    axs[0].set_title('Control Inputs')
-    for ax in axs:
+def plot_dataset(cat_U, timestamp):
+    ''' cat_U       -> intial value of each solution in the control history
+        timestamp   -> time at each computed solution '''
+    # Plot control
+    figU, axsU  = plt.subplots(4, 1, figsize=(7, 15))    
+    w1 = np.ravel(cat_U[n_control   : -4: n_control])   # excluding init, final
+    w2 = np.ravel(cat_U[n_control+1 : -4: n_control])
+    w3 = np.ravel(cat_U[n_control+2 : -4: n_control])
+    w4 = np.ravel(cat_U[n_control+3 : -4: n_control])
+    
+    axsU[0].stairs(w1, timestamp, label='w1 (rad/s)', color='b' )
+    axsU[1].stairs(w2, timestamp, label='w2 (rad/s)', color='g')
+    axsU[2].stairs(w3, timestamp, label='w3 (rad/s)', color='y' )
+    axsU[3].stairs(w4, timestamp, label='w4 (rad/s)', color='r')
+    axsU[0].set_title('Control Inputs')
+    for ax in axsU:
          ax.legend()
     plt.show()
 
-def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst_coord, obs_rad, save=False):
-    
+def simulate(cat_ST, cat_U, t, step_horizon, N, ref_st, bot_rad, obst_coord, obs_rad, save=False):
+    ''' cat_U -> intial value of each solution in the control history
+        timestamp -> time at each computed solution '''
+
     def create_triangle(state=[0,0,0], h=0.14, w=0.09, update=False):
         x, y, th = state
         triangle = np.array([   [h, 0   ],
@@ -45,9 +52,9 @@ def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst
 
     def animate(i):
         # get variables
-        x = cat_states[0, 0, i]
-        y = cat_states[1, 0, i]
-        th = cat_states[3, 0, i]
+        x = cat_ST[0, 0, i]
+        y = cat_ST[1, 0, i]
+        th = cat_ST[3, 0, i]
 
         # update path
         if i == 0:
@@ -57,8 +64,8 @@ def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst
         path.set_data(x_new, y_new)
 
         # update horizon
-        x_new = cat_states[0, :, i]
-        y_new = cat_states[1, :, i]
+        x_new = cat_ST[0, :, i]
+        y_new = cat_ST[1, :, i]
         horizon.set_data(x_new, y_new)
 
         # update current_state, bounding circle
