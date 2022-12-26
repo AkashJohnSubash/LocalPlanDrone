@@ -3,33 +3,11 @@ import numpy as np
 from casadi import *
 from simulation_code import simulate, plot_dataset
 from SysDynamics import SysDyn as Sys, Predictor as Pred
-import common as tool
+from common import *
 
-'''----------------Defining Setup parammeters-----------------'''
-
-hznStep = 0.1                   # time between steps in seconds
-hznLen = 5                     # number of look ahead steps
-sim_time = 20                   # simulation time
-
-v_max = 1   ;   v_min = -1
-w_max = pi/4  ;   w_min = -pi/4
-max_thrust = 22
-                   #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-#init_st = np.array([0,  0,  0,  0,  0,  0])
-init_st = np.array([0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])            # 2D DEBUG
-#targ_st = np.array([4,  4,  4,  0,  0,  0])
-targ_st = np.array([4,  4,  4, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0])            # 2D DEBUG
-rob_rad = 0.3                  # radius of the robot sphere
-
-#obst_st = np.array([1.7,  3,   3,  0,   0,  0])
-obst_st = np.array([8, 8, 8,  0,   0,  0]) # 2D DEBUG
-obst_rad = 0.3                 # radius of the obstacle sphere
-
-'''-----------------------------------------------------------'''
-
+#Parameters defined in common.py
 SysObj = Sys(hznLen)
 ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
-n_states = SysObj.stSize;  n_controls = SysObj.ctrlSize
 
 TF_fp = SysObj.TransferFunction()
 
@@ -123,8 +101,8 @@ X0 = repmat(state_init, 1, hznLen+1)     # initial state full
 
 
 mpc_iter = 0
-cat_states = tool.DM2Arr(X0)
-cat_controls = tool.DM2Arr(u0[:, 0])
+cat_states = DM2Arr(X0)
+cat_controls = DM2Arr(u0[:, 0])
 times = np.array([[0]])
 
 
@@ -138,7 +116,6 @@ if __name__ == '__main__':
         t1 = time()
         args['p'] = vertcat( state_init,  state_target)
         # optimization variable current state
-        #print("DEBUG4", X0, u0)
         args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
                                 reshape(u0, n_controls*hznLen, 1))
 
@@ -147,21 +124,17 @@ if __name__ == '__main__':
         X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
         u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
 
-        cat_states = np.dstack(( cat_states, tool.DM2Arr(X0)))
-        cat_controls = np.vstack(( cat_controls, tool.DM2Arr(u[:, 0])))
+        cat_states = np.dstack(( cat_states, DM2Arr(X0)))
+        cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
         t0, st0, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
-        # data = vertcat(data, [t0, state_init, u0])
-        # print(f'Time : {t0}, State {state_init}, Control {u0}')
+        
+        print(f'\n\nTime : {t0}, State {st0}\n')
         X0 = horzcat(   X0[:, 1:],
                         reshape(X0[:, -1], -1, 1))
 
         t2 = time()
-        # print(mpc_iter)
-        # print(t2-t1)
         times = np.vstack(( times, t2-t1))
-
-        #time_stamp.append(t0)
         mpc_iter = mpc_iter + 1
 
     main_loop_time = time()
@@ -174,7 +147,4 @@ if __name__ == '__main__':
 
     # simulate
     plot_dataset( cat_controls, t_step)
-    # simulate(cat_states, cat_controls, times, hznStep, hznLen, 
-    #          np.append(init_st, targ_st), rob_rad,
-    #          obst_st, obst_rad,             
-    #          save=False)
+    simulate(cat_states, cat_controls, times, save=False)

@@ -3,20 +3,19 @@ from numpy import sin, cos, pi
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from time import time
+from common import *
 
-# redefnition #TODO put in config .yml
-n_state    = 13
-n_control = 4
+#Parameters defined in common.py
 
 def plot_dataset(cat_U, timestamp):
     ''' cat_U       -> intial value of each solution in the control history
         timestamp   -> time at each computed solution '''
     # Plot control
     figU, axsU  = plt.subplots(4, 1, figsize=(7, 15))    
-    w1 = np.ravel(cat_U[n_control   : -4: n_control])   # excluding init, final
-    w2 = np.ravel(cat_U[n_control+1 : -4: n_control])
-    w3 = np.ravel(cat_U[n_control+2 : -4: n_control])
-    w4 = np.ravel(cat_U[n_control+3 : -4: n_control])
+    w1 = np.ravel(cat_U[n_controls   : -4: n_controls])   # excluding init, final
+    w2 = np.ravel(cat_U[n_controls+1 : -4: n_controls])
+    w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
+    w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
     
     axsU[0].stairs(w1, timestamp, label='w1 (rad/s)', color='b' )
     axsU[1].stairs(w2, timestamp, label='w2 (rad/s)', color='g')
@@ -27,9 +26,11 @@ def plot_dataset(cat_U, timestamp):
          ax.legend()
     plt.show()
 
-def simulate(cat_ST, cat_U, t, step_horizon, N, ref_st, bot_rad, obst_coord, obs_rad, save=False):
-    ''' cat_U -> intial value of each solution in the control history
-        timestamp -> time at each computed solution '''
+def simulate(cat_ST, cat_U, t, save=False):
+    ''' cat_U       -> intial value of each solution in the control history
+        cat_ST      -> full predition of each solution in the control history
+        timestamp   -> time at each computed solution 
+        global vars : hznStep, hznLen, rob_rad, obs_rad, init_st, targ_st, obst_st '''
 
     def create_triangle(state=[0,0,0], h=0.14, w=0.09, update=False):
         x, y, th = state
@@ -80,8 +81,8 @@ def simulate(cat_ST, cat_U, t, step_horizon, N, ref_st, bot_rad, obst_coord, obs
 
     # create figure and axes
     fig, ax = plt.subplots(figsize=(6, 6))
-    min_scale = min(ref_st[0], ref_st[1], ref_st[13], ref_st[14]) - 2
-    max_scale = max(ref_st[0], ref_st[1], ref_st[13], ref_st[14]) + 2
+    min_scale = min(init_st[0], init_st[1], targ_st[0], targ_st[1]) - 2
+    max_scale = max(init_st[0], init_st[1], targ_st[0], targ_st[1]) + 2
     ax.set_xlim(left = min_scale, right = max_scale)
     ax.set_ylim(bottom = min_scale, top = max_scale)
 
@@ -91,27 +92,28 @@ def simulate(cat_ST, cat_U, t, step_horizon, N, ref_st, bot_rad, obst_coord, obs
     # horizon
     horizon, = ax.plot([], [], 'x-g', alpha=0.5)
     
-    # current state
-    current_triangle = create_triangle([ref_st[0], ref_st[1], ref_st[3]])
+    # Generate triangle from current x, y, theta
+    current_triangle = create_triangle([init_st[0], init_st[1], init_st[3]])        
     current_state = ax.fill(current_triangle[:, 0], current_triangle[:, 1], color='y')
     current_state = current_state[0]
     # current state's boundary circle # TODO around mid-point
-    bot_boundary = plt.Circle(current_triangle[0], bot_rad, color='y', fill = False, linestyle = '--')
+    bot_boundary = plt.Circle(current_triangle[0], rob_rad, color='y', fill = False, linestyle = '--')
     ax.add_artist(bot_boundary)
-    # target state
-    target_triangle = create_triangle([ref_st[13], ref_st[14], ref_st[16]])
+    
+    # Generate triangle from target's x, y, theta
+    target_triangle = create_triangle([targ_st[0], targ_st[1], targ_st[3]])
     target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
     target_state = target_state[0]
 
-    # obstace state
-    obst_triangle = create_triangle([obst_coord[0], obst_coord[1], obst_coord[3] ])
+    # Generate triangle from obstace's x, y, theta
+    obst_triangle = create_triangle([obst_st[0], obst_st[1], obst_st[3] ])
     obst_state = ax.fill(obst_triangle[:, 0], obst_triangle[:, 1], color='b')
     obst_state = obst_state[0]
     # obstace boundary circle
-    obst_boundary = plt.Circle(obst_triangle[0], obs_rad, color='r', fill = False, linestyle = '--')
+    obst_boundary = plt.Circle(obst_triangle[0], obst_rad, color='r', fill = False, linestyle = '--')
     ax.add_artist(obst_boundary)
 
-    sim = animation.FuncAnimation(  fig=fig, func=animate, init_func=init, frames=len(t), interval=step_horizon*400, blit=True,
+    sim = animation.FuncAnimation(  fig=fig, func=animate, init_func=init, frames=len(t), interval=hznStep*400, blit=True,
                                     repeat=True)
     plt.grid()
     plt.show()
