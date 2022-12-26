@@ -4,14 +4,21 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from time import time
 
-def plot_dataset(ctrl_data = [], state_data = [], timestamp = []):
-    fig, axs  = plt.subplots(2, 1, figsize=(7, 15))
-    v_lastIdx = len(ctrl_data[0,:])
-    w_lastIdx = len(ctrl_data[1,:])
-    axs[0].stairs(ctrl_data[0,:][: v_lastIdx], timestamp[: v_lastIdx+ 1], label='v (m/s)', color='b' )
-    axs[1].stairs(ctrl_data[1,:][: w_lastIdx], timestamp[: w_lastIdx+ 1], label='w (rad/s)', color='g')
-    axs[0].set_title('Control Inputs')
-    for ax in axs:
+# redefnition #TODO put in config .yml
+n_state    = 3
+n_control = 2
+
+def plot_dataset(ctrl_data = [], timestamp = []):
+    
+    # Plot control
+    figU, axsU  = plt.subplots(2, 1, figsize=(7, 15))    
+    v = np.ravel(ctrl_data[2 : -2: n_control])   # excluding init, final
+    w = np.ravel(ctrl_data[3 : -2: n_control])   # excluding init, final
+    
+    axsU[0].stairs(v, timestamp, label='v (m/s)', color='b' )
+    axsU[1].stairs(w, timestamp, label='w (rad/s)', color='g')
+    axsU[0].set_title('Control Inputs')
+    for ax in axsU:
          ax.legend()
     plt.show()
 
