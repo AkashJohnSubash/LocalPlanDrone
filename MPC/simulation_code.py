@@ -28,7 +28,7 @@ def plot_dataset(cat_U, timestamp):
 
 def simulate(cat_ST, cat_U, t, save=False):
     ''' cat_U       -> intial value of each solution in the control history
-        cat_ST      -> full predition of each solution in the control history
+        cat_ST      -> full predition of each solution in the State history
         timestamp   -> time at each computed solution 
         global vars : hznStep, hznLen, rob_rad, obs_rad, init_st, targ_st, obst_st '''
 
@@ -105,7 +105,7 @@ def simulate(cat_ST, cat_U, t, save=False):
     target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
     target_state = target_state[0]
 
-    # Generate triangle from obstace's x, y, theta
+    # Generate triangle from obstacle's x, y, theta
     obst_triangle = create_triangle([obst_st[0], obst_st[1], obst_st[3] ])
     obst_state = ax.fill(obst_triangle[:, 0], obst_triangle[:, 1], color='b')
     obst_state = obst_state[0]
