@@ -18,11 +18,6 @@ q1 = SX.sym('q1');  q2 = SX.sym('q2');  q3 = SX.sym('q3');  q4 = SX.sym('q4')   
 u = SX.sym('u');    v = SX.sym('v');    w = SX.sym('w')                         # linear velocities (in body frame)
 p = SX.sym('p');    q = SX.sym('q');    r = SX.sym('r')                         # angular velocities w.r.t psi, theta, phi
 
-# pos = vertcat(xq, yq, zq)       #TODO make static ?
-# ang = vertcat(q1, q2, q3, q4)
-# linVel = vertcat(u, v, w)
-# angVel = vertcat(p, q, r)
-# state = vertcat(pos, ang, linVel, angVel)
 state = vertcat(xq, yq, zq, q1, q2, q3, q4, u, v, w, p, q, r)
 
 # Control symbols (Motor RPM)
@@ -85,7 +80,7 @@ class SysDyn():
     def TimeStep(step_horizon, t0, state_init, u, f):
         f_value = f(state_init, u[:, 0])
         next_state = DM.full(state_init + (step_horizon * f_value)) # TODO Check if linearization is still valid ?
-        print(f'\nDEBUG2 next state {next_state}, \ncontrol {u[:, 0]}' )
+        print(f'\nDEBUG2 {t0}, next state :\n{next_state}, \nControl :\n{u[:, 0]}' )
 
         t0 = t0 + step_horizon
         u0 = horzcat( u[:, 1:], reshape(u[:, -1], -1, 1))

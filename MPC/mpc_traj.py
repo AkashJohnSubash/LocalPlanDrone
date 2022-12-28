@@ -34,7 +34,7 @@ for k in range(hznLen +1):
     g = vertcat(g , (-sqrt( power(ST[0,k] - obst_st[0], 2)  +
                             power(ST[1,k] - obst_st[1], 2)  + 
                             power(ST[2,k] - obst_st[2], 2)) + rob_rad + obst_rad))
-
+#add constraint on quarternion calculation
 OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
 nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
 
@@ -61,16 +61,16 @@ ubg = DM.zeros((st_size + (hznLen+1), 1))
 lbx[0:  st_size: n_states] = -10;           ubx[0: st_size: n_states] = 10                  # x lower, upper bounds
 lbx[1:  st_size: n_states] = -10;           ubx[1: st_size: n_states] = 10                  # y bounds
 lbx[2:  st_size: n_states] = -10;           ubx[2: st_size: n_states] = 10                  # z bounds
-lbx[3:  st_size: n_states] = -1;          ubx[3:  st_size: n_states] = 1                # qw bounds TODO find appropriate val
+lbx[3:  st_size: n_states] = 0;          ubx[3:  st_size: n_states] = 1                # qw bounds TODO find appropriate val
 lbx[4:  st_size: n_states] = -1;          ubx[4:  st_size: n_states] = 1                # qx bounds
 lbx[5:  st_size: n_states] = -1;          ubx[5:  st_size: n_states] = 1                # qy bounds
 lbx[6:  st_size: n_states] = -1;          ubx[6:  st_size: n_states] = 1                # qz bounds
-lbx[7:  st_size: n_states] = -v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
-lbx[8:  st_size: n_states] = -v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
-lbx[9:  st_size: n_states] = -v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
-lbx[10: st_size: n_states] = -inf;         ubx[10: st_size: n_states] = inf              # p bounds TODO find appropriate val
-lbx[11: st_size: n_states] = -inf;         ubx[11: st_size: n_states] = inf              # q bounds
-lbx[12: st_size: n_states] = -inf;         ubx[12: st_size: n_states] = inf              # r bounds
+lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
+lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
+lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
+lbx[10: st_size: n_states] = w_min;         ubx[10: st_size: n_states] = w_max              # p bounds TODO find appropriate val
+lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max              # q bounds
+lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max              # r bounds
 # Control constraints
 lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_thrust        # w1 bounds
 lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_thrust        # w2 bounds
@@ -130,7 +130,7 @@ if __name__ == '__main__':
         cat_states = np.dstack(( cat_states, DM2Arr(X0)))
         cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
-        t0, st0, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
+        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
         
         #print(f'\n\nDEBUG Time : {t0}, State {X0}, \n \n Ctrl {u}\n')
         X0 = horzcat(   X0[:, 1:],
@@ -141,7 +141,7 @@ if __name__ == '__main__':
         mpc_iter = mpc_iter + 1
 
     main_loop_time = time()
-    ss_error = norm_2(st0 - state_target)
+    ss_error = norm_2(state_init - state_target)
 
     print('\n\n')
     print('Total time: ', main_loop_time - main_loop)
@@ -151,4 +151,4 @@ if __name__ == '__main__':
     # simulate
     plot_dataset( cat_controls, t_step)
     #TODO convert state angles (yaw) to euler to be able to reuse the simulation
-    #simulate(cat_states, cat_controls, times, save=False)
+    simulate(cat_states, cat_controls, times, save=False)

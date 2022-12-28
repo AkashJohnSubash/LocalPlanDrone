@@ -31,9 +31,10 @@ def simulate(cat_ST, cat_U, t, save=False):
         cat_ST      -> full predition of each solution in the State history
         timestamp   -> time at each computed solution 
         global vars : hznStep, hznLen, rob_rad, obs_rad, init_st, targ_st, obst_st '''
-
-    def create_triangle(state=[0,0,0], h=0.14, w=0.09, update=False):
-        x, y, th = state
+                            # [x, y, z, qw, qx, qy, qz]
+    def create_triangle(state=[0, 0, 0,  1,  0,  0, 0], h=0.14, w=0.09, update=False):
+        phi, th, psi = quatern2euler(state[3 : ])
+        x, y = state[0 : 2]
         triangle = np.array([   [h, 0   ],
                                 [0,  w/2],
                                 [0, -w/2],
@@ -55,7 +56,7 @@ def simulate(cat_ST, cat_U, t, save=False):
         # get variables
         x = cat_ST[0, 0, i]
         y = cat_ST[1, 0, i]
-        th = cat_ST[3, 0, i]
+        #phi, th, psi = quatern2euler([cat_ST[3, 0, i], cat_ST[3, 0, i], cat_ST[3, 0, i], cat_ST[3, 0, i]])
 
         # update path
         if i == 0:
@@ -70,7 +71,7 @@ def simulate(cat_ST, cat_U, t, save=False):
         horizon.set_data(x_new, y_new)
 
         # update current_state, bounding circle
-        current_state.set_xy(create_triangle([x, y, th], update=True))
+        current_state.set_xy(create_triangle(cat_ST[0:8, 0, i], update=True))
         bot_boundary.set_center([x, y])
         
         # update target_state
@@ -93,7 +94,7 @@ def simulate(cat_ST, cat_U, t, save=False):
     horizon, = ax.plot([], [], 'x-g', alpha=0.5)
     
     # Generate triangle from current x, y, theta
-    current_triangle = create_triangle([init_st[0], init_st[1], init_st[3]])        
+    current_triangle = create_triangle(init_st)        
     current_state = ax.fill(current_triangle[:, 0], current_triangle[:, 1], color='y')
     current_state = current_state[0]
     # current state's boundary circle # TODO around mid-point
@@ -101,12 +102,12 @@ def simulate(cat_ST, cat_U, t, save=False):
     ax.add_artist(bot_boundary)
     
     # Generate triangle from target's x, y, theta
-    target_triangle = create_triangle([targ_st[0], targ_st[1], targ_st[3]])
+    target_triangle = create_triangle(targ_st)
     target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
     target_state = target_state[0]
 
     # Generate triangle from obstacle's x, y, theta
-    obst_triangle = create_triangle([obst_st[0], obst_st[1], obst_st[3] ])
+    obst_triangle = create_triangle(obst_st)
     obst_state = ax.fill(obst_triangle[:, 0], obst_triangle[:, 1], color='b')
     obst_state = obst_state[0]
     # obstace boundary circle
