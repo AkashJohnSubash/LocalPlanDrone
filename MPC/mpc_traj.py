@@ -1,7 +1,7 @@
 from time import time
 import numpy as np
 from casadi import *
-from simulation_code import simulate, plot_dataset
+from simulation_code import simulate3D#, simulate, plot_dataset
 from SysDynamics import SysDyn as Sys, Predictor as Pred
 from common import *
 
@@ -158,6 +158,7 @@ if __name__ == '__main__':
     print('final error: ', ss_error)
 
     # simulate
-    plot_dataset( cat_controls, t_step)
+    #plot_dataset( cat_controls, t_step)
     #TODO convert state angles (yaw) to euler to be able to reuse the simulation
-    simulate(cat_states, cat_controls, times, save=False)
+    #simulate(cat_states, cat_controls, times, save=False)
+    simulate3D(cat_states, times)

@@ -1,9 +1,10 @@
 import numpy as np 
 from numpy import sin, cos, pi
-import matplotlib.pyplot as plt
-from matplotlib import animation
-from time import time
+from matplotlib import pyplot as plt, animation
+from mpl_toolkits.mplot3d import Axes3D
+from skspatial.objects import Sphere
 from common import *
+import time
 
 #Parameters defined in common.py
 
@@ -58,6 +59,7 @@ def simulate(cat_ST, cat_U, t, save=False):
         # get variables
         x = cat_ST[0, 0, i]
         y = cat_ST[1, 0, i]
+        z = cat_ST[2, 0, i]
         #phi, th, psi = quatern2euler([cat_ST[3, 0, i], cat_ST[3, 0, i], cat_ST[3, 0, i], cat_ST[3, 0, i]])
 
         # update path
@@ -125,3 +127,58 @@ def simulate(cat_ST, cat_U, t, save=False):
         sim.save('./animation' + str(time()) +'.gif', writer='ffmpeg', fps=30)
 
     return
+
+def simulate3D(cat_ST, t):
+
+    def animate(i):
+        # use the following two lines for matplotlib 3.4.3
+        # x = cat_ST[0, 0, i]
+        # y = cat_ST[1, 0, i]
+        # z = cat_ST[2, 0, i]
+
+        # # update path
+        # if i == 0:
+        #     point.set_data(np.array([]), np.array([]))
+        # x_new = np.hstack((point.get_xdata(), x))
+        # y_new = np.hstack((point.get_ydata(), y))
+        # z_new = np.hstack((point.get_ydata(), y))
+
+        point.set_data(cat_ST[0:2, 0, :i])
+        point.set_3d_properties(cat_ST[2, 0, :i])
+        # Sphere around current position
+        # sphere = Sphere(cat_ST[0:3, 0 ,i], rob_rad)
+        # sphere.plot_3d(ax, color='g', alpha=0.2)
+        
+        return point
+
+    fig = plt.figure()
+    ax = Axes3D(fig, auto_add_to_figure=False)
+    fig.add_axes(ax)
+
+    # path
+    point = ax.plot([], [], [], 'k', linewidth=2)[0]
+    # horizon
+    horizon = ax.plot([], [], [],'x-g', alpha=0.5)
+    
+
+    min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 2
+    max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 2
+    
+    ax.set_xlim3d(left = min_scale, right = max_scale)
+    ax.set_ylim3d(bottom = min_scale, top = max_scale)
+    ax.set_zlim3d(bottom = min_scale, top = max_scale)
+
+    # Sphere around obstacle position
+    sphere = Sphere(obst_st[ : 3], rob_rad)
+    sphere.plot_3d(ax, color='r', alpha=0.2)
+    
+    # Sphere around target point
+    sphere = Sphere(targ_st[ : 3], rob_rad)
+    sphere.plot_3d(ax, color='g', alpha=0.2)
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    anim = animation.FuncAnimation(fig=fig, func=animate, frames=len(t), interval=hznStep*400, blit=False)
+
+    plt.show()
