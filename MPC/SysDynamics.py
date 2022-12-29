@@ -1,4 +1,5 @@
 from casadi import *
+from common import *
 
 #TODO evaluate the advantage of quarternion
 # def eul2quart():
@@ -23,18 +24,6 @@ state = vertcat(xq, yq, zq, q1, q2, q3, q4, u, v, w, p, q, r)
 # Control symbols (Motor RPM)
 w1 = SX.sym('w1');  w2 = SX.sym('w2');  w3 = SX.sym('w3');  w4 = SX.sym('w4')
 controls = vertcat( w1, w2, w3, w4) 
-
-'----------------------------parameters--------------------------------'
-g0  = 9.8066     # [m.s^2] accerelation of gravity
-mq  = 33e-3      # [kg] total mass (with one marker)
-Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
-Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
-Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
-Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
-Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
-dq  = 65e-3      # [m] distance between motors' center
-l   = dq/2       # [m] distance between motors' center and the axis of rotation
-
 
 class SysDyn():
     
@@ -80,7 +69,7 @@ class SysDyn():
     def TimeStep(step_horizon, t0, state_init, u, f):
         f_value = f(state_init, u[:, 0])
         next_state = DM.full(state_init + (step_horizon * f_value)) # TODO Check if linearization is still valid ?
-        print(f'\nDEBUG2 {t0}, next state :\n{next_state}, \nControl :\n{u[:, 0]}' )
+        #print(f'\nDEBUG3 {t0}, next state :\n{next_state}, \nControl :\n{u[:, 0]}' )
 
         t0 = t0 + step_horizon
         u0 = horzcat( u[:, 1:], reshape(u[:, -1], -1, 1))

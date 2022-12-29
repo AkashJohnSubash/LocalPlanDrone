@@ -33,15 +33,17 @@ def simulate(cat_ST, cat_U, t, save=False):
         global vars : hznStep, hznLen, rob_rad, obs_rad, init_st, targ_st, obst_st '''
                             # [x, y, z, qw, qx, qy, qz]
     def create_triangle(state=[0, 0, 0,  1,  0,  0, 0], h=0.14, w=0.09, update=False):
-        phi, th, psi = quatern2euler(state[3 : ])
+        #print(f"DEBUG4 triangle quartn {state[3 : -1]}" )
+        phi, th, psi = quatern2euler(state[3 : -1])
+        #print(f"eul {phi, th, psi}\n" )
         x, y = state[0 : 2]
         triangle = np.array([   [h, 0   ],
                                 [0,  w/2],
                                 [0, -w/2],
                                 [h, 0   ]]).T
 
-        rotation_matrix = np.array([[cos(th), -sin(th)],
-                                    [sin(th),  cos(th)]])
+        rotation_matrix = np.array([[cos(psi), -sin(psi)],
+                                    [sin(psi),  cos(psi)]])
 
         coords = np.array([[x, y]]) + (rotation_matrix @ triangle).T
         if update == True:
@@ -94,7 +96,7 @@ def simulate(cat_ST, cat_U, t, save=False):
     horizon, = ax.plot([], [], 'x-g', alpha=0.5)
     
     # Generate triangle from current x, y, theta
-    current_triangle = create_triangle(init_st)        
+    current_triangle = create_triangle(init_st[ : 8])        
     current_state = ax.fill(current_triangle[:, 0], current_triangle[:, 1], color='y')
     current_state = current_state[0]
     # current state's boundary circle # TODO around mid-point
@@ -102,7 +104,7 @@ def simulate(cat_ST, cat_U, t, save=False):
     ax.add_artist(bot_boundary)
     
     # Generate triangle from target's x, y, theta
-    target_triangle = create_triangle(targ_st)
+    target_triangle = create_triangle(targ_st[  : 8])
     target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
     target_state = target_state[0]
 

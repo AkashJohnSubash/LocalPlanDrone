@@ -13,7 +13,7 @@ TF_fp = SysObj.TransferFunction()
 
 # State, Control weight matrices
 # TODO investigate effect of weights
-Q = diagcat(120, 100, 100, 1e-1, 1e-1, 1e-1, 1e-1, 0.7, 1, 4, 1e-5, 1e-5, 10) 
+Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 10) 
 R = diagcat(0.06, 0.06, 0.06, 0.06)
 
 cost_fn = 0                  # cost function
@@ -26,19 +26,22 @@ for k in range(hznLen):
     cost_fn = cost_fn + (st - P[n_states:]).T @ Q @ (st - P[n_states:]) + U_k.T @ R @ U_k
     st_opt = ST[:, k+1]
     st_est = Pred.rk4_integrator(TF_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
-    g = vertcat(g, st_opt - st_est)                                 # predicted state (MS) equality constraints equation
+    g = vertcat(g, st_opt - st_est)                                 # predicted state (MS) constraint
     # print(f'DEBUG1 : iter {k}, optim state{st_opt}')
 
-# inequality path constraints equation (obstacle avoidance)
+# # Path constraint equations (obstacle avoidance)
+# for k in range(hznLen +1): 
+#     g = vertcat(g , (-sqrt( ((ST[0,k] - obst_st[0]) ** 2)  +
+#                             ((ST[1,k] - obst_st[1]) ** 2)  + 
+#                             ((ST[2,k] - obst_st[2]) ** 2)) + rob_rad + obst_rad))
+# constraint on quarternion normalization
 for k in range(hznLen +1): 
-    g = vertcat(g , (-sqrt( power(ST[0,k] - obst_st[0], 2)  +
-                            power(ST[1,k] - obst_st[1], 2)  + 
-                            power(ST[2,k] - obst_st[2], 2)) + rob_rad + obst_rad))
-#add constraint on quarternion calculation
+    g = vertcat(g , sqrt( ST[3,k] ** 2 + ST[4,k] ** 2 + ST[5,k] ** 2 + ST[6,k] ** 2))
+
 OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
 nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
 
-opts = {'ipopt'     : { 'max_iter': 100, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
+opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
         'print_time': 0 }
 
 solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
@@ -46,42 +49,47 @@ solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
 st_size = n_states * (hznLen+1)
 U_size = n_controls * hznLen
 
-'''------------------Defining constraints---------------------'''
+'''---------------------------Bounds-----------------------------'''
 
 
-# Bounds on State, Controls
+# bounds on decision variables
 lbx = DM.zeros((st_size + U_size, 1))
 ubx = DM.zeros((st_size + U_size, 1))
-# Bounds on obstace avoidance
-# lbg = DM.zeros((st_size , 1))
-# ubg = DM.zeros((st_size , 1))
-lbg = DM.zeros((st_size + (hznLen+1) , 1))
-ubg = DM.zeros((st_size + (hznLen+1), 1))
-# State constraints
+# State bounds
 lbx[0:  st_size: n_states] = -10;           ubx[0: st_size: n_states] = 10                  # x lower, upper bounds
 lbx[1:  st_size: n_states] = -10;           ubx[1: st_size: n_states] = 10                  # y bounds
 lbx[2:  st_size: n_states] = -10;           ubx[2: st_size: n_states] = 10                  # z bounds
-lbx[3:  st_size: n_states] = 0;          ubx[3:  st_size: n_states] = 1                # qw bounds TODO find appropriate val
-lbx[4:  st_size: n_states] = -1;          ubx[4:  st_size: n_states] = 1                # qx bounds
-lbx[5:  st_size: n_states] = -1;          ubx[5:  st_size: n_states] = 1                # qy bounds
-lbx[6:  st_size: n_states] = -1;          ubx[6:  st_size: n_states] = 1                # qz bounds
+lbx[3:  st_size: n_states] = -1;             ubx[3:  st_size: n_states] = 1                # qw bounds TODO find appropriate val
+lbx[4:  st_size: n_states] = -1;             ubx[4:  st_size: n_states] = 1                # qx bounds
+lbx[5:  st_size: n_states] = -1;             ubx[5:  st_size: n_states] = 1                # qy bounds
+lbx[6:  st_size: n_states] = -1;             ubx[6:  st_size: n_states] = 1                # qz bounds
 lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
 lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
 lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
 lbx[10: st_size: n_states] = w_min;         ubx[10: st_size: n_states] = w_max              # p bounds TODO find appropriate val
 lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max              # q bounds
 lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max              # r bounds
-# Control constraints
+# Control bounds
 lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_thrust        # w1 bounds
 lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_thrust        # w2 bounds
 lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_thrust        # w3 bounds
 lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_thrust        # w4 bounds
 
+# Bounds on constraints
+# lbg = DM.zeros((st_size , 1))
+# ubg = DM.zeros((st_size , 1))
+lbg = DM.zeros((st_size + (hznLen+1) , 1))
+ubg = DM.zeros((st_size + (hznLen+1), 1))
+
 lbg[0: st_size] = 0;                        ubg[0: st_size] = 0                             # pred_st - optim_st = 0                  
-lbg[st_size: st_size+ (hznLen+1)] = -inf;   ubg[st_size: st_size+ (hznLen+1)] = 0           # -inf < Euclidian - sum(radii) < 0
-print("\nDEBUG Optim var : St, U \n\n", OPT_variables)
-print("\nDEBUG: St, U lower bound \n\n", lbx)
-print("\nDEBUG: St, U uppper bound \n\n", ubx)
+lbg[st_size: st_size+ (hznLen+1)] = 0;   ubg[st_size: st_size+ (hznLen+1)] = 1 
+# # Path constraints (obstacle avoidance)
+# lbg[st_size: st_size+ (hznLen+1)] = -inf;   ubg[st_size: st_size+ (hznLen+1)] = 0           # -inf < Euclidian - sum(radii) < 0
+
+#print("\nDEBUG1 NLP  \n\n", nlp_prob)
+print("\nDEBUG1 Optim var : St, U \n\n", OPT_variables)
+# print("\nDEBUG1: St, U lower bound \n\n", lbx)
+print("\nDEBUG1: St, U uppper bound \n\n", ubx)
 # print("\nG(x) lower bound \n", lbg)
 # print("\nG(x) uppper bound \n", ubg)
 
@@ -90,7 +98,7 @@ args = { 'lbg': lbg,                    # constraints lower bound
          'lbx': lbx,
          'ubx': ubx}
 
-'''-----------------------------------------------------------'''
+'''---------------------------------------------------------------'''
 
 t0 = 0
 state_init = DM(init_st)                # initial state
@@ -139,6 +147,7 @@ if __name__ == '__main__':
         t2 = time()
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
+        print(f"DEBUG2: Solution at {t0}: { sol['x'][:n_states] }\n")
 
     main_loop_time = time()
     ss_error = norm_2(state_init - state_target)
