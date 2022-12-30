@@ -87,9 +87,9 @@ lbg[st_size: st_size+ (hznLen+1)] = 0;   ubg[st_size: st_size+ (hznLen+1)] = 1
 # lbg[st_size: st_size+ (hznLen+1)] = -inf;   ubg[st_size: st_size+ (hznLen+1)] = 0           # -inf < Euclidian - sum(radii) < 0
 
 #print("\nDEBUG1 NLP  \n\n", nlp_prob)
-print("\nDEBUG1 Optim var : St, U \n\n", OPT_variables)
+#print("\nDEBUG1 Optim var : St, U \n\n", OPT_variables)
 # print("\nDEBUG1: St, U lower bound \n\n", lbx)
-print("\nDEBUG1: St, U uppper bound \n\n", ubx)
+#print("\nDEBUG1: St, U uppper bound \n\n", ubx)
 # print("\nG(x) lower bound \n", lbg)
 # print("\nG(x) uppper bound \n", ubg)
 
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         t2 = time()
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
-        print(f"DEBUG2: Solution at {t0}: { sol['x'][:n_states] }\n")
+        #print(f"DEBUG2: Solution at {t0}: { sol['x'][:n_states] }\n")
 
     main_loop_time = time()
     ss_error = norm_2(state_init - state_target)

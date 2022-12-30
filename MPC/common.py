@@ -4,8 +4,8 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 hznStep = 0.1                   # time between steps in seconds
-hznLen = 30                      # number of look ahead steps
-sim_time = 20                   # simulation time
+hznLen = 50                      # number of look ahead steps
+sim_time = 10                   # simulation time
 
 v_max = 0.6   ;   v_min = -0.6
 w_max = pi/4  ;   w_min = -pi/4
