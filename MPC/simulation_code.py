@@ -2,9 +2,7 @@ import numpy as np
 from numpy import sin, cos, pi
 from matplotlib import pyplot as plt, animation
 from mpl_toolkits.mplot3d import Axes3D
-from skspatial.objects import Sphere
 from common import *
-import time
 
 #Parameters defined in common.py
 
@@ -26,140 +24,35 @@ def plot_dataset(cat_U, timestamp):
     for ax in axsU:
          ax.legend()
     plt.show()
-
-def simulate(cat_ST, cat_U, t, save=False):
-    ''' cat_U       -> intial value of each solution in the control history
-        cat_ST      -> full predition of each solution in the State history
-        timestamp   -> time at each computed solution 
-        global vars : hznStep, hznLen, rob_rad, obs_rad, init_st, targ_st, obst_st '''
-                            # [x, y, z, qw, qx, qy, qz]
-    def create_triangle(state=[0, 0, 0,  1,  0,  0, 0], h=0.14, w=0.09, update=False):
-        #print(f"DEBUG4 triangle quartn {state[3 : -1]}" )
-        phi, th, psi = quatern2euler(state[3 : -1])
-        #print(f"eul {phi, th, psi}\n" )
-        x, y = state[0 : 2]
-        triangle = np.array([   [h, 0   ],
-                                [0,  w/2],
-                                [0, -w/2],
-                                [h, 0   ]]).T
-
-        rotation_matrix = np.array([[cos(psi), -sin(psi)],
-                                    [sin(psi),  cos(psi)]])
-
-        coords = np.array([[x, y]]) + (rotation_matrix @ triangle).T
-        if update == True:
-            return coords
-        else:
-            return coords[:3, :]
-
+    
+def simulate3D(cat_ST, t):
+    
     def init():
-        return path, horizon, current_state, target_state, bot_boundary
+        return path, horizon, sphere_i
+
 
     def animate(i):
-        # get variables
-        x = cat_ST[0, 0, i]
-        y = cat_ST[1, 0, i]
-        z = cat_ST[2, 0, i]
-        #phi, th, psi = quatern2euler([cat_ST[3, 0, i], cat_ST[3, 0, i], cat_ST[3, 0, i], cat_ST[3, 0, i]])
-
         # update path
-        if i == 0:
-            path.set_data(np.array([]), np.array([]))
-        x_new = np.hstack((path.get_xdata(), x))
-        y_new = np.hstack((path.get_ydata(), y))
-        path.set_data(x_new, y_new)
+        path.set_data(cat_ST[0:2, 0, :i])
+        path.set_3d_properties(cat_ST[2, 0, :i])
 
         # update horizon
-        x_new = cat_ST[0, :, i]
-        y_new = cat_ST[1, :, i]
-        horizon.set_data(x_new, y_new)
-
-        # update current_state, bounding circle
-        current_state.set_xy(create_triangle(cat_ST[0:8, 0, i], update=True))
-        bot_boundary.set_center([x, y])
+        horizon.set_data(cat_ST[0, :, i], cat_ST[1, :, i])
+        horizon.set_3d_properties(cat_ST[2, :, i])
         
-        # update target_state
-        # xy = target_state.get_xy()
-        # target_state.set_xy(xy)            
-
-        return path, horizon, current_state, target_state, bot_boundary
-
-    # create figure and axes
-    fig, ax = plt.subplots(figsize=(6, 6))
-    min_scale = min(init_st[0], init_st[1], targ_st[0], targ_st[1]) - 2
-    max_scale = max(init_st[0], init_st[1], targ_st[0], targ_st[1]) + 2
-    ax.set_xlim(left = min_scale, right = max_scale)
-    ax.set_ylim(bottom = min_scale, top = max_scale)
-
-    # create lines:
-    # path
-    path, = ax.plot([], [], 'k', linewidth=2)
-    # horizon
-    horizon, = ax.plot([], [], 'x-g', alpha=0.5)
-    
-    # Generate triangle from current x, y, theta
-    current_triangle = create_triangle(init_st[ : 8])        
-    current_state = ax.fill(current_triangle[:, 0], current_triangle[:, 1], color='y')
-    current_state = current_state[0]
-    # current state's boundary circle # TODO around mid-point
-    bot_boundary = plt.Circle(current_triangle[0], rob_rad, color='y', fill = False, linestyle = '--')
-    ax.add_artist(bot_boundary)
-    
-    # Generate triangle from target's x, y, theta
-    target_triangle = create_triangle(targ_st[  : 8])
-    target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
-    target_state = target_state[0]
-
-    # Generate triangle from obstacle's x, y, theta
-    obst_triangle = create_triangle(obst_st)
-    obst_state = ax.fill(obst_triangle[:, 0], obst_triangle[:, 1], color='b')
-    obst_state = obst_state[0]
-    # obstace boundary circle
-    obst_boundary = plt.Circle(obst_triangle[0], obst_rad, color='r', fill = False, linestyle = '--')
-    ax.add_artist(obst_boundary)
-
-    sim = animation.FuncAnimation(  fig=fig, func=animate, init_func=init, frames=len(t), interval=hznStep*400, blit=True,
-                                    repeat=True)
-    plt.grid()
-    plt.show()
-
-    if save == True:
-        sim.save('./animation' + str(time()) +'.gif', writer='ffmpeg', fps=30)
-
-    return
-
-def simulate3D(cat_ST, t):
-
-    def animate(i):
-        # use the following two lines for matplotlib 3.4.3
-        # x = cat_ST[0, 0, i]
-        # y = cat_ST[1, 0, i]
-        # z = cat_ST[2, 0, i]
-
-        # # update path
-        # if i == 0:
-        #     point.set_data(np.array([]), np.array([]))
-        # x_new = np.hstack((point.get_xdata(), x))
-        # y_new = np.hstack((point.get_ydata(), y))
-        # z_new = np.hstack((point.get_ydata(), y))
-
-        point.set_data(cat_ST[0:2, 0, :i])
-        point.set_3d_properties(cat_ST[2, 0, :i])
-        # Sphere around current position
-        # sphere = Sphere(cat_ST[0:3, 0 ,i], rob_rad)
-        # sphere.plot_3d(ax, color='g', alpha=0.2)
+        # update bot sphere
+        sphere_i._offsets3d = (cat_ST[0, 0, i], cat_ST[1, 0, i], cat_ST[2, 0, i])
         
-        return point
+        return path, horizon, sphere_i
 
     fig = plt.figure()
     ax = Axes3D(fig, auto_add_to_figure=False)
     fig.add_axes(ax)
 
     # path
-    point = ax.plot([], [], [], 'k', linewidth=2)[0]
+    path = ax.plot([], [], 'b', alpha=0.5, linewidth=1.5)[0]
     # horizon
-    horizon = ax.plot([], [], [],'x-g', alpha=0.5)
-    
+    horizon, = ax.plot([], [],'x-g', alpha=0.5)
 
     min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 2
     max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 2
@@ -168,17 +61,18 @@ def simulate3D(cat_ST, t):
     ax.set_ylim3d(bottom = min_scale, top = max_scale)
     ax.set_zlim3d(bottom = min_scale, top = max_scale)
 
+    # Sphere around initial bot position
+    sphere_i = ax.scatter( init_st[0], init_st[1], init_st[ 2], s=pi * rob_rad**2 * 500, c='b', alpha=0.2)
+
     # Sphere around obstacle position
-    sphere = Sphere(obst_st[ : 3], rob_rad)
-    sphere.plot_3d(ax, color='r', alpha=0.2)
+    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * rob_rad**2 * 500, c='r', alpha=0.2)
     
     # Sphere around target point
-    sphere = Sphere(targ_st[ : 3], rob_rad)
-    sphere.plot_3d(ax, color='g', alpha=0.2)
+    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 500, c='g', alpha=0.2)
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    anim = animation.FuncAnimation(fig=fig, func=animate, frames=len(t), interval=hznStep*400, blit=False)
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=hznStep*400, blit=True)
 
     plt.show()

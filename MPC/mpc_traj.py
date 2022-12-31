@@ -1,7 +1,7 @@
 from time import time
 import numpy as np
 from casadi import *
-from simulation_code import simulate3D#, simulate, plot_dataset
+from simulation_code import simulate3D, plot_dataset
 from SysDynamics import SysDyn as Sys, Predictor as Pred
 from common import *
 
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         t2 = time()
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
-        #print(f"DEBUG2: Solution at {t0}: { sol['x'][:n_states] }\n")
+        print(f"DEBUG2: Solution at {t0}")#: { sol['x'][:n_states] }\n")
 
     main_loop_time = time()
     ss_error = norm_2(state_init - state_target)
