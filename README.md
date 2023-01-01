@@ -17,9 +17,3 @@ Obstacle handling : ( milestone based)
     Ambitious milestones :
         Real, stationary (hanging object), dynamically detected.  (Multiranger, flow deck, local coordinates converted to global coordinates)
         Real, moving drone, dynamically detected during flight.
-
-Suggested TODOs (by Mohammad):
-- [ ]  implement quadcopter dynamics
-- [ ]  visualize dynamics  (input → output)
-- [ ]  formulate MPC without constraints
-- [ ]  add constraints to the MPC
