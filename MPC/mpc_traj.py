@@ -5,7 +5,7 @@ from simulation_code import simulate3D, plot_dataset
 from SysDynamics import SysDyn as Sys, Predictor as Pred
 from common import *
 
-#Parameters defined in common.py
+# Parameters defined in common.py
 SysObj = Sys(hznLen)
 ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
 
@@ -19,7 +19,7 @@ R = diagcat(0.06, 0.06, 0.06, 0.06)
 cost_fn = 0                  # cost function
 g = ST[:, 0] - P[:n_states]  # constraints in the equation
 
-# obtain optimized and estimated state from MS, RK (Symbolic)
+# Obtain optimized and estimated state from MS, RK (Symbolic)
 for k in range(hznLen):
     st = ST[:, k]
     U_k = U[:, k]
@@ -27,16 +27,16 @@ for k in range(hznLen):
     st_opt = ST[:, k+1]
     st_est = Pred.rk4_integrator(TF_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
     g = vertcat(g, st_opt - st_est)                                 # predicted state (MS) constraint
-    # print(f'DEBUG1 : iter {k}, optim state{st_opt}')
 
-# # Path constraint equations (obstacle avoidance)
-# for k in range(hznLen +1): 
-#     g = vertcat(g , (-sqrt( ((ST[0,k] - obst_st[0]) ** 2)  +
-#                             ((ST[1,k] - obst_st[1]) ** 2)  + 
-#                             ((ST[2,k] - obst_st[2]) ** 2)) + rob_rad + obst_rad))
-# constraint on quarternion normalization
+# Path constraint equations (obstacle avoidance)
 for k in range(hznLen +1): 
-    g = vertcat(g , sqrt( ST[3,k] ** 2 + ST[4,k] ** 2 + ST[5,k] ** 2 + ST[6,k] ** 2))
+    g = vertcat(g , (-sqrt( ((ST[0,k] - obst_st[0]) ** 2)  +
+                            ((ST[1,k] - obst_st[1]) ** 2)  + 
+                            ((ST[2,k] - obst_st[2]) ** 2)) + rob_rad + rob_rad)) # obstacle with same radius as bot
+
+# # Quarternion normalization constr (q = sqrt(qw^2 + qx^2 + qy^2 + qz^2))
+# for k in range(hznLen +1): 
+#     g = vertcat(g , sqrt( ST[3,k] ** 2 + ST[4,k] ** 2 + ST[5,k] ** 2 + ST[6,k] ** 2))
 
 OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
 nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
@@ -52,7 +52,7 @@ U_size = n_controls * hznLen
 '''---------------------------Bounds-----------------------------'''
 
 
-# bounds on decision variables
+# Bounds on decision variables
 lbx = DM.zeros((st_size + U_size, 1))
 ubx = DM.zeros((st_size + U_size, 1))
 # State bounds
@@ -76,15 +76,12 @@ lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = ma
 lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_thrust        # w4 bounds
 
 # Bounds on constraints
-# lbg = DM.zeros((st_size , 1))
-# ubg = DM.zeros((st_size , 1))
 lbg = DM.zeros((st_size + (hznLen+1) , 1))
-ubg = DM.zeros((st_size + (hznLen+1), 1))
+ubg = DM.zeros((st_size + (hznLen+1) , 1))
 
-lbg[0: st_size] = 0;                        ubg[0: st_size] = 0                             # pred_st - optim_st = 0                  
-lbg[st_size: st_size+ (hznLen+1)] = 0;   ubg[st_size: st_size+ (hznLen+1)] = 1 
-# # Path constraints (obstacle avoidance)
-# lbg[st_size: st_size+ (hznLen+1)] = -inf;   ubg[st_size: st_size+ (hznLen+1)] = 0           # -inf < Euclidian - sum(radii) < 0
+lbg[0: st_size] = 0;                                    ubg[0: st_size] = 0                                     # Optim constr: pred_st - optim_st = 0                  
+lbg[st_size: st_size+ (hznLen+1)] = -inf;               ubg[st_size: st_size+ (hznLen+1)] = 0                   # Path constr: -inf < Euclidian - sum(radii) < 0
+#lbg[st_size +(hznLen+1): st_size+ (hznLen+1)] = 0;    ubg[st_size +(hznLen+1): st_size+ (hznLen+1)] = 1     # Quart constr: 0 <= q <=1
 
 #print("\nDEBUG1 NLP  \n\n", nlp_prob)
 #print("\nDEBUG1 Optim var : St, U \n\n", OPT_variables)
@@ -130,7 +127,7 @@ if __name__ == '__main__':
         args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
                                 reshape(u0, n_controls*hznLen, 1))
 
-        sol = solver(   x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
+        sol = solver( x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
 
         X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
         u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
@@ -140,14 +137,13 @@ if __name__ == '__main__':
         t_step = np.append(t_step, t0)
         t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
         
-        #print(f'\n\nDEBUG Time : {t0}, State {X0}, \n \n Ctrl {u}\n')
         X0 = horzcat(   X0[:, 1:],
                         reshape(X0[:, -1], -1, 1))
 
         t2 = time()
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
-        print(f"DEBUG2: Solution at {t0}")#: { sol['x'][:n_states] }\n")
+        print(f'DEBUG Time : {round(t0,3)}') #, State {X0[:, 0]}')
 
     main_loop_time = time()
     ss_error = norm_2(state_init - state_target)
@@ -159,6 +155,5 @@ if __name__ == '__main__':
 
     # simulate
     #plot_dataset( cat_controls, t_step)
-    #TODO convert state angles (yaw) to euler to be able to reuse the simulation
-    #simulate(cat_states, cat_controls, times, save=False)
+    #TODO convert state angles (yaw) to euler to indicate heading
     simulate3D(cat_states, times)

@@ -26,26 +26,32 @@ def plot_dataset(cat_U, timestamp):
     plt.show()
     
 def simulate3D(cat_ST, t):
-    
+    init_azim = -45
+
+
     def init():
         return path, horizon, sphere_i
 
 
-    def animate(i):
+    def animate(interval):
+        # rotate viewpoint (Not working, TODO find solution)
+        #ax.azim = ax.azim-10
+        
         # update path
-        path.set_data(cat_ST[0:2, 0, :i])
-        path.set_3d_properties(cat_ST[2, 0, :i])
+        path.set_data(cat_ST[0:2, 0, :interval])
+        path.set_3d_properties(cat_ST[2, 0, :interval])
 
         # update horizon
-        horizon.set_data(cat_ST[0, :, i], cat_ST[1, :, i])
-        horizon.set_3d_properties(cat_ST[2, :, i])
+        horizon.set_data(cat_ST[0, :, interval], cat_ST[1, :, interval])
+        horizon.set_3d_properties(cat_ST[2, :, interval])
         
-        # update bot sphere
-        sphere_i._offsets3d = (cat_ST[0, 0, i], cat_ST[1, 0, i], cat_ST[2, 0, i])
-        
+        # update bot sphere (Not working, TODO find solution) 
+        sphere_i._offsets3d = (cat_ST[0, 0, :interval], cat_ST[1, 0, :interval], cat_ST[2, 0, :interval])
+
         return path, horizon, sphere_i
 
     fig = plt.figure()
+    #plt.ion()
     ax = Axes3D(fig, auto_add_to_figure=False)
     fig.add_axes(ax)
 
@@ -61,8 +67,8 @@ def simulate3D(cat_ST, t):
     ax.set_ylim3d(bottom = min_scale, top = max_scale)
     ax.set_zlim3d(bottom = min_scale, top = max_scale)
 
-    # Sphere around initial bot position
-    sphere_i = ax.scatter( init_st[0], init_st[1], init_st[ 2], s=pi * rob_rad**2 * 500, c='b', alpha=0.2)
+    #Sphere around bot
+    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 500, c='b', alpha=0.2)
 
     # Sphere around obstacle position
     sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * rob_rad**2 * 500, c='r', alpha=0.2)
@@ -73,6 +79,6 @@ def simulate3D(cat_ST, t):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=hznStep*400, blit=True)
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=hznStep*500, blit=True)
 
     plt.show()

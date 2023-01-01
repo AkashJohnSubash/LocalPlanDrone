@@ -5,7 +5,7 @@ from casadi import *
 
 hznStep = 0.1                   # time between steps in seconds
 hznLen = 10                      # number of look ahead steps
-sim_time = 20                   # simulation time
+sim_time = 15                   # simulation time
 
 v_max = 0.6   ;   v_min = -0.6
 w_max = pi/18  ;   w_min = -pi/18
@@ -18,12 +18,13 @@ init_st = np.array([0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 targ_st = np.array([4,  4,  4,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.3                               # radius of the robot sphere
 
-obst_st = np.array([2,   2,  2,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2,   1.7,  1.4,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 
 # Control
 n_controls = 4
 
 '------------------------CF parameters--------------------------------'
+
 g0  = 9.8066     # [m.s^2] accerelation of gravity
 mq  = 33e-3      # [kg] total mass (with one marker)
 Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
