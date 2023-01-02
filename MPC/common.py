@@ -8,7 +8,7 @@ hznLen = 10                      # number of look ahead steps
 sim_time = 15                   # simulation time
 
 v_max = 0.6   ;   v_min = -0.6
-w_max = pi/18  ;   w_min = -pi/18
+w_max = pi/10  ;   w_min = -pi/10
 
 # State
 n_states = 13
