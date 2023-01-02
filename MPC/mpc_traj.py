@@ -34,10 +34,6 @@ for k in range(hznLen +1):
                             ((ST[1,k] - obst_st[1]) ** 2)  + 
                             ((ST[2,k] - obst_st[2]) ** 2)) + rob_rad + rob_rad)) # obstacle with same radius as bot
 
-# # Quarternion normalization constr (q = sqrt(qw^2 + qx^2 + qy^2 + qz^2))
-# for k in range(hznLen +1): 
-#     g = vertcat(g , sqrt( ST[3,k] ** 2 + ST[4,k] ** 2 + ST[5,k] ** 2 + ST[6,k] ** 2))
-
 OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
 nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
 
@@ -81,7 +77,6 @@ ubg = DM.zeros((st_size + (hznLen+1) , 1))
 
 lbg[0: st_size] = 0;                                    ubg[0: st_size] = 0                                     # Optim constr: pred_st - optim_st = 0                  
 lbg[st_size: st_size+ (hznLen+1)] = -inf;               ubg[st_size: st_size+ (hznLen+1)] = 0                   # Path constr: -inf < Euclidian - sum(radii) < 0
-#lbg[st_size +(hznLen+1): st_size+ (hznLen+1)] = 0;    ubg[st_size +(hznLen+1): st_size+ (hznLen+1)] = 1     # Quart constr: 0 <= q <=1
 
 #print("\nDEBUG1 NLP  \n\n", nlp_prob)
 #print("\nDEBUG1 Optim var : St, U \n\n", OPT_variables)
@@ -106,7 +101,6 @@ t_step = np.array([])
 
 u0 = DM.zeros((n_controls, hznLen))      # initial control
 X0 = repmat(state_init, 1, hznLen+1)     # initial state full
-
 
 mpc_iter = 0
 cat_states = DM2Arr(X0)
@@ -154,6 +148,6 @@ if __name__ == '__main__':
     print('final error: ', ss_error)
 
     # simulate
-    #plot_dataset( cat_controls, t_step)
+    plot_dataset( cat_controls, t_step)
     #TODO convert state angles (yaw) to euler to indicate heading
     simulate3D(cat_states, times)
