@@ -16,7 +16,7 @@ def argparse_init():
 if __name__ == '__main__':
     parser = argparse_init()
     args = parser.parse_args()
-    print(args.virtual)
+    # print(args.virtual)
     if args.virtual:
         ocp_nlp.gen_path()
     else :
