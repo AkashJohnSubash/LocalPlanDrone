@@ -2,7 +2,7 @@ import numpy as np
 from numpy import sin, cos, pi
 from matplotlib import pyplot as plt, animation
 from mpl_toolkits.mplot3d import Axes3D
-from common import *
+from MPC.common import *
 
 #Parameters defined in common.py
 
