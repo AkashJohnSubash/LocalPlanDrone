@@ -1,5 +1,5 @@
 import argparse
-from MPC import mpc_traj
+from MPC import ocp_nlp
 
 def argparse_init():
     '''
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args.virtual)
     if args.virtual:
-        mpc_traj.gen_path()
+        ocp_nlp.gen_path()
     else :
         print("only commandline argument <-v> supported currently")
     print("Flight completed")
