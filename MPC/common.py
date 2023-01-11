@@ -8,7 +8,7 @@ hznLen = 10                      # number of look ahead steps
 sim_time = 15                   # simulation time
 
 v_max = 0.6   ;   v_min = -0.6
-w_max = pi/10  ;   w_min = -pi/10
+w_max = pi/18  ;   w_min = -pi/18
 
 # State
 n_states = 13
@@ -18,7 +18,7 @@ init_st = np.array([0,  0,  4,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 targ_st = np.array([4,  4,  4,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.3                               # radius of the robot sphere
 
-obst_st = np.array([2.3, 1.7, 3.7,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2.3, 1.7, 4,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 
 # Control
 n_controls = 4

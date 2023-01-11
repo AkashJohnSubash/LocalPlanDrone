@@ -42,20 +42,20 @@ class SysDyn():
     def TransferFunction(self):
         # Transfer function : input (Ctrl)-> output(State) mapping
         # Rate of change of position
-        dxq = u*(2*q1**2 + 2*q2**2 - 1) - v*(2*q1*q4 - 2*q2*q3) + w*(2*q1*q3 + 2*q2*q4)
-        dyq = v*(2*q1**2 + 2*q3**2 - 1) + u*(2*q1*q4 + 2*q2*q3) - w*(2*q1*q2 - 2*q3*q4)
-        dzq = w*(2*q1**2 + 2*q4**2 - 1) - u*(2*q1*q3 - 2*q2*q4) + v*(2*q1*q2 + 2*q3*q4)
+        dxq = u*(2*q1**2 + 2*q2**2 - 1) - v*(2*q1*q4 - 2*q2*q3)     + w*(2*q1*q3 + 2*q2*q4)
+        dyq = u*(2*q1*q4 + 2*q2*q3)     + v*(2*q1**2 + 2*q3**2 - 1) - w*(2*q1*q2 - 2*q3*q4)
+        dzq = -u*(2*q1*q3 - 2*q2*q4)    + v*(2*q1*q2 + 2*q3*q4)     + w*(2*q1**2 + 2*q4**2 - 1) 
         
         # Rate of change of angles (in qaurternion)
         dq1 = - (q2*p)/2 - (q3*q)/2 - (q4*r)/2
         dq2 =   (q1*p)/2 - (q4*q)/2 + (q3*r)/2
         dq3 =   (q4*p)/2 + (q1*q)/2 - (q2*r)/2
-        dq4 =   (q2*q)/2 - (q3*p)/2 + (q1*r)/2        
+        dq4 = - (q3*p)/2 + (q2*q)/2 + (q1*r)/2        
 
         # Rate of change of linear velocity
-        du = v*r - w*q + g0*(2*q1*q3 - 2*q2*q4)
-        dv = w*p - u*r - g0*(2*q1*q2 + 2*q3*q4)
-        dw = u*q - v*p - g0*(2*q1**2 + 2*q4**2 - 1) + (Ct*(w1**2 + w2**2 + w3**2 + w4**2))/mq
+        du =   -w*q  + v*r  + g0*(2*q1*q3 - 2*q2*q4)
+        dv =    w*p  - u*r  - g0*(2*q1*q2 + 2*q3*q4)
+        dw =   -v*p  + u*q  - g0*(2*q1**2 + 2*q4**2 - 1) + (Ct*(w1**2 + w2**2 + w3**2 + w4**2))/mq
         
         # Rate of change of angular velocity
         dp = -(Ct*l*(w1**2 + w2**2 - w3**2 - w4**2) - Iyy*q*r + Izz*q*r)/Ixx

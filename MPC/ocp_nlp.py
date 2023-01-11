@@ -59,10 +59,10 @@ def gen_path():
     lbx[0:  st_size: n_states] = -10;           ubx[0: st_size: n_states] = 10                  # x lower, upper bounds
     lbx[1:  st_size: n_states] = -10;           ubx[1: st_size: n_states] = 10                  # y bounds
     lbx[2:  st_size: n_states] = -10;           ubx[2: st_size: n_states] = 10                  # z bounds
-    lbx[3:  st_size: n_states] = -1;             ubx[3:  st_size: n_states] = 1                # qw bounds TODO find appropriate val
-    lbx[4:  st_size: n_states] = -1;             ubx[4:  st_size: n_states] = 1                # qx bounds
-    lbx[5:  st_size: n_states] = -1;             ubx[5:  st_size: n_states] = 1                # qy bounds
-    lbx[6:  st_size: n_states] = -1;             ubx[6:  st_size: n_states] = 1                # qz bounds
+    lbx[3:  st_size: n_states] = -1;            ubx[3:  st_size: n_states] = 1                # qw bounds TODO find appropriate val
+    lbx[4:  st_size: n_states] = -1;            ubx[4:  st_size: n_states] = 1                # qx bounds
+    lbx[5:  st_size: n_states] = -1;            ubx[5:  st_size: n_states] = 1                # qy bounds
+    lbx[6:  st_size: n_states] = -1;            ubx[6:  st_size: n_states] = 1                # qz bounds
     lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
     lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
     lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
