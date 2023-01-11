@@ -1,115 +1,84 @@
 import numpy as np 
 from numpy import sin, cos, pi
-import matplotlib.pyplot as plt
-from matplotlib import animation
-from time import time
+from matplotlib import pyplot as plt, animation
+from mpl_toolkits.mplot3d import Axes3D
+from MPC.common import *
 
-# redefnition #TODO put in config .yml
-n_state    = 3
-n_control = 2
+#Parameters defined in common.py
 
-def plot_dataset(ctrl_data = [], timestamp = []):
-    
+def plot_dataset(cat_U, timestamp):
+    ''' cat_U       -> intial value of each solution in the control history
+        timestamp   -> time at each computed solution '''
     # Plot control
-    figU, axsU  = plt.subplots(2, 1, figsize=(7, 15))    
-    v = np.ravel(ctrl_data[2 : -2: n_control])   # excluding init, final
-    w = np.ravel(ctrl_data[3 : -2: n_control])   # excluding init, final
+    figU, axsU  = plt.subplots(4, 1, figsize=(7, 15))    
+    w1 = np.ravel(cat_U[n_controls   : -4: n_controls])   # excluding init, final
+    w2 = np.ravel(cat_U[n_controls+1 : -4: n_controls])
+    w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
+    w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
     
-    axsU[0].stairs(v, timestamp, label='v (m/s)', color='b' )
-    axsU[1].stairs(w, timestamp, label='w (rad/s)', color='g')
+    axsU[0].stairs(w1, timestamp, label='w1 (rad/s)', color='b' )
+    axsU[1].stairs(w2, timestamp, label='w2 (rad/s)', color='g')
+    axsU[2].stairs(w3, timestamp, label='w3 (rad/s)', color='y' )
+    axsU[3].stairs(w4, timestamp, label='w4 (rad/s)', color='r')
     axsU[0].set_title('Control Inputs')
     for ax in axsU:
          ax.legend()
     plt.show()
-
-def simulate(cat_states, cat_controls, t, step_horizon, N, ref_st, bot_rad, obst_coord, obs_rad, save=False):
     
-    def create_triangle(state=[0,0,0], h=0.14, w=0.09, update=False):
-        x, y, th = state
-        triangle = np.array([   [h, 0   ],
-                                [0,  w/2],
-                                [0, -w/2],
-                                [h, 0   ]]).T
+def simulate3D(cat_ST, t):
+    init_azim = -45
 
-        rotation_matrix = np.array([[cos(th), -sin(th)],
-                                    [sin(th),  cos(th)]])
-
-        coords = np.array([[x, y]]) + (rotation_matrix @ triangle).T
-        if update == True:
-            return coords
-        else:
-            return coords[:3, :]
 
     def init():
-        return path, horizon, current_state, target_state, bot_boundary
+        return path, horizon, sphere_i
 
-    def animate(i):
-        # get variables
-        x = cat_states[0, 0, i]
-        y = cat_states[1, 0, i]
-        th = cat_states[2, 0, i]
 
+    def animate(interval):
+        # rotate viewpoint (Not working, TODO find solution)
+        #ax.azim = ax.azim-10
+        
         # update path
-        if i == 0:
-            path.set_data(np.array([]), np.array([]))
-        x_new = np.hstack((path.get_xdata(), x))
-        y_new = np.hstack((path.get_ydata(), y))
-        path.set_data(x_new, y_new)
+        path.set_data(cat_ST[0:2, 0, :interval])
+        path.set_3d_properties(cat_ST[2, 0, :interval])
 
         # update horizon
-        x_new = cat_states[0, :, i]
-        y_new = cat_states[1, :, i]
-        horizon.set_data(x_new, y_new)
-
-        # update current_state, bounding circle
-        current_state.set_xy(create_triangle([x, y, th], update=True))
-        bot_boundary.set_center([x, y])
+        horizon.set_data(cat_ST[0, :, interval], cat_ST[1, :, interval])
+        horizon.set_3d_properties(cat_ST[2, :, interval])
         
-        # update target_state
-        # xy = target_state.get_xy()
-        # target_state.set_xy(xy)            
+        # update bot sphere (Not working, TODO find solution) 
+        sphere_i._offsets3d = (cat_ST[0, 0, :interval], cat_ST[1, 0, :interval], cat_ST[2, 0, :interval])
 
-        return path, horizon, current_state, target_state, bot_boundary
+        return path, horizon, sphere_i
 
-    # create figure and axes
-    fig, ax = plt.subplots(figsize=(6, 6))
-    min_scale = min(ref_st[0], ref_st[1], ref_st[3], ref_st[4]) - 2
-    max_scale = max(ref_st[0], ref_st[1], ref_st[3], ref_st[4]) + 2
-    ax.set_xlim(left = min_scale, right = max_scale)
-    ax.set_ylim(bottom = min_scale, top = max_scale)
+    fig = plt.figure()
+    #plt.ion()
+    ax = Axes3D(fig, auto_add_to_figure=False)
+    fig.add_axes(ax)
 
-    # create lines:
     # path
-    path, = ax.plot([], [], 'k', linewidth=2)
+    path = ax.plot([], [], 'b', alpha=0.5, linewidth=1.5)[0]
     # horizon
-    horizon, = ax.plot([], [], 'x-g', alpha=0.5)
+    horizon, = ax.plot([], [],'x-g', alpha=0.5)
+
+    min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 2
+    max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 2
     
-    # current state
-    current_triangle = create_triangle(ref_st[:3])
-    current_state = ax.fill(current_triangle[:, 0], current_triangle[:, 1], color='y')
-    current_state = current_state[0]
-    # current state's boundary circle # TODO around mid-point
-    bot_boundary = plt.Circle(current_triangle[0], bot_rad, color='y', fill = False, linestyle = '--')
-    ax.add_artist(bot_boundary)
-    # target state
-    target_triangle = create_triangle(ref_st[3:])
-    target_state = ax.fill(target_triangle[:, 0], target_triangle[:, 1], color='b')
-    target_state = target_state[0]
+    ax.set_xlim3d(left = min_scale, right = max_scale)
+    ax.set_ylim3d(bottom = min_scale, top = max_scale)
+    ax.set_zlim3d(bottom = min_scale, top = max_scale)
 
-    # obstace state
-    obst_triangle = create_triangle(obst_coord)
-    obst_state = ax.fill(obst_triangle[:, 0], obst_triangle[:, 1], color='b')
-    obst_state = obst_state[0]
-    # obstace boundary circle
-    obst_boundary = plt.Circle(obst_triangle[0], obs_rad, color='r', fill = False, linestyle = '--')
-    ax.add_artist(obst_boundary)
+    #Sphere around bot
+    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 500, c='b', alpha=0.2)
 
-    sim = animation.FuncAnimation(  fig=fig, func=animate, init_func=init, frames=len(t), interval=step_horizon*400, blit=True,
-                                    repeat=True)
-    plt.grid()
+    # Sphere around obstacle position
+    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * rob_rad**2 * 500, c='r', alpha=0.2)
+    
+    # Sphere around target point
+    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 500, c='g', alpha=0.2)
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=hznStep*500, blit=True)
+
     plt.show()
-
-    if save == True:
-        sim.save('./animation' + str(time()) +'.gif', writer='ffmpeg', fps=30)
-
-    return
