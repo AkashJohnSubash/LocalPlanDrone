@@ -1,17 +1,6 @@
 from casadi import *
 from MPC.common import *
 
-#TODO evaluate the advantage of quarternion
-# def eul2quart():
-#     # Convert euler angles to quarternion
-#     qw = cos(phi) * cos(th) * cos(psi) + sin(phi) * sin(th) * sin(psi)
-#     qx = -cos(phi) * cos(th) * cos(phi) + sin(psi) * sin(th) * cos(phi)
-#     qy = -cos(psi) * sin(th) * cos(phi) - sin(psi) * cos(th) * sin(phi)
-#     qz = -sin(psi) * cos(th) * cos(phi) - cos(psi) * sin(th) * sin(phi)
-#     quart = vertcat(qw, qx, qy, qz)
-#     fp = Function('e2q', [ang], [quart])
-#     return fp
-
 '-------------------Symbolic variables---------------------------'
 # State symbols
 xq = SX.sym('xq');  yq = SX.sym('yq');  zq = SX.sym('zq')                       # (in inertial frame)
@@ -75,23 +64,6 @@ class SysDyn():
         u0 = horzcat( u[:, 1:], reshape(u[:, -1], -1, 1))
 
         return t0, next_state, u0
-
-    # # DEBUG ERROR
-    # def eulRotTrans(self):
-    #     Rx = vertcat([1,           0,          0],
-    #                  [0,    cos(phi),   sin(phi)],
-    #                  [0,   -sin(phi),   cos(phi)])
-
-    #     Ry = vertcat([cos(th),      0,  -sin(th)],
-    #                  [      0,      1,         0],
-    #                  [sin(th),      0,   cos(th)])
-        
-    #     Rz = vertcat([cos(psi),     sin(psi),   0],
-    #                  [-sin(psi),    cos(psi),   0],
-    #                  [0,                   0,   1])
-    #     f_op = Rx ** Ry ** Rz ** ang
-    #     print(f_op)
-    #     fp = Function('euRot', [ang], f_op)
 
 class Predictor:
 

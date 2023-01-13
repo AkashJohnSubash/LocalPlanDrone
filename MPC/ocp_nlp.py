@@ -6,7 +6,7 @@ from MPC.simulation_code import simulate3D, plot_dataset
 from MPC.SysDynamics import SysDyn as Sys, Predictor as Pred
 from MPC.common import *
 
-def gen_path():
+def gen_path(visualize= False):
     # generates optimal trajectory using an NMPC cost function
     # Parameters defined in common.py
     # print('MPC started')
@@ -109,7 +109,7 @@ def gen_path():
     times = np.array([[0]])
 
 
-    '''--------------------Simulation-----------------------------'''
+    '''--------------------Execute MPC -----------------------------'''
 
     main_loop = time()  # return time in sec
     
@@ -138,6 +138,24 @@ def gen_path():
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
         print(f'Soln Timestep : {round(t0,3)} s\r', end="") #State {X0[:, 0]}')
+        #print(f"DEBU{X0[:, 0]}")
+
+        '''---------------------Generate CF HighLevel Commands--------------------------'''
+        #TODO find documentation of this mapping, 
+        # euler in deg from q1,      q2,       q3,       q4
+        eul_deg = quat2eul(X0[3, 0], X0[4, 0], X0[5, 0], X0[6, 0])
+
+        lin_x  = eul_deg[1]                                         # theta
+        lin_y  = eul_deg[0]                                         # phi
+        lin_z  = krpm2pwm((u[0, 0] + u[1, 0]+ u[2, 0]+ u[3, 0])/4)  # convert average RPM to PWM
+        ang_z  = X0[12, 0] * 180 /pi                                # r in deg
+        roll   = lin_y #+ m_roll_trim # TODO resolve ? 
+        pitch  = lin_x #+ m_pitch_trim
+        pitch  = - (lin_x) #+ m_pitch_trim)
+        yawrate = ang_z
+        thrust = min(max(lin_z, 0.0), 60000)
+
+	    #m_cf.sendSetpoint(roll, pitch, yawrate, thrust)
 
     main_loop_time = time()
     ss_error = norm_2(state_init - state_target)
@@ -147,8 +165,11 @@ def gen_path():
     print('avg iteration time: ', np.array(times).mean() * 1000, 'ms')
     print('final error: ', ss_error)
 
-    # Plot controls over the simulation period
-    plot_dataset( cat_controls, t_step)
-    # Plot position( State[0-3]) over simulation period TODO convert state angles (yaw) to euler to indicate heading
-    simulate3D(cat_states, times)
+    '''-------------------- Visualize for virtual flight-----------------------------'''
+    # if(visualize):
+    #     # Plot controls over the simulation period
+    #     plot_dataset( cat_controls, t_step)
+    #     # Plot position( State[0-3]) over simulation period TODO convert state angles (yaw) to euler to indicate heading
+    #     simulate3D(cat_states, times)
+
     return 0
