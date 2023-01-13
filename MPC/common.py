@@ -34,7 +34,10 @@ Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
 Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
 dq  = 65e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
-max_thrust = 22  # [krpm]
+max_rpm = 22     # [krpm]
+
+ROLL_TRIM  = 0
+PITCH_TRIM = 0
 '''-----------------------------------------------------------'''
 
 def DM2Arr(dm):

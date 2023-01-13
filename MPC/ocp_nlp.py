@@ -70,10 +70,10 @@ def gen_path(visualize= False):
     lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max              # q bounds
     lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max              # r bounds
     # Control bounds
-    lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_thrust        # w1 bounds
-    lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_thrust        # w2 bounds
-    lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_thrust        # w3 bounds
-    lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_thrust        # w4 bounds
+    lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_rpm        # w1 bounds
+    lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_rpm        # w2 bounds
+    lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_rpm        # w3 bounds
+    lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_rpm        # w4 bounds
 
     # Bounds on constraints
     lbg = DM.zeros((st_size + (hznLen+1) , 1))
@@ -143,18 +143,17 @@ def gen_path(visualize= False):
         '''---------------------Generate CF HighLevel Commands--------------------------'''
         #TODO find documentation of this mapping, 
         # euler in deg from q1,      q2,       q3,       q4
-        eul_deg = quat2eul(X0[3, 0], X0[4, 0], X0[5, 0], X0[6, 0])
+        eul_deg = quat2eul([X0[3, 0], X0[4, 0], X0[5, 0], X0[6, 0]])
 
-        lin_x  = eul_deg[1]                                         # theta
-        lin_y  = eul_deg[0]                                         # phi
-        lin_z  = krpm2pwm((u[0, 0] + u[1, 0]+ u[2, 0]+ u[3, 0])/4)  # convert average RPM to PWM
+        lin_x  = eul_deg[1]                                          # theta
+        lin_y  = -eul_deg[0]                                         # -phi
+        lin_z  = krpm2pwm((u[0, 0] + u[1, 0]+ u[2, 0]+ u[3, 0])/4)  # convert average prop RPM to PWM
         ang_z  = X0[12, 0] * 180 /pi                                # r in deg
-        roll   = lin_y #+ m_roll_trim # TODO resolve ? 
-        pitch  = lin_x #+ m_pitch_trim
-        pitch  = - (lin_x) #+ m_pitch_trim)
+        roll   = lin_y + ROLL_TRIM # TODO calibrate !
+        pitch  = lin_x + PITCH_TRIM
         yawrate = ang_z
         thrust = min(max(lin_z, 0.0), 60000)
-
+        
 	    #m_cf.sendSetpoint(roll, pitch, yawrate, thrust)
 
     main_loop_time = time()
