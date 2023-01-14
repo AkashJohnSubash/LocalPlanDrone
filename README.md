@@ -3,7 +3,7 @@ Drone : https://www.bitcraze.io/products/crazyflie-2-1/
 Indoor Positioning : https://www.bitcraze.io/documentation/lighthouse/
 
 # ControlLab
-Submodules cfClient, cfLib may be updated for the speific problem
+Submodules cfClient, cfLib may be updated for the specific problem
 
 Problem Statement: Perform an overtake manoeuvre for an drone.
 
