@@ -5,7 +5,7 @@ Indoor Positioning : https://www.bitcraze.io/documentation/lighthouse/
 # ControlLab
 Submodules cfClient, cfLib may be updated for the speific problem
 
-Problem Statement: Perform an overtake maneuver for an obstacle.
+Problem Statement: Perform an overtake manoeuvre for an drone.
 
 Control :
 
