@@ -4,11 +4,11 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 hznStep = 0.1                   # time between steps in seconds
-hznLen = 2                      # number of look ahead steps
-sim_time = 10                   # simulation time
+hznLen = 7                      # number of look ahead steps
+sim_time = 15                   # simulation time
 
 v_max = 0.6   ;   v_min = -0.6
-w_max = pi/18  ;   w_min = -pi/18
+w_max = pi/10  ;   w_min = -pi/10
 
 # State
 n_states = 13
@@ -35,6 +35,7 @@ Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
 dq  = 65e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
 max_rpm = 22     # [krpm]
+hover_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct))
 
 ROLL_TRIM  = 0
 PITCH_TRIM = 0

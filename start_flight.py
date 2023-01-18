@@ -7,7 +7,7 @@ import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.utils import uri_helper
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+from cflib.positioning.position_hl_commander import PositionHlCommander
 
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
@@ -15,7 +15,7 @@ from cflib.crazyflie.syncLogger import SyncLogger
 import argparse
 
 # URI to the Crazyflie to connect to
-uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E2')
+uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 # Only output errors from the logging framework
 logging.basicConfig(level=logging.ERROR)
 
@@ -46,16 +46,30 @@ if __name__ == '__main__':
     parser = argparse_init()
     args = parser.parse_args()
     if args.virtual:
-        ocp_nlp.gen_path(visualize = True)
+        ocp_nlp.traj_commander(visualize = True)
     elif args.lab:
         cflib.crtp.init_drivers()
-        with SyncCrazyflie(uri, cf=Crazyflie(rw_cache='./cache')) as scf:
+        cf = Crazyflie(rw_cache='./cache')
+        with SyncCrazyflie(uri, cf) as scf:
             lg_stab = LogConfig(name='Stabilizer', period_in_ms=10)
             lg_stab.add_variable('stabilizer.roll', 'float')
             lg_stab.add_variable('stabilizer.pitch', 'float')
             lg_stab.add_variable('stabilizer.yaw', 'float')
             simple_log(scf, lg_stab)
-            ocp_nlp.gen_path(visualize = False)
+
+            #HlCom = PositionHlCommander(scf)
+            try:
+                # Go to a coordinate
+                #HlCom.take_off()
+                ocp_nlp.traj_commander(cf, visualize = True)
+                
+            except Exception as ex:
+                print("Exception: ex")
+
+            # finally:
+            #     #HlCom.land()
+            #     #print("Land drone")
+    
     else :
         print("only commandline argument <-v> supported currently")
     print("Flight completed")
