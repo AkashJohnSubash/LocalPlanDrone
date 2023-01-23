@@ -5,7 +5,7 @@ from MPC.simulation_code import simulate3D, plot_dataset
 from MPC.SysDynamics import SysDyn as Sys, Predictor as Pred
 from MPC.common import *
 
-def traj_commander(cf = None, visualize= False):
+def traj_commander(scf = None):
     # generates optimal trajectory using an NMPC cost function
     # Parameters defined in common.py
     # print('MPC started')
@@ -23,7 +23,7 @@ def traj_commander(cf = None, visualize= False):
     g = ST[:, 0] - P[:n_states]  # constraints in the equation
     
     try:
-        '''-----------------------Formulate NLP-----------------------------'''
+        '''-----------Formulate OCP as inequality constrained NLP------------'''
 
         # Obtain optimized and estimated state from MS, RK (Symbolic)
         for k in range(hznLen):
@@ -63,10 +63,10 @@ def traj_commander(cf = None, visualize= False):
         lbx[0:  st_size: n_states] = -10;           ubx[0: st_size: n_states] = 10                  # x lower, upper bounds
         lbx[1:  st_size: n_states] = -10;           ubx[1: st_size: n_states] = 10                  # y bounds
         lbx[2:  st_size: n_states] = -10;           ubx[2: st_size: n_states] = 10                  # z bounds
-        lbx[3:  st_size: n_states] = -1;            ubx[3:  st_size: n_states] = 1                # qw bounds TODO find appropriate val
-        lbx[4:  st_size: n_states] = -1;            ubx[4:  st_size: n_states] = 1                # qx bounds
-        lbx[5:  st_size: n_states] = -1;            ubx[5:  st_size: n_states] = 1                # qy bounds
-        lbx[6:  st_size: n_states] = -1;            ubx[6:  st_size: n_states] = 1                # qz bounds
+        lbx[3:  st_size: n_states] = -1;            ubx[3:  st_size: n_states] = 1                  # qw bounds TODO find appropriate val
+        lbx[4:  st_size: n_states] = -1;            ubx[4:  st_size: n_states] = 1                  # qx bounds
+        lbx[5:  st_size: n_states] = -1;            ubx[5:  st_size: n_states] = 1                  # qy bounds
+        lbx[6:  st_size: n_states] = -1;            ubx[6:  st_size: n_states] = 1                  # qz bounds
         lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
         lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
         lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
@@ -92,9 +92,9 @@ def traj_commander(cf = None, visualize= False):
         # print("\nDEBUG1: G(x) uppper bound \n", ubg)
 
         args = { 'lbg': lbg,                    # constraints lower bound
-                'ubg': ubg,                    # constraints upper bound
-                'lbx': lbx,
-                'ubx': ubx}
+                 'ubg': ubg,                    # constraints upper bound
+                 'lbx': lbx,
+                 'ubx': ubx}
 
         '''---------------------------------------------------------------'''
 
@@ -115,16 +115,17 @@ def traj_commander(cf = None, visualize= False):
 
         '''--------------------Execute MPC -----------------------------'''
         # TODO STATE 1 ramp up thrust to hover
-        if(cf):
+        if(scf):
             print("DEBUG : Ramp up to init position")
-            rampMotorsUp(cf)
+            scf.cf.commander.send_position_setpoint(0,0, 4, 0)
+            rampMotorsUp(scf.cf)
 
         # State 2 perform overtake
         #print("DEBUG : performing overtake")
         main_loop = time()  # return time in sec
         #time_stamp = []
         while (norm_2(state_init - state_target) > 1e-1) and (mpc_iter * hznStep < sim_time):
-            t1 = time()
+            t1 = time()                                                     # start iter timer
             args['p'] = vertcat( state_init,  state_target)
             # optimization variable current state
             args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
@@ -140,25 +141,24 @@ def traj_commander(cf = None, visualize= False):
             t_step = np.append(t_step, t0)
             t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
             
-            X0 = horzcat(   X0[:, 1:],
-                            reshape(X0[:, -1], -1, 1))
+            X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
 
-            t2 = time()
+            t2 = time()                                                     # stop iter timer
             times = np.vstack(( times, t2-t1))
             mpc_iter = mpc_iter + 1
             print(f'Soln Timestep : {round(t0,3)} s\r', end="") #State {X0[:, 0]}')
             #print(f"DEBU{X0[:, 0]}")
 
             '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
-            if(cf):
+            if(scf):
                 roll, pitch, yawRate, thrust = calc_thrust_setpoint(X0, u)
-                cf.commander.send_setpoint(roll, pitch, yawRate, thrust)            #TODO why use this API instead of others ?
+                scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust)            #TODO why use this API instead of others ?
 
         main_loop_time = time()
         # TODO STATE 3 ramp down thrust to land
-        if(cf):
-            print("DEBUG : performing graceful landing")
-            rampMotorsDown(cf, thrust)
+        if(scf):
+            print("DEBUG : Landing gracefully ")
+            rampMotorsDown(scf.cf, thrust)
         ss_error = norm_2(state_init - state_target)
 
         print('\n\n')
@@ -166,16 +166,15 @@ def traj_commander(cf = None, visualize= False):
         print('avg iteration time: ', np.array(times).mean() * 1000, 'ms')
         print('final error: ', ss_error)
 
-        '''-------------------- Visualize for virtual flight-----------------------------'''
-        if(visualize):
-            # Plot controls over the simulation period
-            plot_dataset( cat_controls, t_step)
-            # Plot position( State[0-3]) over simulation period TODO convert state angles (yaw) to euler to indicate heading
-            simulate3D(cat_states, times)
+        '''-------------------- Visualize -----------------------------'''
+        # # Plot controls over the simulation period
+        # plot_dataset( cat_controls, t_step)
+        # # Plot position( State[0-3]) over simulation period TODO convert state angles (yaw) to euler to indicate heading
+        # simulate3D(cat_states, times)
 
 
     except Exception as ex:
-        print("MPC aborted due to ", ex)
+        print("MPC aborted due to Exception:", ex)
     
 def calc_thrust_setpoint(St, U):
     #TODO find documentation of this mapping, 
@@ -196,7 +195,7 @@ def calc_thrust_setpoint(St, U):
 
 def rampMotorsUp(cf):
     thrust_mult = 1
-    thrust_step = 500
+    thrust_step = 1000
     thrust = 0
     # Unlock startup thrust protection
     cf.commander.send_setpoint(0, 0, 0, 0)
@@ -211,12 +210,13 @@ def rampMotorsUp(cf):
 
 def rampMotorsDown(cf, CurrentRpm):
     thrust_mult = -1
-    thrust_step = 500
+    thrust_step = 1000
     thrust = CurrentRpm
     # Unlock startup thrust protection
     cf.commander.send_setpoint(0, 0, 0, 0)
 
     while thrust > 0:
+        #print(thrust)
         cf.commander.send_setpoint(0, 0, 0, thrust)
         sleep(0.1)
         thrust += thrust_step * thrust_mult

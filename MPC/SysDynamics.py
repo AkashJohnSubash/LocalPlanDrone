@@ -55,8 +55,8 @@ class SysDyn():
         fp = Function('f', [state, controls], [f_op])
         return fp 
 
-    def TimeStep(step_horizon, t0, state_init, u, f):
-        f_value = f(state_init, u[:, 0])
+    def TimeStep(step_horizon, t0, state_init, u, f_TF):
+        f_value = f_TF(state_init, u[:, 0])
         next_state = DM.full(state_init + (step_horizon * f_value)) # TODO Check if linearization is still valid ?
         #print(f'\nDEBUG3 {t0}, next state :\n{next_state}, \nControl :\n{u[:, 0]}' )
 
