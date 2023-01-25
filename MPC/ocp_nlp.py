@@ -1,14 +1,13 @@
 from time import time, sleep
 import numpy as np
 from casadi import *
+from MPC.common import *
 from MPC.simulation_code import simulate3D, plot_dataset
 from MPC.SysDynamics import SysDyn as Sys, Predictor as Pred
-from MPC.common import *
+from MPC.measurement import Meas_St
 
 def traj_commander(scf = None):
     # generates optimal trajectory using an NMPC cost function
-    # Parameters defined in common.py
-    # print('MPC started')
     SysObj = Sys(hznLen)
     ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
 
@@ -60,9 +59,9 @@ def traj_commander(scf = None):
         lbx = DM.zeros((st_size + U_size, 1))
         ubx = DM.zeros((st_size + U_size, 1))
         # State bounds
-        lbx[0:  st_size: n_states] = -10;           ubx[0: st_size: n_states] = 10                  # x lower, upper bounds
-        lbx[1:  st_size: n_states] = -10;           ubx[1: st_size: n_states] = 10                  # y bounds
-        lbx[2:  st_size: n_states] = -10;           ubx[2: st_size: n_states] = 10                  # z bounds
+        lbx[0:  st_size: n_states] = 0;           ubx[0: st_size: n_states] = 2.5                   # x lower, upper bounds
+        lbx[1:  st_size: n_states] = 0;           ubx[1: st_size: n_states] = 2.5                   # y bounds
+        lbx[2:  st_size: n_states] = 0;           ubx[2: st_size: n_states] = 2.5                   # z bounds
         lbx[3:  st_size: n_states] = -1;            ubx[3:  st_size: n_states] = 1                  # qw bounds TODO find appropriate val
         lbx[4:  st_size: n_states] = -1;            ubx[4:  st_size: n_states] = 1                  # qx bounds
         lbx[5:  st_size: n_states] = -1;            ubx[5:  st_size: n_states] = 1                  # qy bounds
@@ -114,18 +113,18 @@ def traj_commander(scf = None):
 
 
         '''--------------------Execute MPC -----------------------------'''
-        # TODO STATE 1 ramp up thrust to hover
+        # STAGE 1 ramp up thrust to hover
         if(scf):
             print("DEBUG : Ramp up to init position")
-            scf.cf.commander.send_position_setpoint(0,0, 4, 0)
+            # scf.cf.commander.send_position_setpoint(0,0, 4, 0)
             rampMotorsUp(scf.cf)
 
-        # State 2 perform overtake
-        #print("DEBUG : performing overtake")
-        main_loop = time()  # return time in sec
-        #time_stamp = []
+        # STAGE 2 perform overtake
+        main_loop = time()                                                  # return time in sec
         while (norm_2(state_init - state_target) > 1e-1) and (mpc_iter * hznStep < sim_time):
             t1 = time()                                                     # start iter timer
+                                                               
+            print("DEBUG Measured state", Meas_St)
             args['p'] = vertcat( state_init,  state_target)
             # optimization variable current state
             args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
@@ -146,8 +145,8 @@ def traj_commander(scf = None):
             t2 = time()                                                     # stop iter timer
             times = np.vstack(( times, t2-t1))
             mpc_iter = mpc_iter + 1
-            print(f'Soln Timestep : {round(t0,3)} s\r', end="") #State {X0[:, 0]}')
-            #print(f"DEBU{X0[:, 0]}")
+            print(f'Soln Timestep : {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
+            #print(f"DEBUG{X0[:, 0]}")
 
             '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
             if(scf):
@@ -155,7 +154,8 @@ def traj_commander(scf = None):
                 scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust)            #TODO why use this API instead of others ?
 
         main_loop_time = time()
-        # TODO STATE 3 ramp down thrust to land
+
+        # STAGE 3 ramp down thrust to land
         if(scf):
             print("DEBUG : Landing gracefully ")
             rampMotorsDown(scf.cf, thrust)
@@ -167,10 +167,10 @@ def traj_commander(scf = None):
         print('final error: ', ss_error)
 
         '''-------------------- Visualize -----------------------------'''
-        # # Plot controls over the simulation period
-        # plot_dataset( cat_controls, t_step)
-        # # Plot position( State[0-3]) over simulation period TODO convert state angles (yaw) to euler to indicate heading
-        # simulate3D(cat_states, times)
+        # Plot controls over the simulation period
+        plot_dataset( cat_controls, t_step)
+        # Plot position( State[0-3]) over simulation period TODO convert state angles (yaw) to euler to indicate heading
+        simulate3D(cat_states, times)
 
 
     except Exception as ex:
@@ -189,7 +189,7 @@ def calc_thrust_setpoint(St, U):
     pitch  = lin_x + PITCH_TRIM
     yawrate = ang_z
     thrust = int(min(max(lin_z, 0.0), 60000))
-    print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
+    # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
     return roll, pitch, yawrate, thrust
 
 

@@ -5,7 +5,7 @@ from casadi import *
 
 hznStep = 0.1                   # time between steps in seconds
 hznLen = 10                      # number of look ahead steps
-sim_time = 10                   # simulation time
+sim_time = 15                   # simulation time
 
 v_max = 0.3    ;   v_min = -0.3
 w_max = pi/10  ;   w_min = -pi/10
@@ -88,3 +88,18 @@ def krpm2pwm( Krpm):
     pwm = ((Krpm*1000)-4070.3)/0.2685
 
     return pwm
+
+def quatdecompress(comp, q_4):
+	mask = int((1 << 9) - 1)
+	i_largest = comp >> 30
+	sum_squares = float(0)
+	for i in range(3, -1):
+		if (i != i_largest):
+			mag = comp & mask
+			negbit = (comp >> 9) & 0x1
+			comp = comp >> 10
+			q_4[i] = float(sqrt(0.5)) * float(mag) / mask
+			if negbit == 1:
+				q_4[i] = -q_4[i]
+			sum_squares += q_4[i] * q_4[i]
+	q_4[i_largest] = float(sqrt(1 - sum_squares))
