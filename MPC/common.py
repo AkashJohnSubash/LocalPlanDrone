@@ -4,7 +4,7 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 hznStep = 0.1                   # time between steps in seconds
-hznLen = 10                      # number of look ahead steps
+hznLen = 5                      # number of look ahead steps
 sim_time = 15                   # simulation time
 
 v_max = 0.3    ;   v_min = -0.3
@@ -13,12 +13,12 @@ w_max = pi/10  ;   w_min = -pi/10
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0,  0,  1.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-
+init_st = np.array([0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
 targ_st = np.array([1,  1,  1.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([0.7, 0.3, 1.5,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([0.8, 0.6, 1.5,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_rad = .05
 
 # Control
 n_controls = 4
