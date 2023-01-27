@@ -4,21 +4,21 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 hznStep = 0.1                   # time between steps in seconds
-hznLen = 5                      # number of look ahead steps
+hznLen = 10                      # number of look ahead steps
 sim_time = 15                   # simulation time
 
-v_max = 0.3    ;   v_min = -0.3
+v_max = 0.5    ;   v_min = -0.5
 w_max = pi/10  ;   w_min = -pi/10
 
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  1.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([1,  1,  1.8,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([0.8, 0.6, 1.5,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
-obst_rad = .05
+obst_st = np.array([0.5, 0.5, 0.5,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_rad = .1
 
 # Control
 n_controls = 4
@@ -55,9 +55,9 @@ def quat2eul(qoid):
     R33 = 2*(qoid[0]*qoid[0] + qoid[3]*qoid[3]) - 1
 
     # Euler angles in degrees
-    phi	  =  atan2(R32, R33) * 180 / pi
-    theta = -asin(R31)       * 180 / pi
-    psi	  =  atan2(R21, R11) * 180 / pi
+    phi	  =  atan2(R32, R33) * 180 / pi         # pitch
+    theta = -asin(R31)       * 180 / pi         # roll
+    psi	  =  atan2(R21, R11) * 180 / pi         # yaw
 
     return [phi, theta, psi]
 
@@ -103,3 +103,18 @@ def quatdecompress(comp, q_4):
 				q_4[i] = -q_4[i]
 			sum_squares += q_4[i] * q_4[i]
 	q_4[i_largest] = float(sqrt(1 - sum_squares))
+
+
+def calc_thrust_setpoint(St_0, U_0):
+    #TODO find documentation of this mapping, add to report 
+    # euler in deg from q1,      q2,       q3,       q4
+    eul_deg = quat2eul([St_0[3], St_0[4], St_0[5], St_0[6]])
+    pitch_x  = eul_deg[1]                                         # theta (roll)-> pitch ?
+    roll_y  = -eul_deg[0]                                        # -phi (pitch) -> roll ?
+    thrust_z  = krpm2pwm((U_0[0] + U_0[1]+ U_0[2]+ U_0[3])/4)      # convert average prop RPM to PWM                              
+    roll_c   = roll_y + ROLL_TRIM                                   # TODO calibrate !
+    pitch_c  = pitch_x + PITCH_TRIM                                 # corrected values
+    thrust_c = int(min(max(thrust_z, 0.0), 60000))
+    yawrate = St_0[12] * 180 /pi                                    # r in deg
+    # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
+    return pitch_c, roll_c, yawrate, thrust_c

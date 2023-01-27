@@ -1,5 +1,5 @@
-from MPC import ocp_sim, ocp_cf
-from MPC.simulation_code import simulate3D, plot_dataset
+import ocp_sim, ocp_cf
+from simulation_code import simulate3D, plot_dataset
 
 import argparse
 
@@ -10,9 +10,8 @@ from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 
 
-import numpy as np
-from MPC.common import *
-from MPC import measurement
+from common import *
+import measurement
 
 # Only output errors from the logging framework
 # logging.basicConfig(level=logging.ERROR)
@@ -24,13 +23,13 @@ def argparse_init():
     '''
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--lab", action='store_true', help="Laborotory flight")
+    parser.add_argument("-rt", "--RealTime", action='store_true', help="MPC computation in flight time ")
     return parser
 
 if __name__ == '__main__':
     
     parser = argparse_init()
     args = parser.parse_args()
-    
     
     if args.lab:
         # URI to the Crazyflie to connect to
@@ -39,7 +38,7 @@ if __name__ == '__main__':
         print("Lab flight")
         with SyncCrazyflie(uri, cf = Crazyflie(rw_cache='./cache')) as scf:
             measurement.init_drone(scf)
-            cat_U, t_step, cat_ST, times_ST = ocp_cf.traj_commander(scf)
+            cat_U, t_step, cat_ST, times_ST = ocp_cf.traj_commander(scf, realtime = args.RealTime)
     else:
         print("Simulated flight")
         cat_U, t_step, cat_ST, times_ST = ocp_sim.traj_commander()

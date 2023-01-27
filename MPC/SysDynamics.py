@@ -1,5 +1,5 @@
 from casadi import *
-from MPC.common import *
+from common import *
 
 '-------------------Symbolic variables---------------------------'
 # State symbols

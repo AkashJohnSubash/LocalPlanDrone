@@ -2,7 +2,7 @@ import numpy as np
 from numpy import sin, cos, pi
 from matplotlib import pyplot as plt, animation
 from mpl_toolkits.mplot3d import Axes3D
-from MPC.common import *
+from common import *
 
 #Parameters defined in common.py
 
@@ -49,23 +49,27 @@ def simulate3D(cat_ST, t):
     fig = plt.figure()
     #plt.ion()
     ax = Axes3D(fig, auto_add_to_figure=False)
+    ax.azim = -180
     fig.add_axes(ax)
+    
 
     # path
     path = ax.plot([], [], 'b', alpha=0.5, linewidth=0.5)[0]
     # horizon
     horizon, = ax.plot([], [],'x-g', alpha=0.5)
 
-    ax.set_xlim([-1.5, 1.5])
-    ax.set_ylim([-1.5, 1.5])
-    ax.set_zlim([-1.5, 1.5])
+    # ax.set_xlim([-1.5, 1.5])
+    # ax.set_ylim([-1.5, 1.5])
+    # ax.set_zlim([-1.5, 1.5])
 
-    min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 0.5
-    max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 0.5
-    
-    ax.set_xlim3d(left = min_scale, right = max_scale)
-    ax.set_ylim3d(bottom = min_scale, top = max_scale)
-    ax.set_zlim3d(bottom = min_scale, top = max_scale)
+    # min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 0.5
+    # max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 0.5
+    cage_x = [-0.5, 2.3]  #dimensions in meters
+    cage_y = [-0.5, 2.3]  #dimensions in meters
+    cage_z = [0, 2]       #dimensions in meters
+    ax.set_xlim3d(left = cage_x[0], right = cage_x[1])
+    ax.set_ylim3d(bottom = cage_y[0], top = cage_y[1])
+    ax.set_zlim3d(bottom = cage_z[0], top = cage_z[1])
 
     #Sphere around bot
     sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 10000, c='b', alpha=0.2)

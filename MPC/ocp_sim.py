@@ -1,9 +1,9 @@
 from time import time
 import numpy as np
 from casadi import *
-from MPC.common import *
-from MPC.SysDynamics import SysDyn as Sys, Predictor as Pred
-from MPC.measurement import state_meas
+from common import *
+from SysDynamics import SysDyn as Sys, Predictor as Pred
+from measurement import state_meas
 
 def traj_commander():
     # generates optimal trajectory using an NMPC cost function
@@ -127,7 +127,6 @@ def traj_commander():
 
         X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
         u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
-
         cat_states = np.dstack(( cat_states, DM2Arr(X0)))
         cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
@@ -140,7 +139,7 @@ def traj_commander():
         mpc_iter = mpc_iter + 1
         print(f'Soln Timestep : {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
         #print(f"DEBUG{X0[:, 0]}")
-        roll, pitch, yawRate, thrust = calc_thrust_setpoint(X0, u)
+        #roll, pitch, yawRate, thrust = calc_thrust_setpoint(X0, u)
         
     '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
     main_loop_time = time()
@@ -154,19 +153,3 @@ def traj_commander():
     return cat_controls, t_step, cat_states, times
     # except Exception as ex:
     #     print("MPC aborted due to Exception:", ex)
-    
-def calc_thrust_setpoint(St, U):
-    #TODO find documentation of this mapping, add to report 
-    # euler in deg from q1,      q2,       q3,       q4
-    eul_deg = quat2eul([St[3, 0], St[4, 0], St[5, 0], St[6, 0]])
-
-    lin_x  = eul_deg[1]                                         # theta
-    lin_y  = -eul_deg[0]                                        # -phi
-    lin_z  = krpm2pwm((U[0, 0] + U[1, 0]+ U[2, 0]+ U[3, 0])/4)  # convert average prop RPM to PWM
-    ang_z  = St[12, 0] * 180 /pi                                # r in deg
-    roll   = lin_y + ROLL_TRIM                                  # TODO calibrate !
-    pitch  = lin_x + PITCH_TRIM
-    yawrate = ang_z
-    thrust = int(min(max(lin_z, 0.0), 60000))
-    # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
-    return roll, pitch, yawrate, thrust
