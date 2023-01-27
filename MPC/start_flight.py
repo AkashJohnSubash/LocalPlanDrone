@@ -6,15 +6,12 @@ import argparse
 from cflib.utils import uri_helper
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.log import LogConfig
+from cflib.crazyflie.log import LogConfig #TODO remove ?
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 
 
 from common import *
 import measurement
-
-# Only output errors from the logging framework
-# logging.basicConfig(level=logging.ERROR)
 
 
 def argparse_init():

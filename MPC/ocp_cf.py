@@ -116,11 +116,11 @@ def traj_commander(scf, realtime):
     
     # STAGE 1 ramp up thrust to hover
     print("DEBUG : Ramp up to init position")
-    #scf.cf.commander.send_position_setpoint(init_st[0], init_st[1], init_st[2], 0)
-    sleep(0.5)
-    # Unlock startup thrust protection
-    scf.cf.commander.send_setpoint(0, 0, 0, 0)
-    sleep(0.05)
+    scf.cf.commander.send_position_setpoint(init_st[0], init_st[1], init_st[2], 0)
+    #sleep(0.5)
+    # # Unlock startup thrust protection
+    # scf.cf.commander.send_setpoint(0, 0, 0, 0)
+    #sleep(0.05)
     #scf.cf.commander.send_setpoint(0, 0, 0, hover_rpm)
     #sleep(2)
     #rampMotorsUp(scf.cf)
@@ -128,6 +128,8 @@ def traj_commander(scf, realtime):
     # STAGE 2 perform overtake
     setpoints = [0, 0, 0, int(0)]
     main_loop = time()                                                      # return time in sec
+    scf.cf.commander.send_setpoint(0, 0, 0, 0)                              # Unlock startup thrust protection
+    
     while (norm_2(state_meas - state_target) > 1e-1) and (mpc_iter * hznStep < sim_time):
         t1 = time()                                                         # start iter timer          
         args['p'] = vertcat( state_meas,  state_target)                                                                                            
@@ -143,27 +145,28 @@ def traj_commander(scf, realtime):
         cat_states = np.dstack(( cat_states, DM2Arr(X0)))
         cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
-        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
+        print(f"DEBUG StateExp :{state_init[:8]}")
+        print(f"DEBUG StateMeas :{state_meas[:8]}")
+        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_meas, u, TF_fp)
         
         X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
-
-        t2 = time()                                                     # stop iter timer
-        times = np.vstack(( times, t2-t1))
-        mpc_iter = mpc_iter + 1
         #print(f'Soln Timestep : {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
 
-        pitch, roll, yawRate, thrust = calc_thrust_setpoint(X0[:, 0], u[:, 0])
+        roll, pitch, yawRate, thrust = calc_thrust_setpoint(X0[:, 0], u[:, 0])
         
-        #print(f"DEBUG setpoint :{roll}, {pitch}, {yawRate}, {thrust}")
+        print(f"DEBUG setpoint :{roll}, {pitch}, {yawRate}, {thrust}")
         #print(f"DEBUG req pwm: {pwm_req[0]}, {pwm_req[1]}, {pwm_req[2]}, {pwm_req[3]}")
         #print(f"DEBUG set pwm: {pwm_set[0]}, {pwm_set[1]}, {pwm_set[2]}, {pwm_set[3]}")
 
         '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
         #if(realtime == True):
-        #    scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust)            #TODO why use this API instead of others ?
+        scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust)            #TODO why use this API instead of others ?
 
-        #else:
-        setpoints = np.vstack( (setpoints, [roll, pitch, yawRate, thrust]))
+        # #else:
+        #setpoints = np.vstack( (setpoints, [roll, pitch, yawRate, thrust]))
+        t2 = time()                                                             # stop iter timer
+        times = np.vstack(( times, t2-t1))
+        mpc_iter = mpc_iter + 1
 
     #print("DEBUG \n Non real time execution \n")
     main_loop_time = time()
@@ -172,7 +175,7 @@ def traj_commander(scf, realtime):
     scf.cf.commander.send_setpoint(0, 0, 0, 0)
     if(realtime != True):
         for i in range(0 ,len(setpoints[:, 0])):
-            #sleep(0.02)
+            sleep(0.1)
             print(f" {setpoints[i, 0]}, {setpoints[i, 1]}, {setpoints[i, 2]}, {setpoints[i, 3]}\n")
             scf.cf.commander.send_setpoint(setpoints[i, 0], setpoints[i, 1], setpoints[i, 2], setpoints[i, 3])
     # STAGE 3 ramp down thrust to land

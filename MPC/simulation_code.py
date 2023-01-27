@@ -58,10 +58,6 @@ def simulate3D(cat_ST, t):
     # horizon
     horizon, = ax.plot([], [],'x-g', alpha=0.5)
 
-    # ax.set_xlim([-1.5, 1.5])
-    # ax.set_ylim([-1.5, 1.5])
-    # ax.set_zlim([-1.5, 1.5])
-
     # min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 0.5
     # max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 0.5
     cage_x = [-0.5, 2.3]  #dimensions in meters
