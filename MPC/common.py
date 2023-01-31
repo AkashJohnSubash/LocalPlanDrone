@@ -4,8 +4,9 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 hznStep = 0.1                   # time between steps in seconds
-hznLen = 12                      # number of look ahead steps
+hznLen = 10                      # number of look ahead steps
 sim_time = 15                   # simulation time
+milestones = 5
 
 v_max = 0.2    ;   v_min = -0.2
 w_max = pi/10  ;   w_min = -pi/10
@@ -13,11 +14,11 @@ w_max = pi/10  ;   w_min = -pi/10
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0,  0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+init_st = np.array([0,  0,  0.3,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
 targ_st = np.array([1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([0.5, 0.5, 0.5,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2, 2, 2,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .1
 
 # Control
@@ -26,7 +27,7 @@ n_controls = 4
 '------------------------CF parameters--------------------------------'
 
 g0  = 9.8066     # [m.s^2] accerelation of gravity
-mq  = 30e-3      # [kg] total mass (with one marker)
+mq  = 33e-3      # [kg] total mass (with one marker)
 Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
 Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
 Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis

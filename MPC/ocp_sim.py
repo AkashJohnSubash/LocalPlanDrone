@@ -10,12 +10,12 @@ def traj_commander():
     SysObj = Sys(hznLen)
     ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
 
-    TF_fp = SysObj.TransferFunction()
+    Dyn_fp = SysObj.ForwardDynamics()
 
     # State, Control weight matrices
     # TODO investigate effect of weights
     Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 10) 
-    R = diagcat(0.06, 0.06, 0.06, 0.06)
+    R = diagcat(0.5, 0.5, 0.5, 0.5)
 
     cost_fn = 0                  # cost function
     g = ST[:, 0] - P[:n_states]  # constraints in the equation
@@ -29,8 +29,8 @@ def traj_commander():
         U_k = U[:, k]
         cost_fn = cost_fn + (st - P[n_states:]).T @ Q @ (st - P[n_states:]) + U_k.T @ R @ U_k
         st_opt = ST[:, k+1]
-        st_est = Pred.rk4_integrator(TF_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
-        g = vertcat(g, st_opt - st_est)                                 # predicted state (MS) constraint
+        st_est = Pred.rk4_integrator(Dyn_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
+        g = vertcat(g, st_opt - st_est)                                  # predicted state (MS) constraint
 
     # Path constraint equations (obstacle avoidance)
     for k in range(hznLen +1): 
@@ -130,7 +130,7 @@ def traj_commander():
         cat_states = np.dstack(( cat_states, DM2Arr(X0)))
         cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
-        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, TF_fp)
+        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, Dyn_fp)
         
         X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
 

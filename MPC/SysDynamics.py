@@ -28,8 +28,9 @@ class SysDyn():
         
         self.hov_w = np.sqrt((mq*g0)/(4*Ct))
 
-    def TransferFunction(self):
-        # Transfer function : input (Ctrl)-> output(State) mapping
+    def ForwardDynamics(self):
+        '''Describes forward Dynamics equations'''
+
         # Rate of change of position
         dxq = u*(2*q1**2 + 2*q2**2 - 1) - v*(2*q1*q4 - 2*q2*q3)     + w*(2*q1*q3 + 2*q2*q4)
         dyq = u*(2*q1*q4 + 2*q2*q3)     + v*(2*q1**2 + 2*q3**2 - 1) - w*(2*q1*q2 - 2*q3*q4)
@@ -55,9 +56,11 @@ class SysDyn():
         fp = Function('f', [state, controls], [f_op])
         return fp 
 
-    def TimeStep(step_horizon, t0, state_init, u, f_TF):
-        f_value = f_TF(state_init, u[:, 0])
-        next_state = DM.full(state_init + (step_horizon * f_value)) # TODO Check if linearization is still valid ?
+    def TimeStep(step_horizon, t0, state, u, dyn_fp):
+        '''Discrete time step of forward dynamics'''
+
+        f_value = dyn_fp(state, u[:, 0])
+        next_state = DM.full(state + (step_horizon * f_value)) # TODO Check if linearization is still valid ?
         #print(f'\nDEBUG3 {t0}, next state :\n{next_state}, \nControl :\n{u[:, 0]}' )
 
         t0 = t0 + step_horizon
@@ -67,10 +70,10 @@ class SysDyn():
 
 class Predictor:
 
-    def rk4_integrator(TransFunc, state, ctrl, step_horizon):
-        k1 = TransFunc(state, ctrl)
-        k2 = TransFunc(state + step_horizon/2*k1, ctrl)
-        k3 = TransFunc(state + step_horizon/2*k2, ctrl)
-        k4 = TransFunc(state + step_horizon * k3, ctrl)
+    def rk4_integrator(Dyn_fp, state, ctrl, step_horizon):
+        k1 = Dyn_fp(state, ctrl)
+        k2 = Dyn_fp(state + step_horizon/2*k1, ctrl)
+        k3 = Dyn_fp(state + step_horizon/2*k2, ctrl)
+        k4 = Dyn_fp(state + step_horizon * k3, ctrl)
         st_next_RK4 = state + (step_horizon / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
         return st_next_RK4
