@@ -1,4 +1,4 @@
-import ocp_sim, ocp_cf
+import flight_optim
 from visualize import simulate3D, plot_dataset
 
 import argparse
@@ -35,10 +35,10 @@ if __name__ == '__main__':
         print("Lab flight")
         with SyncCrazyflie(uri, cf = Crazyflie(rw_cache='./cache')) as scf:
             measurement.init_drone(scf)
-            cat_U, t_step, cat_ST, times_ST = ocp_cf.traj_commander(scf, realtime = args.RealTime)
+            cat_U, t_step, cat_ST, times_ST = flight_optim.onboard(scf, realtime = args.RealTime)
     else:
         print("Simulated flight")
-        cat_U, t_step, cat_ST, times_ST = ocp_sim.traj_commander()
+        cat_U, t_step, cat_ST, times_ST = flight_optim.simulation()
 
         '''-------------------- Visualize -----------------------------'''
     # Plot controls over the simulation period

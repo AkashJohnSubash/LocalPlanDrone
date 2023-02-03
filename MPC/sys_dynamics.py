@@ -2,7 +2,7 @@ from casadi import *
 from common import *
 
 '-------------------Symbolic variables---------------------------'
-# State symbols
+# State variables
 xq = SX.sym('xq');  yq = SX.sym('yq');  zq = SX.sym('zq')                       # (in inertial frame)
 q1 = SX.sym('q1');  q2 = SX.sym('q2');  q3 = SX.sym('q3');  q4 = SX.sym('q4')   # quarternion angle representation
 u = SX.sym('u');    v = SX.sym('v');    w = SX.sym('w')                         # linear velocities (in body frame)
@@ -10,7 +10,7 @@ p = SX.sym('p');    q = SX.sym('q');    r = SX.sym('r')                         
 
 state = vertcat(xq, yq, zq, q1, q2, q3, q4, u, v, w, p, q, r)
 
-# Control symbols (Motor RPM)
+# Control varianles (Motor RPM)
 w1 = SX.sym('w1');  w2 = SX.sym('w2');  w3 = SX.sym('w3');  w4 = SX.sym('w4')
 controls = vertcat( w1, w2, w3, w4) 
 

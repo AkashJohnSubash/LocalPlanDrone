@@ -9,17 +9,17 @@ sim_time = 10                       # simulation time
 milestones = 5
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]
-w_max = pi/10  ;   w_min = -pi/10   #  [rad/s]
-del_rpm_max = inf                   #  [Krpm]
+w_max = pi/10  ;   w_min = -pi/10     #  [rad/s]
+del_rpm_max = 0.5                   #  [Krpm]
 
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,      0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([0.2,      0.2,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([1,   1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([2.3,  2.3,  2,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2.3,  2.3,  2.3,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .1
 
 # Control
@@ -36,7 +36,7 @@ Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
 Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
 dq  = 65e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
-max_krpm = 22     # [krpm]
+max_krpm = 22    # [krpm]
 hover_krpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000 #[krpm]
 
 ROLL_TRIM  = 0
@@ -73,7 +73,7 @@ def eul2quat(eul):
     psi = 0.5* eul[2] * pi / 180
 
     qw =  cos(phi) * cos(th) * cos(psi) + sin(phi) * sin(th) * sin(psi)
-    qx = -cos(phi) * cos(th) * cos(phi) + sin(psi) * sin(th) * cos(phi)
+    qx = -cos(psi) * cos(th) * cos(phi) + sin(psi) * sin(th) * cos(phi)
     qy = -cos(psi) * sin(th) * cos(phi) - sin(psi) * cos(th) * sin(phi)
     qz = -sin(psi) * cos(th) * cos(phi) + cos(psi) * sin(th) * sin(phi)
 
@@ -120,3 +120,4 @@ def calc_thrust_setpoint(St_0, U_0):
     yawrate = St_0[12] * 180 /pi                                    # r in deg
     # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
     return roll_c, pitch_c, yawrate, thrust_c
+

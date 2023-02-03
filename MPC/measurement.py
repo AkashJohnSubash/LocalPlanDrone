@@ -9,6 +9,7 @@ from common import init_st
 
 deck_attached_event = Event()
 state_meas =  np.copy(init_st)
+Ctrl_rpyt = np.zeros(4)
 #att_cmp = np.zeros(1)
 pwm_set =  np.zeros(4)
 pwm_req =  np.zeros(4)
@@ -29,6 +30,8 @@ def deck_light_cbk(_, value_str):
 
 def start_state_rx(scf):
 
+    '''Define variables in group'''
+
     #Log data from the CF stabilizer via Radio
     stabZ = LogConfig(name='StabZ', period_in_ms=100)
     stabZ.add_variable('stateEstimateZ.x', 'int16_t')
@@ -42,17 +45,20 @@ def start_state_rx(scf):
     stabZ.add_variable('stateEstimateZ.ratePitch', 'int16_t')
     stabZ.add_variable('stateEstimateZ.rateYaw', 'int16_t')
     
-    # stabPos = LogConfig(name='StabPos', period_in_ms=100)
-    # stabPos.add_variable('stateEstimate.x', 'float')
-    # stabPos.add_variable('stateEstimate.y', 'float')
-    # stabPos.add_variable('stateEstimate.z', 'float')
+    # # stabPos = LogConfig(name='StabPos', period_in_ms=100)
+    # # stabPos.add_variable('stateEstimate.x', 'float')
+    # # stabPos.add_variable('stateEstimate.y', 'float')
+    # # stabPos.add_variable('stateEstimate.z', 'float')
     
     stabAtt = LogConfig(name='StabAtt', period_in_ms=100)
     stabAtt.add_variable('stateEstimate.qw', 'float')
     stabAtt.add_variable('stateEstimate.qx', 'float')
     stabAtt.add_variable('stateEstimate.qy', 'float')
     stabAtt.add_variable('stateEstimate.qz', 'float')
-
+    # stabAtt.add_variable('stateEstimate.roll', 'float')
+    # stabAtt.add_variable('stateEstimate.pitch', 'float')
+    # stabAtt.add_variable('stateEstimate.yaw', 'float')
+    
     # stabLvel = LogConfig(name='StabPos', period_in_ms=100)
     # stabLvel.add_variable('stateEstimate.vx', 'float')
     # stabLvel.add_variable('stateEstimate.vy', 'float')
@@ -63,17 +69,26 @@ def start_state_rx(scf):
     # stabAvel.add_variable('stateEstimate.ratePitch', 'float')
     # stabAvel.add_variable('stateEstimate.rateYaw', 'float')
 
-    # mot_set = LogConfig(name='MotSet', period_in_ms=100)
-    # mot_set.add_variable('motor.m1', 'int32_t')
-    # mot_set.add_variable('motor.m2', 'int32_t')
-    # mot_set.add_variable('motor.m3', 'int32_t')
-    # mot_set.add_variable('motor.m4', 'int32_t')
+    mot_set = LogConfig(name='MotSet', period_in_ms=100)
+    mot_set.add_variable('motor.m1', 'int32_t')
+    mot_set.add_variable('motor.m2', 'int32_t')
+    mot_set.add_variable('motor.m3', 'int32_t')
+    mot_set.add_variable('motor.m4', 'int32_t')
 
     # mot_req = LogConfig(name='MotReq', period_in_ms=100)
     # mot_req.add_variable('motor.m1req', 'int32_t')
     # mot_req.add_variable('motor.m2req', 'int32_t')
     # mot_req.add_variable('motor.m3req', 'int32_t')
     # mot_req.add_variable('motor.m4req', 'int32_t')
+
+    
+    ctrl_req = LogConfig(name='CtrlReq', period_in_ms=100)
+    ctrl_req.add_variable('controller.roll', 'float')
+    ctrl_req.add_variable('controller.pitch', 'float')
+    ctrl_req.add_variable('controller.yawRate', 'float')
+    ctrl_req.add_variable('controller.actuatorThrust', 'float')
+
+    '''register callbacks for group'''
 
     scf.cf.log.add_config(stabZ)
     stabZ.data_received_cb.add_callback(StabZ_cbk)
@@ -99,9 +114,13 @@ def start_state_rx(scf):
     # mot_req.data_received_cb.add_callback(MotReq_cbk)
     # mot_req.start()
     
-    # scf.cf.log.add_config(mot_set)
-    # mot_set.data_received_cb.add_callback(MotSet_cbk)
-    # mot_set.start()
+    scf.cf.log.add_config(mot_set)
+    mot_set.data_received_cb.add_callback(MotSet_cbk)
+    mot_set.start()
+
+    scf.cf.log.add_config(ctrl_req)
+    ctrl_req.data_received_cb.add_callback(CtrlPid_cbk)
+    ctrl_req.start()
 
 def StabZ_cbk(timestamp, data, logconf):
     '''Callback function to decode position data from stateEstimateZ group'''
@@ -137,6 +156,13 @@ def StabAtt_cbk(timestamp, data, logconf):
     state_meas[5] = data['stateEstimate.qy']
     state_meas[6] = data['stateEstimate.qz'] 
 
+def CtrlPid_cbk(timestamp, data, logconf):
+    Ctrl_rpyt[0] = data['controller.roll']
+    Ctrl_rpyt[1] = data['controller.pitch']
+    Ctrl_rpyt[2] = data['controller.yawRate']
+    Ctrl_rpyt[3] = data['controller.actuatorThrust']
+
+
 # def StabLVel_cbk(timestamp, data, logconf):    
 #     state_meas[7] = data['stateEstimate.vx']
 #     state_meas[8] = data['stateEstimate.vy']
@@ -157,14 +183,14 @@ def StabAtt_cbk(timestamp, data, logconf):
 #     pwm_req[2] = data['motor.m3req']
 #     pwm_req[3] = data['motor.m4req']
 
-#     print(f"DEBUG req: {pwm_req}")
+    #print(f"DEBUG req: {pwm_req}")
     
-# def MotSet_cbk(timestamp, data, logconf):
-#     '''Callback function to decode rates from stateEstimateZ group'''
+def MotSet_cbk(timestamp, data, logconf):
+    '''Callback function to decode rates from stateEstimateZ group'''
 
-#     pwm_set[0] = data['motor.m1']
-#     pwm_set[1] = data['motor.m2']
-#     pwm_set[2] = data['motor.m3']
-#     pwm_set[3] = data['motor.m4']
+    pwm_set[0] = data['motor.m1']
+    pwm_set[1] = data['motor.m2']
+    pwm_set[2] = data['motor.m3']
+    pwm_set[3] = data['motor.m4']
     
 #     print(f"DEBUG set: {pwm_set}")
