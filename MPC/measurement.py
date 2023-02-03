@@ -8,7 +8,8 @@ from threading import Event
 from common import init_st
 
 deck_attached_event = Event()
-state_meas =  init_st
+state_meas =  np.copy(init_st)
+#att_cmp = np.zeros(1)
 pwm_set =  np.zeros(4)
 pwm_req =  np.zeros(4)
 
@@ -30,10 +31,10 @@ def start_state_rx(scf):
 
     #Log data from the CF stabilizer via Radio
     stabZ = LogConfig(name='StabZ', period_in_ms=100)
-    # stabZ.add_variable('stateEstimateZ.x', 'int16_t')
-    # stabZ.add_variable('stateEstimateZ.y', 'int16_t')
-    # stabZ.add_variable('stateEstimateZ.z', 'int16_t')
-    # stabZ.add_variable('stateEstimateZ.quat', 'float')
+    stabZ.add_variable('stateEstimateZ.x', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.y', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.z', 'int16_t')
+    #stabZ.add_variable('stateEstimateZ.quat', 'float')
     stabZ.add_variable('stateEstimateZ.vx', 'int16_t')
     stabZ.add_variable('stateEstimateZ.vy', 'int16_t')
     stabZ.add_variable('stateEstimateZ.vz', 'int16_t')
@@ -41,10 +42,10 @@ def start_state_rx(scf):
     stabZ.add_variable('stateEstimateZ.ratePitch', 'int16_t')
     stabZ.add_variable('stateEstimateZ.rateYaw', 'int16_t')
     
-    stabPos = LogConfig(name='StabPos', period_in_ms=100)
-    stabPos.add_variable('stateEstimate.x', 'float')
-    stabPos.add_variable('stateEstimate.y', 'float')
-    stabPos.add_variable('stateEstimate.z', 'float')
+    # stabPos = LogConfig(name='StabPos', period_in_ms=100)
+    # stabPos.add_variable('stateEstimate.x', 'float')
+    # stabPos.add_variable('stateEstimate.y', 'float')
+    # stabPos.add_variable('stateEstimate.z', 'float')
     
     stabAtt = LogConfig(name='StabAtt', period_in_ms=100)
     stabAtt.add_variable('stateEstimate.qw', 'float')
@@ -78,9 +79,9 @@ def start_state_rx(scf):
     stabZ.data_received_cb.add_callback(StabZ_cbk)
     stabZ.start()
     
-    scf.cf.log.add_config(stabPos)
-    stabPos.data_received_cb.add_callback(StabPos_cbk)
-    stabPos.start()
+    # scf.cf.log.add_config(stabPos)
+    # stabPos.data_received_cb.add_callback(StabPos_cbk)
+    # stabPos.start()
 
     scf.cf.log.add_config(stabAtt)
     stabAtt.data_received_cb.add_callback(StabAtt_cbk)
@@ -105,14 +106,11 @@ def start_state_rx(scf):
 def StabZ_cbk(timestamp, data, logconf):
     '''Callback function to decode position data from stateEstimateZ group'''
 
-    # state_meas[0] = data['stateEstimateZ.x']/1000
-    # state_meas[1] = data['stateEstimateZ.y']/1000
-    # state_meas[2] = data['stateEstimateZ.z']/1000
+    state_meas[0] = data['stateEstimateZ.x']/1000
+    state_meas[1] = data['stateEstimateZ.y']/1000
+    state_meas[2] = data['stateEstimateZ.z']/1000
     
-    # state_meas[3] = 1#data['stateEstimateZ.q']
-    # state_meas[4] = 0#data['stateEstimateZ.q']
-    # state_meas[5] = 0#data['stateEstimateZ.q']
-    # state_meas[6] = 0#data['stateEstimateZ.q']
+    #att_cmp[0] = data['stateEstimateZ.quat']
 
     state_meas[7] = data['stateEstimateZ.vx']/1000
     state_meas[8] = data['stateEstimateZ.vy']/1000
@@ -127,11 +125,11 @@ def StabZ_cbk(timestamp, data, logconf):
     #quatdecompress(q, q_d)
     #print(f'ST  pos:{Meas_St[0]}, {Meas_St[1]}, {Meas_St[2]}')
 
-def StabPos_cbk(timestamp, data, logconf):
-    '''Callback function to decode attitude from stateEstimate group'''
-    state_meas[0] = data['stateEstimate.x']
-    state_meas[1] = data['stateEstimate.y']
-    state_meas[2] = data['stateEstimate.z']
+# def StabPos_cbk(timestamp, data, logconf):
+#     '''Callback function to decode attitude from stateEstimate group'''
+#     state_meas[0] = data['stateEstimate.x']
+#     state_meas[1] = data['stateEstimate.y']
+#     state_meas[2] = data['stateEstimate.z']
 
 def StabAtt_cbk(timestamp, data, logconf):  
     state_meas[3] = data['stateEstimate.qw']

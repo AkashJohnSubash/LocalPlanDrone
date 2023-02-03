@@ -7,7 +7,7 @@ from measurement import state_meas
 
 def traj_commander():
     # generates optimal trajectory using an NMPC cost function
-    SysObj = Sys(hznLen)
+    SysObj = Sys()
     ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
 
     Dyn_fp = SysObj.ForwardDynamics()
@@ -36,7 +36,13 @@ def traj_commander():
     for k in range(hznLen +1): 
         g = vertcat(g , (-sqrt( ((ST[0,k] - obst_st[0]) ** 2)  +
                                 ((ST[1,k] - obst_st[1]) ** 2)  + 
-                                ((ST[2,k] - obst_st[2]) ** 2)) + rob_rad + obst_rad)) # obstacle with same radius as bot
+                                ((ST[2,k] - obst_st[2]) ** 2)) + rob_rad + obst_rad))                           # obstacle with same radius as bot
+    
+    # Thrust smoothening constraint
+    for k in range(hznLen-1):
+        avg_rpm_next =  (U[0,k+1] + U[1,k+1] + U[2,k+1] + U[3,k+1])/4
+        avg_rpm  = (U[0,k] + U[1,k] + U[2,k] + U[3,k])/4
+        g = vertcat(g , ( avg_rpm_next - avg_rpm))                                      # difference of thrust average (delta_thrust)
 
     OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
     nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
@@ -72,24 +78,27 @@ def traj_commander():
     lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max              # q bounds
     lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max              # r bounds
     # Control bounds
-    lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_rpm        # w1 bounds
-    lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_rpm        # w2 bounds
-    lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_rpm        # w3 bounds
-    lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_rpm        # w4 bounds
+    lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_krpm        # w1 bounds
+    lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_krpm        # w2 bounds
+    lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_krpm        # w3 bounds
+    lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_krpm        # w4 bounds
 
     # Bounds on constraints
-    lbg = DM.zeros((st_size + (hznLen+1) , 1))
-    ubg = DM.zeros((st_size + (hznLen+1) , 1))
+                   #MS,        Path,       Smoothen
+    lbg = DM.zeros((st_size + (hznLen+1) + (hznLen-1), 1))
+    ubg = DM.zeros((st_size + (hznLen+1) + (hznLen-1), 1))
 
-    lbg[0: st_size] = 0;                                    ubg[0: st_size] = 0                                     # Optim constr: pred_st - optim_st = 0                  
-    lbg[st_size: st_size+ (hznLen+1)] = -inf;               ubg[st_size: st_size+ (hznLen+1)] = 0                   # Path constr: -inf < Euclidian - sum(radii) < 0
+    # MS constr: pred_st - optim_st = 0
+    lbg[0 : st_size] = 0;                         ubg[0        : st_size] = 0
 
-    # print("\nDEBUG1: St, U lower bound \n\n", lbx)
-    # print("\nDEBUG1: St, U uppper bound \n\n", ubx)
-    # print("\nDEBUG1: G(x) lower bound \n", lbg)
-    # print("\nDEBUG1: G(x) uppper bound \n", ubg)
+    # Path constr: -inf < Euclidian - sum(radii) < 0
+    lbg[st_size : st_size + (hznLen+1)]   = -inf; ubg[st_size  : st_size+ (hznLen+1)] = 0                
+    
+    # Smoothening constraints Delta_rpm_avg < Delta_rpm_max
+    lbg[st_size + (hznLen+1) : st_size + (hznLen+1) + (hznLen-1)] = -del_rpm_max;   
+    ubg[st_size + (hznLen+1) : st_size + (hznLen+1) + (hznLen-1)] = del_rpm_max
 
-    args = { 'lbg': lbg,                    # constraints lower bound
+    args = {    'lbg': lbg,                    # constraints lower bound
                 'ubg': ubg,                    # constraints upper bound
                 'lbx': lbx,
                 'ubx': ubx}
@@ -102,7 +111,7 @@ def traj_commander():
 
     t_step = np.array([])
 
-    u0 = DM.zeros((n_controls, hznLen))      # initial control
+    u0 = DM(np.full((n_controls, hznLen), hover_krpm))      # initial control
     X0 = repmat(state_init, 1, hznLen+1)     # initial state full
 
     mpc_iter = 0
@@ -114,6 +123,9 @@ def traj_commander():
     '''--------------------Execute MPC -----------------------------'''
 
     # STAGE 2 perform overtake
+    setpoints = [0, 0, 0, int(0)]
+    roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
+    print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
     main_loop = time()                                                      # return time in sec
     while (norm_2(state_init - state_target) > 1e-1) and (mpc_iter * hznStep < sim_time):
         t1 = time()                                                         # start iter timer                                                                                                    
@@ -131,7 +143,7 @@ def traj_commander():
         cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
         t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, Dyn_fp)
-        
+        #print(f"MPC State {X0[:, 0]} at {np.round(t0,3)}s ")#, {u[:, 0]}")
         X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
 
         t2 = time()                                                     # stop iter timer
@@ -139,8 +151,9 @@ def traj_commander():
         mpc_iter = mpc_iter + 1
         print(f'Soln Timestep : {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
         #print(f"DEBUG{X0[:, 0]}")
-        #roll, pitch, yawRate, thrust = calc_thrust_setpoint(X0, u)
-        
+        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0, u)
+        setpoints = np.vstack( (setpoints, [roll, pitch, yawRate, thrust_norm]))
+        print(f'set points : {roll}, {pitch}, {yawRate}, {thrust_norm}')
     '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
     main_loop_time = time()
     ss_error = norm_2(state_init - state_target)

@@ -16,14 +16,14 @@ controls = vertcat( w1, w2, w3, w4)
 
 class SysDyn():
     
-    def __init__(self, N):
+    def __init__(self):
         
         self.stSize = state.numel()
         self.ctrlSize = controls.numel()
 
         # matrices containing all States, Controls, Paramters over all time steps +1
-        self.St = SX.sym('St', self.stSize, N + 1)
-        self.U = SX.sym('U', self.ctrlSize, N)
+        self.St = SX.sym('St', self.stSize, hznLen + 1)
+        self.U = SX.sym('U', self.ctrlSize, hznLen)
         self.P = SX.sym('P', self.stSize + self.stSize)
         
         self.hov_w = np.sqrt((mq*g0)/(4*Ct))

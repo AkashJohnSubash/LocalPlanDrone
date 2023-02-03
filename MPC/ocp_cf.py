@@ -3,13 +3,13 @@ import numpy as np
 from casadi import *
 from common import *
 from SysDynamics import SysDyn as Sys, Predictor as Pred
-from measurement import state_meas, pwm_set, pwm_req
+from measurement import state_meas#, pwm_set, pwm_req, att_cmp
+from cflib.positioning.motion_commander import MotionCommander
 
 def traj_commander(scf, realtime):
     # generates optimal trajectory using an NMPC cost function
-    SysObj = Sys(hznLen)
+    SysObj = Sys()
     ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
-
     Dyn_fp = SysObj.ForwardDynamics()
 
     # State, Control weight matrices
@@ -72,10 +72,10 @@ def traj_commander(scf, realtime):
     lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max              # q bounds
     lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max              # r bounds
     # Control bounds
-    lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_rpm        # w1 bounds
-    lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_rpm        # w2 bounds
-    lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_rpm        # w3 bounds
-    lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_rpm        # w4 bounds
+    lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_krpm        # w1 bounds
+    lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_krpm        # w2 bounds
+    lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_krpm        # w3 bounds
+    lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_krpm        # w4 bounds
 
     # Bounds on constraints
     lbg = DM.zeros((st_size + (hznLen+1) , 1))
@@ -97,14 +97,14 @@ def traj_commander(scf, realtime):
     '''---------------------------------------------------------------'''
 
     t0 = 0
-    state_init = DM(init_st)                # initial state
-    state_target = DM(targ_st)              # target state
+    state_init = DM(np.copy(init_st))                # initial state
+    state_target = DM(np.copy(targ_st))              # target state
 
     t_step = np.array([])
     setpoints = np.array([])
 
-    u0 = DM.zeros((n_controls, hznLen))      # initial control
-    X0 = repmat(state_init, 1, hznLen+1)     # initial state full
+    u0 = DM(np.full((n_controls, hznLen), hover_krpm))      # initial control
+    X0 = repmat(state_init, 1, hznLen+1)                   # initial state full
 
     mpc_iter = 0
     cat_states = DM2Arr(X0)
@@ -115,22 +115,28 @@ def traj_commander(scf, realtime):
     '''--------------------Execute MPC -----------------------------'''
     
     # STAGE 1 ramp up thrust to hover
-    print("DEBUG : Ramp up to init position")
-    scf.cf.commander.send_position_setpoint(init_st[0], init_st[1], init_st[2], 0)
-    #sleep(0.5)
-    # # Unlock startup thrust protection
-    # scf.cf.commander.send_setpoint(0, 0, 0, 0)
+    mc = MotionCommander(scf)
+    mc.take_off(height=state_init[2])
+    print("DEBUG: WAIT at takeoff height for 5s")
+    
+    #MotionCommander(scf, default_height=DEFAULT_HEIGHT)
     #sleep(0.05)
     #scf.cf.commander.send_setpoint(0, 0, 0, hover_rpm)
-    #sleep(2)
-    #rampMotorsUp(scf.cf)
+    #sleep(0.05)
 
     # STAGE 2 perform overtake
     setpoints = [0, 0, 0, int(0)]
     main_loop = time()                                                      # return time in sec
-    scf.cf.commander.send_setpoint(0, 0, 0, 0)                              # Unlock startup thrust protection
     
-    while (norm_2(state_meas - state_target) > 1e-1) and (mpc_iter * hznStep < sim_time):
+    roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
+    print(f"DEBUG: Hover for 2s with norm rpm {thrust_norm}")
+    scf.cf.commander.send_setpoint(0, 0, 0, 0)
+    # Unlock startup thrust protection
+    scf.cf.commander.send_setpoint(0, 0, 0, thrust_norm)  
+    
+    sleep(2)                            
+
+    while (norm_2(state_init - state_target) > 1e-1) and (mpc_iter * hznStep < sim_time):
         t1 = time()                                                         # start iter timer          
         args['p'] = vertcat( state_meas,  state_target)                                                                                            
         #print(f"DEBUG Measured state \t {state_meas}" )
@@ -145,25 +151,24 @@ def traj_commander(scf, realtime):
         cat_states = np.dstack(( cat_states, DM2Arr(X0)))
         cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
-        print(f"DEBUG StateExp :{state_init[:8]}")
-        print(f"DEBUG StateMeas :{state_meas[:8]}")
-        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_meas, u, Dyn_fp)
+        #print(f"DEBUG StateExp :{state_init[:8]}")
+        #print(f"DEBUG Measured Pos :{np.round(state_meas[0:3], 4)}")
+        t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, Dyn_fp)
         
         X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
         #print(f'Soln Timestep : {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
-
         roll, pitch, yawRate, thrust = calc_thrust_setpoint(X0[:, 0], u[:, 0])
-        
-        print(f"DEBUG setpoint :{roll}, {pitch}, {yawRate}, {thrust}")
-        #print(f"DEBUG req pwm: {pwm_req[0]}, {pwm_req[1]}, {pwm_req[2]}, {pwm_req[3]}")
-        #print(f"DEBUG set pwm: {pwm_set[0]}, {pwm_set[1]}, {pwm_set[2]}, {pwm_set[3]}")
+        #print(f"DEBUG setpoint :{roll}, {pitch}, {yawRate}, {thrust}")
+        #print(f"DEBUG Measured Setpoint :ROLL, PITCH, YAWRATE, RPM}")
 
-        '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
-        #if(realtime == True):
-        scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust)            #TODO why use this API instead of others ?
-
-        # #else:
-        #setpoints = np.vstack( (setpoints, [roll, pitch, yawRate, thrust]))
+        # '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
+        # if(realtime == True):
+        #     scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust)            #TODO why use this API instead of position setpoint ?
+        #     ''''TEST Position setpoint command'''
+        #     #roll, pitch, yaw = quat2eul(X0[3:7])
+        #     #scf.cf.commander.send_position_setpoint( X0[0], X0[1], X0[2], yaw)
+        # else:
+        setpoints = np.vstack( (setpoints, [roll, pitch, yawRate, thrust]))
         t2 = time()                                                             # stop iter timer
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
@@ -171,17 +176,18 @@ def traj_commander(scf, realtime):
     #print("DEBUG \n Non real time execution \n")
     main_loop_time = time()
 
-    #print(setpoints, setpoints[1, 0], len(setpoints[:, 0]))
-    scf.cf.commander.send_setpoint(0, 0, 0, 0)
-    if(realtime != True):
-        for i in range(0 ,len(setpoints[:, 0])):
-            sleep(0.1)
-            print(f" {setpoints[i, 0]}, {setpoints[i, 1]}, {setpoints[i, 2]}, {setpoints[i, 3]}\n")
-            scf.cf.commander.send_setpoint(setpoints[i, 0], setpoints[i, 1], setpoints[i, 2], setpoints[i, 3])
+    # Offline setpoint commands
+    #if(realtime != True):
+    print("Execute offline setpoints")
+    for i in range(0 ,len(setpoints[:, 0])):
+        sleep(0.1)
+        print(f" Measured Pos :{np.round(state_meas, 4)}")
+        print(f"Offline Setpoint {setpoints[i, 0]}, {setpoints[i, 1]}, {setpoints[i, 2]}, {setpoints[i, 3]}\n")
+        #scf.cf.commander.send_setpoint(setpoints[i, 0], setpoints[i, 1], setpoints[i, 2], setpoints[i, 3])
+    
+    
     # STAGE 3 ramp down thrust to land
-    #print("DEBUG : Landing gracefully ")
-    #rampMotorsDown(scf.cf, thrust)
-    #scf.cf.commander.send_position_setpoint(state_target[0], state_target[1], 0, 0)
+    mc.land()
 
     main_loop_time = time()
     ss_error = norm_2(state_meas - state_target)

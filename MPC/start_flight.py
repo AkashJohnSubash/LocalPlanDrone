@@ -1,5 +1,5 @@
 import ocp_sim, ocp_cf
-from simulation_code import simulate3D, plot_dataset
+from visualize import simulate3D, plot_dataset
 
 import argparse
 
@@ -42,6 +42,6 @@ if __name__ == '__main__':
 
         '''-------------------- Visualize -----------------------------'''
     # Plot controls over the simulation period
-    plot_dataset( cat_U, t_step)
+    plot_dataset(cat_U, t_step)
     # Plot position( State[0-3]) over simulation period TODO convert state angles (yaw) to euler to indicate heading
     simulate3D(cat_ST, times_ST)

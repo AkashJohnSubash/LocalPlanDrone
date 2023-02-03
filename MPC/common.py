@@ -3,22 +3,23 @@ from casadi import *
 
 '''----------------OCP parammeters-----------------'''
 
-hznStep = 0.1                   # time between steps in seconds
-hznLen = 10                      # number of look ahead steps
-sim_time = 15                   # simulation time
+hznStep = 0.1                       # time between steps in seconds
+hznLen = 10                         # number of look ahead steps
+sim_time = 10                       # simulation time
 milestones = 5
 
-v_max = 0.2    ;   v_min = -0.2
-w_max = pi/10  ;   w_min = -pi/10
+v_max = 0.2    ;   v_min = -0.2     #  [m/s]
+w_max = pi/10  ;   w_min = -pi/10   #  [rad/s]
+del_rpm_max = inf                   #  [Krpm]
 
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0,  0,  0.3,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+init_st = np.array([0,      0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+targ_st = np.array([0.2,      0.2,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([2, 2, 2,  1,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2.3,  2.3,  2,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .1
 
 # Control
@@ -35,8 +36,8 @@ Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
 Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
 dq  = 65e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
-max_rpm = 22     # [krpm]
-hover_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct))
+max_krpm = 22     # [krpm]
+hover_krpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000 #[krpm]
 
 ROLL_TRIM  = 0
 PITCH_TRIM = 0
