@@ -50,14 +50,13 @@ def simulation():
         cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
         t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, dynamics_fp)
-        #print(f"MPC State {X0[:, 0]} at {np.round(t0,3)}s ")
         X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
 
         t2 = time()                                                     # stop iter timer
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
         
-        print(f'Soln Timestep : {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
+        #print(f'Soln Timestep {mpc_iter}: {u0[:,0]} {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 0], u[:, 0])
         setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
         print(f'set points {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm}')
@@ -94,11 +93,11 @@ def onboard(scf, realtime):
     times = np.array([[0]])
 
 
-    '''--------------------Execute MPC for RPYT setpoints-----------------------------'''
+    '''--------------------Feed MPC traj to CF using RPYT setpoints-----------------------------'''
     
     # STAGE 1 ramp up thrust to hover
     mc = MotionCommander(scf)
-    mc.take_off(height=state_init[2])
+    #mc.take_off(height=state_init[2])
     print("Execute TAKEOFF height ")
     #hl = PositionHlCommander(scf)
     #hl.take_off(0.5)
@@ -172,12 +171,12 @@ def onboard(scf, realtime):
         for i in range(0 ,len(setpoints[:, 0])):
             #print(f"Measured State {i}: {np.round(state_meas, 2)}")
                       #print(f"pwm req: {pwm_req}")
-            print(f"Onboard Pos {i}: {state_meas[:3]}")
-            print(f"Onboard setpoint {i}: {Ctrl_rpyt}")
-            print(f"pwm set{i}: {pwm_set}\n")
-            print(f"Offline MPC Setpoint {i+1}: {setpoints[i, 0]}, {setpoints[i, 1]}, {setpoints[i, 2]}, {setpoints[i, 3]}")
-            scf.cf.commander.send_setpoint(setpoints[i, 0], setpoints[i, 1], setpoints[i, 2], setpoints[i, 3])
-            sleep(0.2)
+            #print(f"Onboard Pos {i}: {state_meas[:3]}")
+            #print(f"Onboard setpoint {i}: {Ctrl_rpyt}")
+            #print(f"pwm set{i}: {pwm_set}\n")
+            #print(f"Offline MPC Setpoint {i+1}: {setpoints[i, 0]}, {setpoints[i, 1]}, {setpoints[i, 2]}, {setpoints[i, 3]}")
+            #scf.cf.commander.send_setpoint(setpoints[i, 0], setpoints[i, 1], setpoints[i, 2], setpoints[i, 3])
+            sleep(0.1)
     
     # STAGE 3 ramp down thrust to land
     print("Execute LAND command")

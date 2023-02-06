@@ -13,7 +13,7 @@ Ctrl_rpyt = np.zeros(4)
 #att_cmp = np.zeros(1)
 pwm_set =  np.zeros(4)
 pwm_req =  np.zeros(4)
-
+att_eul = np.zeros(3)
 
 def init_drone(scf):
     scf.cf.param.add_update_callback(group='deck', name='bcLighthouse4', cb=deck_light_cbk)
@@ -37,7 +37,7 @@ def start_state_rx(scf):
     stabZ.add_variable('stateEstimateZ.x', 'int16_t')
     stabZ.add_variable('stateEstimateZ.y', 'int16_t')
     stabZ.add_variable('stateEstimateZ.z', 'int16_t')
-    #stabZ.add_variable('stateEstimateZ.quat', 'float')
+    #stabZ.add_variable('stateEstimateZ.quat', 'uint32_t')
     stabZ.add_variable('stateEstimateZ.vx', 'int16_t')
     stabZ.add_variable('stateEstimateZ.vy', 'int16_t')
     stabZ.add_variable('stateEstimateZ.vz', 'int16_t')
@@ -50,14 +50,16 @@ def start_state_rx(scf):
     # # stabPos.add_variable('stateEstimate.y', 'float')
     # # stabPos.add_variable('stateEstimate.z', 'float')
     
-    stabAtt = LogConfig(name='StabAtt', period_in_ms=100)
-    stabAtt.add_variable('stateEstimate.qw', 'float')
-    stabAtt.add_variable('stateEstimate.qx', 'float')
-    stabAtt.add_variable('stateEstimate.qy', 'float')
-    stabAtt.add_variable('stateEstimate.qz', 'float')
-    # stabAtt.add_variable('stateEstimate.roll', 'float')
-    # stabAtt.add_variable('stateEstimate.pitch', 'float')
-    # stabAtt.add_variable('stateEstimate.yaw', 'float')
+    stabAttq = LogConfig(name='StabAtt', period_in_ms=100)
+    stabAttq.add_variable('stateEstimate.qw', 'float')
+    stabAttq.add_variable('stateEstimate.qx', 'float')
+    stabAttq.add_variable('stateEstimate.qy', 'float')
+    stabAttq.add_variable('stateEstimate.qz', 'float')
+
+    stabAtte = LogConfig(name='StabAtt', period_in_ms=100)
+    stabAtte.add_variable('stateEstimate.roll', 'float')
+    stabAtte.add_variable('stateEstimate.pitch', 'float')
+    stabAtte.add_variable('stateEstimate.yaw', 'float')
     
     # stabLvel = LogConfig(name='StabPos', period_in_ms=100)
     # stabLvel.add_variable('stateEstimate.vx', 'float')
@@ -98,9 +100,14 @@ def start_state_rx(scf):
     # stabPos.data_received_cb.add_callback(StabPos_cbk)
     # stabPos.start()
 
-    scf.cf.log.add_config(stabAtt)
-    stabAtt.data_received_cb.add_callback(StabAtt_cbk)
-    stabAtt.start()
+    scf.cf.log.add_config(stabAttq)
+    stabAttq.data_received_cb.add_callback(StabAttq_cbk)
+    stabAttq.start()
+
+    scf.cf.log.add_config(stabAtte)
+    stabAtte.data_received_cb.add_callback(StabAtte_cbk)
+    stabAtte.start()
+
 
     # scf.cf.log.add_config(stabLvel)
     # stabLvel.data_received_cb.add_callback(StabLVel_cbk)
@@ -114,13 +121,13 @@ def start_state_rx(scf):
     # mot_req.data_received_cb.add_callback(MotReq_cbk)
     # mot_req.start()
     
-    scf.cf.log.add_config(mot_set)
-    mot_set.data_received_cb.add_callback(MotSet_cbk)
-    mot_set.start()
+    # scf.cf.log.add_config(mot_set)
+    # mot_set.data_received_cb.add_callback(MotSet_cbk)
+    # mot_set.start()
 
-    scf.cf.log.add_config(ctrl_req)
-    ctrl_req.data_received_cb.add_callback(CtrlPid_cbk)
-    ctrl_req.start()
+    # scf.cf.log.add_config(ctrl_req)
+    # ctrl_req.data_received_cb.add_callback(CtrlPid_cbk)
+    # ctrl_req.start()
 
 def StabZ_cbk(timestamp, data, logconf):
     '''Callback function to decode position data from stateEstimateZ group'''
@@ -150,11 +157,18 @@ def StabZ_cbk(timestamp, data, logconf):
 #     state_meas[1] = data['stateEstimate.y']
 #     state_meas[2] = data['stateEstimate.z']
 
-def StabAtt_cbk(timestamp, data, logconf):  
+def StabAttq_cbk(timestamp, data, logconf):  
     state_meas[3] = data['stateEstimate.qw']
     state_meas[4] = data['stateEstimate.qx']
     state_meas[5] = data['stateEstimate.qy']
     state_meas[6] = data['stateEstimate.qz'] 
+    print("quat",np.round(np.array([state_meas[3], state_meas[4], state_meas[5], state_meas[6]]), 5))
+
+def StabAtte_cbk(timestamp, data, logconf):  
+    att_eul[0] = data['stateEstimate.roll']
+    att_eul[1] = data['stateEstimate.pitch']
+    att_eul[2] = data['stateEstimate.yaw']
+    print("eul", np.round(np.array([att_eul[0], att_eul[1], att_eul[2]]),5))
 
 def CtrlPid_cbk(timestamp, data, logconf):
     Ctrl_rpyt[0] = data['controller.roll']

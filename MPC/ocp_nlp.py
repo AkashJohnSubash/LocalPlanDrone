@@ -10,11 +10,6 @@ def setup_nlp():
 
     dyn_fp = SysObj.ForwardDynamics()
 
-    # State, Control weight matrices
-    # TODO investigate effect of weights
-    Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 10) 
-    R = diagcat(0.5, 0.5, 0.5, 0.5)
-
     cost_fn = 0                  # cost function
     g = ST[:, 0] - P[:n_states]  # constraints in the equation
 
@@ -49,7 +44,7 @@ def setup_nlp():
 
     '''-----------------------Configure solver-----------------------------'''
 
-    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
+    opts = {'ipopt'     : { 'max_iter': 100, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
             'print_time': 0 }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
@@ -59,13 +54,12 @@ def setup_nlp():
 
     '''-----------------------Define NLP bounds-----------------------------'''
 
-
     # Bounds on decision variables
     lbx = DM.zeros((st_size + U_size, 1))
     ubx = DM.zeros((st_size + U_size, 1))
     # State bounds
-    lbx[0:  st_size: n_states] = 0;             ubx[0: st_size: n_states] = 2                 # x lower, upper bounds
-    lbx[1:  st_size: n_states] = 0;             ubx[1: st_size: n_states] = 2                 # y bounds
+    lbx[0:  st_size: n_states] = 0;             ubx[0: st_size: n_states] = 2                   # x lower, upper bounds
+    lbx[1:  st_size: n_states] = 0;             ubx[1: st_size: n_states] = 2                   # y bounds
     lbx[2:  st_size: n_states] = 0;             ubx[2: st_size: n_states] = 1.8                 # z bounds
     lbx[3:  st_size: n_states] = -1;            ubx[3:  st_size: n_states] = 1                  # qw bounds TODO find appropriate val
     lbx[4:  st_size: n_states] = -1;            ubx[4:  st_size: n_states] = 1                  # qx bounds
