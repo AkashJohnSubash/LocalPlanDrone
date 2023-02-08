@@ -49,7 +49,7 @@ def simulate3D(cat_ST, t):
     fig = plt.figure()
     #plt.ion()
     ax = Axes3D(fig, auto_add_to_figure=False)
-    ax.azim = -180
+    ax.azim = 0
     fig.add_axes(ax)
     
 

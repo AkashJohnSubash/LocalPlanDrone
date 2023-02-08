@@ -5,21 +5,21 @@ from casadi import *
 
 hznStep = 0.1                       # time between steps in seconds
 hznLen = 10                         # number of look ahead steps
-sim_time = 10                       # simulation time
+sim_time = 5                       # simulation time
 milestones = 5
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]
 w_max = pi/12  ;   w_min = -pi/12   #  [rad/s]
-del_rpm_max = 0.5                   #  [Krpm]
+del_rpm_max = 0.3                   #  [Krpm]
 
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,  0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([0,  0,  0.7,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([0.2,  0.2,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([0.5,  0.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2.3,  2.3,  2.3,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .1
 
 # Control
@@ -73,16 +73,17 @@ def quat2eul(qoid):
 
 def quat2rpy(qoid):
     ''' qoid -> [qw, qx, qy, qz]
-        reference math3d.h crazyflie-firmware
-        returns euler angles in degrees'''
+        returns euler angles in degrees
+        reference math3d.h crazyflie-firmware'''
 
     r	  =  atan2( 2 * (qoid[0]*qoid[1] + qoid[2]*qoid[3]), 1 - 2 * (qoid[1]**2 + qoid[2]**2 ))
-    p     =  asin( 2 *  (qoid[0]*qoid[2] - qoid[1]*qoid[3]))                
+    p     =  asin( 2 *  (qoid[0]*qoid[2] - qoid[1]*qoid[3]))          
     y	  =  atan2( 2 * (qoid[0]*qoid[3] + qoid[1]*qoid[2]), 1 - 2 * (qoid[2]**2 + qoid[3]**2 ))
 
     r_d = r * 180 / pi          # roll in degrees
     p_d = p * 180 / pi          # pitch in degrees
     y_d = y * 180 / pi          # yaw in degrees
+
     return [r_d, p_d, y_d]
 
 def eul2quat(eul):
@@ -132,13 +133,13 @@ def krpm2pwm( Krpm):
 def calc_thrust_setpoint(St_0, U_0):
     #TODO find documentation of this mapping, add to report 
     # euler in deg from q1,      q2,       q3,       q4
-    eul_deg = quat2eul([St_0[3], St_0[4], St_0[5], St_0[6]])
-    #eul_deg = quat2rpy([St_0[3], St_0[4], St_0[5], St_0[6]])
-    roll_x  = -eul_deg[0]                                           # Roll 
+    #eul_deg = quat2eul([St_0[3], St_0[4], St_0[5], St_0[6]])
+    eul_deg = quat2rpy([St_0[3], St_0[4], St_0[5], St_0[6]])
+    roll_x  = eul_deg[0]                                            # Roll 
     pitch_y  = eul_deg[1]                                           # Pitch
     thrust_z  = krpm2pwm((U_0[0] + U_0[1]+ U_0[2]+ U_0[3])/4)       # convert average prop RPM to PWM                              
     roll_c   = roll_x + ROLL_TRIM                                   # TODO calibrate !
-    pitch_c  = pitch_y + PITCH_TRIM                                 # corrected values
+    pitch_c  = -(pitch_y + PITCH_TRIM)                                 # corrected values
     thrust_c = int(min(max(thrust_z, 0.0), 60000))
     yawrate = St_0[12] * 180 /pi                                    # r in deg
     # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
