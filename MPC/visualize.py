@@ -15,6 +15,7 @@ def plot_dataset(cat_U, timestamp):
     w2 = np.ravel(cat_U[n_controls+1 : -4: n_controls])
     w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
     w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
+    #print(w1)
     
     axsU[0].stairs(w1, timestamp, label='w1 (rad/s)', color='b' )
     axsU[1].stairs(w2, timestamp, label='w2 (rad/s)', color='g')

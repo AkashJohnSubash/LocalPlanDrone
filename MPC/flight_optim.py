@@ -41,6 +41,7 @@ def simulation():
         args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
                                 reshape(u0, n_controls*hznLen, 1))
 
+        # Solve the NLP using IPOPT
         sol = solver( x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
 
         X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
@@ -48,27 +49,29 @@ def simulation():
 
         # Append data to plotting list
         cat_states = np.dstack(( cat_states, DM2Arr(X0)))
-        cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
+        cat_controls = np.vstack( (cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
 
         # Save state and Control for next iter
         u0 = np.copy(u)
         state_init = np.copy(X0[:,1])
 
-        # t0, state_init, u0 = Sys.TimeStep(hznStep, t0, state_init, u, dynamics_fp)
         X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
 
         t2 = time()                                                     # stop iter timer
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
         
-        print(f'Soln Timestep {mpc_iter}: {u[:,0]} {round(t0,3)} s\t', end="")             # State {X0[:, 0]}')
+                   # State {X0[:, 0]}')
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 0], u[:, 0])
-        setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
+        print(f'Soln Timestep {mpc_iter}: {u[:, 0]}')#, {np.array([roll, pitch, yawRate, thrust_norm], dtype=object)} {round(t0,3)} s\t', end="")  
+        #setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
 
     '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
-
+    cat_controls = reshape(cat_controls, 1, (mpc_iter+1)*n_controls)
+    print("DEBUG ", cat_controls)
     main_loop_time = time()
+    print(cat_controls, np.shape(cat_controls))
     ss_error_mod = norm_2(state_init - state_target)
     print('\n\n')
     print('Total time: ', main_loop_time - main_loop)
