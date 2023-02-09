@@ -6,7 +6,7 @@ def setup_nlp():
     
     # generates optimal trajectory using an NMPC cost function
     SysObj = Sys()
-    ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
+    ST = SysObj.St;   U = SysObj.U;   P = SysObj.P;  ST_T = SysObj.St_T
 
     dyn_fp = SysObj.ForwardDynamics()
 
@@ -17,6 +17,7 @@ def setup_nlp():
     '''-----------Formulate OCP as inequality constrained NLP------------'''
 
     # Obtain optimized and estimated state from MS, RK (Symbolic)
+    # Stage cost
     for k in range(hznLen):
         st = ST[:, k]
         U_k = U[:, k]
@@ -25,7 +26,7 @@ def setup_nlp():
         st_est = Pred.rk4_integrator(dyn_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
         g = vertcat(g, st_opt - st_est)                                  # predicted state (MS) constraint
 
-    # Path constraint equations (obstacle avoidance)
+    #Path constraint equations (obstacle avoidance)
     for k in range(hznLen +1): 
         g = vertcat(g , (-sqrt( ((ST[0,k] - obst_st[0]) ** 2)  +
                                 ((ST[1,k] - obst_st[1]) ** 2)  + 
@@ -33,9 +34,6 @@ def setup_nlp():
 
     # Thrust smoothening constraint
     for k in range(hznLen-1):
-        # avg_rpm_next =  (U[0,k+1] + U[1,k+1] + U[2,k+1] + U[3,k+1])/4
-        # avg_rpm  = (U[0,k] + U[1,k] + U[2,k] + U[3,k])/4
-        # g = vertcat(g , ( avg_rpm_next - avg_rpm))                                      # difference of thrust average (delta_thrust)
         rpm_diff = (U[:, k+1] - U[:, k])
         g = vertcat(g , (rpm_diff.T @ rpm_diff)/4)
 
@@ -45,7 +43,7 @@ def setup_nlp():
     '''-----------------------Configure solver-----------------------------'''
 
 
-    opts = {'ipopt'     : { 'max_iter': 100, 'print_level': 0, 'acceptable_tol': 1e-5, 'acceptable_obj_change_tol': 1e-6},
+    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
             'print_time': 0 }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
@@ -90,8 +88,8 @@ def setup_nlp():
     lbg[st_size : st_size + (hznLen+1)]   = -inf; ubg[st_size  : st_size+ (hznLen+1)] = 0                
 
     # Smoothening constraints Delta_rpm_avg < Delta_rpm_max
-    lbg[st_size + (hznLen+1) : st_size + (hznLen+1) + (hznLen-1)] = -del_rpm_max;   
-    ubg[st_size + (hznLen+1) : st_size + (hznLen+1) + (hznLen-1)] = del_rpm_max
+    lbg[st_size + (hznLen+1): st_size  + (hznLen+1) + (hznLen-1)] = -del_rpm_max
+    ubg[st_size + (hznLen+1): st_size + (hznLen+1) + (hznLen-1)] = del_rpm_max
 
     args = {    'lbg': lbg,                    # constraints lower bound
                 'ubg': ubg,                    # constraints upper bound

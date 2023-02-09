@@ -25,7 +25,7 @@ class SysDyn():
         self.St = SX.sym('St', self.stSize, hznLen + 1)
         self.U = SX.sym('U', self.ctrlSize, hznLen)
         self.P = SX.sym('P', self.stSize + self.stSize)
-        
+        self.St_T = SX.sym('St_T', self.stSize, 1)              # Terminal state
         self.hov_w = np.sqrt((mq*g0)/(4*Ct))
 
     def ForwardDynamics(self):
