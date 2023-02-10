@@ -69,8 +69,7 @@ def simulation():
         #setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
 
     '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
-    print(np.shape(X0))
-    print(np.shape(u))
+
     main_loop_time = time()
     ss_error_mod = norm_2(state_init - state_target)
     print('\n\n')

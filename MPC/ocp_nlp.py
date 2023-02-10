@@ -13,7 +13,6 @@ def setup_nlp():
     cost_fn = 0                  # cost function
     g = ST[:, 0] - P[:n_states]  # constraints in the equation
 
-    # try:
     '''-----------Formulate OCP as inequality constrained NLP------------'''
 
     # Obtain optimized and estimated state from MS, RK (Symbolic)
@@ -26,11 +25,10 @@ def setup_nlp():
         st_est = Pred.rk4_integrator(dyn_fp, st, U_k, hznStep)           # generates discrete system dynamics model from TF
         g = vertcat(g, st_opt - st_est)                                  # predicted state (MS) constraint
 
-    #Path constraint equations (obstacle avoidance)
+    # Path constraint equations (obstacle avoidance)
     for k in range(hznLen +1): 
-        g = vertcat(g , (-sqrt( ((ST[0,k] - obst_st[0]) ** 2)  +
-                                ((ST[1,k] - obst_st[1]) ** 2)  + 
-                                ((ST[2,k] - obst_st[2]) ** 2)) + rob_rad + obst_rad))                           # obstacle with same radius as bot
+        euclid = (ST[0: 3, k] - obst_st[0:3])
+        g = vertcat(g , (-(euclid.T @ euclid) + rob_rad + obst_rad))                           # obstacle with same radius as bot
 
     # Thrust smoothening constraint
     for k in range(hznLen-1):
@@ -43,7 +41,7 @@ def setup_nlp():
     '''-----------------------Configure solver-----------------------------'''
 
 
-    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 3, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
+    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
             'print_time': 0 }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
