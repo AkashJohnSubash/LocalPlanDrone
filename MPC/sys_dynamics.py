@@ -25,7 +25,6 @@ class SysDyn():
         self.St = SX.sym('St', self.stSize, hznLen + 1)
         self.U = SX.sym('U', self.ctrlSize, hznLen)
         self.P = SX.sym('P', self.stSize + self.stSize)
-        self.St_T = SX.sym('St_T', self.stSize, 1)              # Terminal state
         self.hov_w = np.sqrt((mq*g0)/(4*Ct))
 
     def ForwardDynamics(self):
@@ -54,26 +53,14 @@ class SysDyn():
         
         f_op = vertcat(dxq, dyq, dzq, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
         fp = Function('f', [state, controls], [f_op])
-        return fp 
-
-    def TimeStep(step_horizon, t0, state, u, dyn_fp):
-        '''Discrete time step of forward dynamics'''
-
-        f_value = dyn_fp(state, u[:, 0])
-        next_state = DM.full(state + (step_horizon * f_value)) # TODO Check if linearization is still valid ?
-        #print(f'\nDEBUG3 {t0}, next state :\n{next_state}, \nControl :\n{u[:, 0]}' )
-
-        t0 = t0 + step_horizon
-        u0 = horzcat( u[:, 1:], reshape(u[:, -1], -1, 1))
-
-        return t0, next_state, u0
+        return fp
 
 class Predictor:
 
-    def rk4_integrator(Dyn_fp, state, ctrl, step_horizon):
+    def rk4_integrator(Dyn_fp, state, ctrl, Dt):
         k1 = Dyn_fp(state, ctrl)
-        k2 = Dyn_fp(state + step_horizon/2*k1, ctrl)
-        k3 = Dyn_fp(state + step_horizon/2*k2, ctrl)
-        k4 = Dyn_fp(state + step_horizon * k3, ctrl)
-        st_next_RK4 = state + (step_horizon / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+        k2 = Dyn_fp(state + Dt * k1/2, ctrl)
+        k3 = Dyn_fp(state + Dt * k2/2, ctrl)
+        k4 = Dyn_fp(state + Dt * k3, ctrl)
+        st_next_RK4 = state + (Dt /6) * (k1 + 2 * k2 + 2 * k3 + k4)
         return st_next_RK4

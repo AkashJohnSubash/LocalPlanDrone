@@ -34,7 +34,7 @@ def simulation():
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
     print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
     main_loop = time()                                                      # return time in sec
-    while (norm_2(state_init[0:3] - state_target[0:3]) > 1e-1) and (mpc_iter * hznStep < sim_time):
+    while (norm_2(state_init - state_target) > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()                                                         # start iter timer                          
                                                                                                                        
         args['p'] = vertcat( state_init,  state_target)                     # optimization variable current state
@@ -65,7 +65,7 @@ def simulation():
 
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 1], u[:, 1])
         print(f'Soln Timestep {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} ms\t')
-        # print(f'State {mpc_iter}: {X0[:, 1]}')  
+        #print(f'State {mpc_iter}: {X0[:, 1]}')  
         #setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
 
     '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
@@ -126,8 +126,8 @@ def onboard(scf, realtime):
         print("Execute HOVER ")
         
         #sleep(3)                            
-        state_pred0 = np.copy(state_meas)
-        while (norm_2(state_init[0:3] - state_target[0:3]) > 1e-1) and (mpc_iter * hznStep < sim_time):
+        #state_pred0 = np.copy(state_meas)
+        while (norm_2(state_init[0:3] - state_target[0:3]) > 1e-1) and (mpc_iter  < sim_Smax):
             #print(f"REQ RPYT {mpc_iter}: {req_rpyt}")
             #print(f"SET RPYT {mpc_iter}: {set_rpyt}")
             #print(f"SET RPYT {mpc_iter-1}: {set_rpyt}\n")
@@ -193,7 +193,7 @@ def onboard(scf, realtime):
                 #print(f"pwm set{i}: {pwm_set}\n")
                 print(f"Offline MPC Setpoint {i+1}: {setpoints[i, 0]}, {setpoints[i, 1]}, {setpoints[i, 2]}, {setpoints[i, 3]}")
                 scf.cf.commander.send_setpoint(setpoints[i, 0], setpoints[i, 1], setpoints[i, 2], setpoints[i, 3])
-                sleep(0.1)
+                sleep(0.025)
         print("\nExecute HOVER2 \n")
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, hover_U)
         scf.cf.commander.send_setpoint(0, 0, 0, thrust_norm)

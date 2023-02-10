@@ -3,23 +3,23 @@ from casadi import *
 
 '''----------------OCP parammeters-----------------'''
 
-hznStep = 0.1                       # time between steps in seconds
-hznLen = 10                         # number of look ahead steps
-sim_time = 10                       # simulation time
-milestones = 5
+
+stepTime = 0.01                        # time between steps in seconds
+hznLen = 30                            # number of look ahead steps
+sim_Smax = 7 / stepTime                 # simulation time
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]
-w_max = pi/12  ;   w_min = -pi/12   #  [rad/s]
-del_rpm_max = 0.3                   #  [Krpm]
+w_max = pi/3  ;   w_min = -pi/3   #  [rad/s]
+del_rpm_max = 1                   #  [Krpm]
 
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,  0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([0.5,  0.5,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([2,  2,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([0.5,  0.5,  0.75,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .1
 
 # Control
@@ -27,14 +27,14 @@ n_controls = 4
 
 '------------------------CF parameters--------------------------------'
 
-g0  = 9.8066     # [m.s^2] accerelation of gravity
+g0  = 9.80665     # [m.s^2] accerelation of gravity
 mq  = 32e-3      # [kg] total mass (with Lighthouse deck) TODO : test 32e-3? (TT), 33
 Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
-Iyy = 1.436e-5   # [kg.m^2] Inertia moment around y-axis  TODO : test 1.436e-5? (TT)
+Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis  TODO : test 1.436e-5? (TT)
 Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis  TODO : verify
 Cd  = 7.9379e-06 # [N/krpm^2] Drag coef                   TODO : verify  
 Ct  = 3.25e-4    # [N/krpm^2] Thrust coef                 TODO : verify
-dq  = 92e-3      # [m] distance between motors' center    TODO : test 92e-3 (firmware and measured), 65
+dq  = 65e-3      # [m] distance between motors' center    TODO : test 92e-3 (firmware and measured), 65
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
 max_krpm = 22    # [krpm]
 hover_krpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000 #[krpm]
@@ -47,10 +47,9 @@ PITCH_TRIM = 0
 
 Q = diagcat(10, 10, 10, 1, 1, 1, 0.5, 5, 5, 5, 0.5, 0.5, 0.25) 
 R = diagcat(0.5, 0.5, 0.5, 0.5)
-
-#_f = diagcat(100, 100, 100, 1, 1, 1, 0.5, 5, 5, 5, 0.5, 0.5, 0.25) 
-# Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 10) 
-# R = diagcat(0.06, 0.06, 0.06, 0.06)
+ 
+# Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 1e-5) 
+# R = diagcat(0.5, 0.5, 0.5, 0.5)
 '''------------------------------------------------------------------'''
 
 def DM2Arr(dm):
@@ -134,7 +133,6 @@ def krpm2pwm( Krpm):
 
 
 def calc_thrust_setpoint(St_0, U_0):
-    #TODO find documentation of this mapping, add to report 
     # euler in deg from q1,      q2,       q3,       q4
     #eul_deg = quat2eul([St_0[3], St_0[4], St_0[5], St_0[6]])
     eul_deg = quat2rpy([St_0[3], St_0[4], St_0[5], St_0[6]])
@@ -143,7 +141,7 @@ def calc_thrust_setpoint(St_0, U_0):
     pitch_y  = eul_deg[1]                                           # Pitch
     thrust_z  = krpm2pwm((U_0[0] + U_0[1]+ U_0[2]+ U_0[3])/4)       # convert average prop RPM to PWM                              
     roll_c   = roll_x + ROLL_TRIM                                   # TODO calibrate !
-    pitch_c  = -(pitch_y + PITCH_TRIM)                                 # corrected values
+    pitch_c  = (pitch_y + PITCH_TRIM)                                 # corrected values
     thrust_c = int(min(max(thrust_z, 0.0), 60000))
     yawrate = St_0[12] * 180 /pi                                    # r in deg/s
     # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
