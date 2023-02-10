@@ -34,7 +34,7 @@ def simulation():
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
     print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
     main_loop = time()                                                      # return time in sec
-    while (norm_2(state_init - state_target) > 1e-1) and (mpc_iter * hznStep < sim_time):
+    while (norm_2(state_init[0:3] - state_target[0:3]) > 1e-1) and (mpc_iter * hznStep < sim_time):
         t1 = time()                                                         # start iter timer                          
                                                                                                                        
         args['p'] = vertcat( state_init,  state_target)                     # optimization variable current state
@@ -52,26 +52,26 @@ def simulation():
         cat_controls = np.vstack( (cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
 
-        # Save state and Control for next iter
+        # Save state and Control for next iteration
+        t0 = t0 + hznLen
         u0 = np.copy(u)
         state_init = np.copy(X0[:,1])
-
         X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
 
         t2 = time()                                                     # stop iter timer
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
         
-                   # State {X0[:, 0]}')
-        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 0], u[:, 0])
-        print(f'Soln Timestep {mpc_iter}: {u[:, 0]}')#, {np.array([roll, pitch, yawRate, thrust_norm], dtype=object)} {round(t0,3)} s\t', end="")  
+
+        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 1], u[:, 1])
+        print(f'Soln Timestep {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} ms\t')
+        # print(f'State {mpc_iter}: {X0[:, 1]}')  
         #setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
 
     '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
-    cat_controls = reshape(cat_controls, 1, (mpc_iter+1)*n_controls)
-    print("DEBUG ", cat_controls)
+    print(np.shape(X0))
+    print(np.shape(u))
     main_loop_time = time()
-    print(cat_controls, np.shape(cat_controls))
     ss_error_mod = norm_2(state_init - state_target)
     print('\n\n')
     print('Total time: ', main_loop_time - main_loop)
@@ -150,13 +150,14 @@ def onboard(scf, realtime):
             cat_controls = np.vstack(( cat_controls, DM2Arr(u[:, 0])))
             t_step = np.append(t_step, t0)
 
-            # Save state and Control for next iter
+            # Save state and Control for next iteration
+            t0 = t0 + hznLen
             u0 = np.copy(u)
             state_init = np.copy(X0[:,1])
             
             X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))
             # print(f'Soln Timestep : {round(t0,3)} s\r', end="")             # State {X0[:, 0]}')
-            roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 0], u[:, 0])
+            roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u[:, 0])
             #print(f"DEBUG Measured Setpoint :ROLL, PITCH, YAWRATE, RPM}")
             #print(f"Controls {mpc_iter}: {u[:, 0]}")
 

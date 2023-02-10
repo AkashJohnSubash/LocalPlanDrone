@@ -16,10 +16,10 @@ del_rpm_max = 0.3                   #  [Krpm]
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,  0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([0.5,  0.5,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([0.5,  0.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2,  2,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .1
 
 # Control
@@ -145,6 +145,6 @@ def calc_thrust_setpoint(St_0, U_0):
     roll_c   = roll_x + ROLL_TRIM                                   # TODO calibrate !
     pitch_c  = -(pitch_y + PITCH_TRIM)                                 # corrected values
     thrust_c = int(min(max(thrust_z, 0.0), 60000))
-    yawrate = St_0[12] * 180 /pi                                    # r in deg
+    yawrate = St_0[12] * 180 /pi                                    # r in deg/s
     # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
     return roll_c, pitch_c, yawrate, thrust_c

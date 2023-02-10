@@ -43,7 +43,7 @@ def setup_nlp():
     '''-----------------------Configure solver-----------------------------'''
 
 
-    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
+    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 3, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
             'print_time': 0 }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)

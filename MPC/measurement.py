@@ -33,18 +33,6 @@ def start_state_rx(scf):
 
     '''Define variables in group'''
 
-    #Log data from the CF stabilizer via Radio
-    stabZ = LogConfig(name='StabZ', period_in_ms=50)
-    stabZ.add_variable('stateEstimateZ.x', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.y', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.z', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.quat', 'uint32_t')
-    stabZ.add_variable('stateEstimateZ.vx', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.vy', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.vz', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.rateRoll', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.ratePitch', 'int16_t')
-    stabZ.add_variable('stateEstimateZ.rateYaw', 'int16_t')
     
     # stabPos = LogConfig(name='StabPos', period_in_ms=100)
     # stabPos.add_variable('stateEstimate.x', 'float')
@@ -106,10 +94,6 @@ def start_state_rx(scf):
 
     '''register callbacks for group'''
 
-    scf.cf.log.add_config(stabZ)
-    stabZ.data_received_cb.add_callback(StabZ_cbk)
-    stabZ.start()
-    
     # scf.cf.log.add_config(stabPos)
     # stabPos.data_received_cb.add_callback(StabPos_cbk)
     # stabPos.start()
@@ -150,6 +134,24 @@ def start_state_rx(scf):
     # scf.cf.log.add_config(ctrl_set)
     # ctrl_set.data_received_cb.add_callback(CtrlPidSet_cbk)
     # ctrl_set.start()
+
+    #Log data from the CF stabilizer via Radio
+    stabZ = LogConfig(name='StabZ', period_in_ms=50)
+    stabZ.add_variable('stateEstimateZ.x', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.y', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.z', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.quat', 'uint32_t')
+    stabZ.add_variable('stateEstimateZ.vx', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.vy', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.vz', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.rateRoll', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.ratePitch', 'int16_t')
+    stabZ.add_variable('stateEstimateZ.rateYaw', 'int16_t')
+
+    scf.cf.log.add_config(stabZ)
+    stabZ.data_received_cb.add_callback(StabZ_cbk)
+    stabZ.start()
+    
 
 ''''Deine Callback functions below'''
 
