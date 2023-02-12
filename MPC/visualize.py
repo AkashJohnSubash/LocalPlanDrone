@@ -60,8 +60,8 @@ def simulate3D(cat_ST, t):
 
     # min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 0.5
     # max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 0.5
-    cage_x = [-0.5, 2.3]  #dimensions in meters
-    cage_y = [-0.5, 2.3]  #dimensions in meters
+    cage_x = [-0.5, 1.5]  #dimensions in meters
+    cage_y = [-0.5, 1.5]  #dimensions in meters
     cage_z = [0, 2]       #dimensions in meters
     ax.set_xlim3d(left = cage_x[0], right = cage_x[1])
     ax.set_ylim3d(bottom = cage_y[0], top = cage_y[1])

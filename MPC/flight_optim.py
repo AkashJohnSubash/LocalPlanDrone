@@ -23,6 +23,7 @@ def simulation():
     X0 = repmat(state_init, 1, hznLen+1)                    # initial state full
 
     mpc_iter = 0
+    state_error = norm_2(state_init[0:3] - state_target[0:3])
     cat_states = DM2Arr(X0)
     cat_controls = DM2Arr(u0[:, 0])
     times = np.array([[0]])
@@ -34,7 +35,7 @@ def simulation():
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
     print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
     main_loop = time()                                                      # return time in sec
-    while (norm_2(state_init - state_target) > 1e-1) and (mpc_iter < sim_Smax):
+    while (state_error > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()                                                         # start iter timer                          
                                                                                                                        
         args['p'] = vertcat( state_init,  state_target)                     # optimization variable current state
@@ -61,6 +62,7 @@ def simulation():
         t2 = time()                                                     # stop iter timer
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
+        state_error = norm_2(state_init[0:3] - state_target[0:3])
         
 
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 1], u[:, 1])
@@ -71,7 +73,7 @@ def simulation():
     '''---------------------Execute trajectory with CF setpoint tracking--------------------------'''
 
     main_loop_time = time()
-    ss_error_mod = norm_2(state_init - state_target)
+    ss_error_mod = state_error
     print('\n\n')
     print('Total time: ', main_loop_time - main_loop)
     print('Avg iteration time: ', np.array(times).mean() * 1000, 'ms')

@@ -38,7 +38,7 @@ def setup_nlp():
     '''-----------------------Configure solver-----------------------------'''
 
 
-    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
+    opts = {'ipopt'     : { 'max_iter': 500, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
             'print_time': 0 }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
@@ -52,9 +52,9 @@ def setup_nlp():
     lbx = DM.zeros((st_size + U_size, 1))
     ubx = DM.zeros((st_size + U_size, 1))
     # State bounds
-    lbx[0:  st_size: n_states] = -1;             ubx[0: st_size: n_states] = 2                   # x lower, upper bounds
-    lbx[1:  st_size: n_states] = -1;             ubx[1: st_size: n_states] = 2                   # y bounds
-    lbx[2:  st_size: n_states] = -1;             ubx[2: st_size: n_states] = 1.8                 # z bounds
+    lbx[0:  st_size: n_states] = -1;             ubx[0: st_size: n_states] = 1.5                   # x lower, upper bounds
+    lbx[1:  st_size: n_states] = -1;             ubx[1: st_size: n_states] = 1.5                   # y bounds
+    lbx[2:  st_size: n_states] = 0;             ubx[2: st_size: n_states] = 2                 # z bounds
     lbx[3:  st_size: n_states] = 0;             ubx[3:  st_size: n_states] = 1                  # qw bounds TODO find appropriate val
     lbx[4:  st_size: n_states] = -1;            ubx[4:  st_size: n_states] = 1                  # qx bounds
     lbx[5:  st_size: n_states] = -1;            ubx[5:  st_size: n_states] = 1                  # qy bounds

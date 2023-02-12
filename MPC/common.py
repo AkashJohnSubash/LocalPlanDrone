@@ -4,22 +4,22 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 
-stepTime = 0.01                        # time between steps in seconds
-hznLen = 30                            # number of look ahead steps
-sim_Smax = 7 / stepTime                 # simulation time
+stepTime = 0.015                        # time between steps in seconds
+hznLen = 15                            # number of look ahead steps
+sim_Smax = 10 / stepTime                 # simulation time
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]
-w_max = pi/3  ;   w_min = -pi/3   #  [rad/s]
-del_rpm_max = 1                   #  [Krpm]
+w_max = pi/6  ;   w_min = -pi/6   #  [rad/s]
+del_rpm_max = 0.5                   #  [Krpm]
 
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,  0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([1.5,  1.5,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([0.5,  0.5,  0.75,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([1.8,  1.8,  1.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .1
 
 # Control
@@ -28,13 +28,13 @@ n_controls = 4
 '------------------------CF parameters--------------------------------'
 
 g0  = 9.80665     # [m.s^2] accerelation of gravity
-mq  = 32e-3      # [kg] total mass (with Lighthouse deck) TODO : test 32e-3? (TT), 33
+mq  = 32e-3      # [kg] total mass (with Lighthouse deck)
 Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
-Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis  TODO : test 1.436e-5? (TT)
-Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis  TODO : verify
-Cd  = 7.9379e-06 # [N/krpm^2] Drag coef                   TODO : verify  
-Ct  = 3.25e-4    # [N/krpm^2] Thrust coef                 TODO : verify
-dq  = 65e-3      # [m] distance between motors' center    TODO : test 92e-3 (firmware and measured), 65
+Iyy = 1.436e-5   # [kg.m^2] Inertia moment around y-axis
+Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
+Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
+Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
+dq  = 92e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
 max_krpm = 22    # [krpm]
 hover_krpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000 #[krpm]
@@ -45,11 +45,11 @@ PITCH_TRIM = 0
 '''-------------------------Weights---------------------------------'''
 # State, Control weighting for MPC cost function : TODO tune
 
-Q = diagcat(10, 10, 10, 1, 1, 1, 0.5, 5, 5, 5, 0.5, 0.5, 0.25) 
-R = diagcat(0.5, 0.5, 0.5, 0.5)
- 
-# Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 1e-5) 
+# Q = diagcat(10, 10, 10, 1, 1, 1, 0.5, 5, 5, 5, 0.5, 0.5, 0.25) 
 # R = diagcat(0.5, 0.5, 0.5, 0.5)
+ 
+Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 1e-5) 
+R = diagcat(0.06, 0.06, 0.06, 0.06)
 '''------------------------------------------------------------------'''
 
 def DM2Arr(dm):
@@ -76,7 +76,6 @@ def quat2rpy(qoid):
     ''' qoid -> [qw, qx, qy, qz]
         returns euler angles in degrees
         reference math3d.h crazyflie-firmware'''
-    #print(qoid)
 
     r	  =  atan2( 2 * (qoid[0]*qoid[1] + qoid[2]*qoid[3]), 1 - 2 * (qoid[1]**2 + qoid[2]**2 ))
     p     =  asin( 2 *  (qoid[0]*qoid[2] - qoid[1]*qoid[3]))          
@@ -116,20 +115,20 @@ def krpm2pwm( Krpm):
 
     return pwm
 
-# def quatdecompress(comp, q_4):
-# 	mask = int((1 << 9) - 1)
-# 	i_largest = comp >> 30
-# 	sum_squares = float(0)
-# 	for i in range(3, -1):
-# 		if (i != i_largest):
-# 			mag = comp & mask
-# 			negbit = (comp >> 9) & 0x1
-# 			comp = comp >> 10
-# 			q_4[i] = float(sqrt(0.5)) * float(mag) / mask
-# 			if negbit == 1:
-# 				q_4[i] = -q_4[i]
-# 			sum_squares += q_4[i] * q_4[i]
-# 	q_4[i_largest] = float(sqrt(1 - sum_squares))
+def quatdecompress(comp, q_4):
+	mask = int((1 << 9) - 1)
+	i_largest = comp >> 30
+	sum_squares = float(0)
+	for i in range(3, -1):
+		if (i != i_largest):
+			mag = comp & mask
+			negbit = (comp >> 9) & 0x1
+			comp = comp >> 10
+			q_4[i] = float(sqrt(0.5)) * float(mag) / mask
+			if negbit == 1:
+				q_4[i] = -q_4[i]
+			sum_squares += q_4[i] * q_4[i]
+	q_4[i_largest] = float(sqrt(1 - sum_squares))
 
 
 def calc_thrust_setpoint(St_0, U_0):
