@@ -6,12 +6,9 @@ import argparse
 from cflib.utils import uri_helper
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.log import LogConfig #TODO remove ?
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 
-
 from common import *
-import measurement
 
 
 def argparse_init():
@@ -20,7 +17,6 @@ def argparse_init():
     '''
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--lab", action='store_true', help="Laborotory flight")
-    parser.add_argument("-rt", "--RealTime", action='store_true', help="MPC computation in flight time ")
     return parser
 
 if __name__ == '__main__':
@@ -34,8 +30,7 @@ if __name__ == '__main__':
         uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E007')
         print("Lab flight")
         with SyncCrazyflie(uri, cf = Crazyflie(rw_cache='./cache')) as scf:
-            measurement.init_drone(scf)
-            cat_U, t_step, cat_ST, times_ST = flight_optim.onboard(scf, realtime = args.RealTime)
+            cat_U, t_step, cat_ST, times_ST = flight_optim.onboard(scf)
     else:
         print("Simulated flight")
         cat_U, t_step, cat_ST, times_ST = flight_optim.simulation()

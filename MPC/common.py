@@ -4,23 +4,23 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 
-stepTime = 0.015                        # time between steps in seconds
-hznLen = 15                            # number of look ahead steps
+stepTime = 0.05                        # time between steps in seconds
+hznLen = 10                            # number of look ahead steps
 sim_Smax = 10 / stepTime                 # simulation time
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]
 w_max = pi/6  ;   w_min = -pi/6   #  [rad/s]
-del_rpm_max = 0.5                   #  [Krpm]
+del_rpm_max = 0.8                   #  [Krpm]
 
 # State
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0,  0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1.5,  1.5,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+targ_st = np.array([0.5,  0.5,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
-obst_st = np.array([1.8,  1.8,  1.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
-obst_rad = .1
+obst_st = np.array([2.5,  2.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_rad = .05
 
 # Control
 n_controls = 4
@@ -28,13 +28,13 @@ n_controls = 4
 '------------------------CF parameters--------------------------------'
 
 g0  = 9.80665     # [m.s^2] accerelation of gravity
-mq  = 32e-3      # [kg] total mass (with Lighthouse deck)
+mq  = 31e-3      # [kg] total mass (with Lighthouse deck)
 Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
-Iyy = 1.436e-5   # [kg.m^2] Inertia moment around y-axis
+Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
 Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
 Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
 Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
-dq  = 92e-3      # [m] distance between motors' center
+dq  = 65e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
 max_krpm = 22    # [krpm]
 hover_krpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000 #[krpm]
@@ -48,7 +48,7 @@ PITCH_TRIM = 0
 # Q = diagcat(10, 10, 10, 1, 1, 1, 0.5, 5, 5, 5, 0.5, 0.5, 0.25) 
 # R = diagcat(0.5, 0.5, 0.5, 0.5)
  
-Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 4, 1e-5, 1e-5, 1e-5) 
+Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 1, 1e-5, 1e-5, 1e-5) 
 R = diagcat(0.06, 0.06, 0.06, 0.06)
 '''------------------------------------------------------------------'''
 
@@ -115,20 +115,23 @@ def krpm2pwm( Krpm):
 
     return pwm
 
-def quatdecompress(comp, q_4):
-	mask = int((1 << 9) - 1)
-	i_largest = comp >> 30
-	sum_squares = float(0)
-	for i in range(3, -1):
-		if (i != i_largest):
-			mag = comp & mask
-			negbit = (comp >> 9) & 0x1
-			comp = comp >> 10
-			q_4[i] = float(sqrt(0.5)) * float(mag) / mask
-			if negbit == 1:
-				q_4[i] = -q_4[i]
-			sum_squares += q_4[i] * q_4[i]
-	q_4[i_largest] = float(sqrt(1 - sum_squares))
+M_SQRT1_2=0.70710678118654752440
+def quatDecompress(comp):
+    q_4 = np.zeros(4)
+    mask = np.uint32(1 << 9) - 1
+    i_largest = (comp >> 30)
+    sum_squares = float(0)
+    for i in range(3, -1, -1):
+        if (i != i_largest):
+            mag = np.uint32(comp & mask)
+            negbit = np.uint32((comp >> 9) & 0x1)
+            comp = comp >> 10
+            q_4[i] = M_SQRT1_2 * float(mag) / mask
+            if negbit == 1:
+                q_4[i] = -q_4[i]
+            sum_squares += q_4[i] * q_4[i]
+    q_4[i_largest] = float(sqrt(1 - sum_squares))
+    return q_4
 
 
 def calc_thrust_setpoint(St_0, U_0):
@@ -145,3 +148,7 @@ def calc_thrust_setpoint(St_0, U_0):
     yawrate = St_0[12] * 180 /pi                                    # r in deg/s
     # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
     return roll_c, pitch_c, yawrate, thrust_c
+
+def get_error2(diff):
+    error = sqrt(diff.T @ diff)
+    return error

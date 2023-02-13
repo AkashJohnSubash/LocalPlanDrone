@@ -5,13 +5,13 @@ import sys
 from cflib.crazyflie.log import LogConfig
 from threading import Event
 
-from common import init_st
+from common import init_st, quatDecompress
 
 deck_attached_event = Event()
 state_meas =  np.zeros(13)
 set_rpyt = np.zeros(4)
 req_rpyt = np.zeros(4)
-#att_cmp = np.zeros(1)
+att_quat = np.zeros(4)
 pwm_set =  np.zeros(4)
 pwm_req =  np.zeros(4)
 att_eul = np.zeros(3)
@@ -44,16 +44,16 @@ def start_state_rx(scf):
     # Kal.add_variable('kalman.stateY', 'float')
     # Kal.add_variable('kalman.stateZ', 'float')
     
-    # stabAttq = LogConfig(name='StabAtt', period_in_ms=100)
-    # stabAttq.add_variable('stateEstimate.qw', 'float')
-    # stabAttq.add_variable('stateEstimate.qx', 'float')
-    # stabAttq.add_variable('stateEstimate.qy', 'float')
-    # stabAttq.add_variable('stateEstimate.qz', 'float')
+    stabAttq = LogConfig(name='StabAtt', period_in_ms=50)
+    stabAttq.add_variable('stateEstimate.qw', 'float')
+    stabAttq.add_variable('stateEstimate.qx', 'float')
+    stabAttq.add_variable('stateEstimate.qy', 'float')
+    stabAttq.add_variable('stateEstimate.qz', 'float')
 
-    stabAtte = LogConfig(name='StabAtt', period_in_ms=50)
-    stabAtte.add_variable('stateEstimate.roll', 'float')
-    stabAtte.add_variable('stateEstimate.pitch', 'float')
-    stabAtte.add_variable('stateEstimate.yaw', 'float')
+    # stabAtte = LogConfig(name='StabAtt', period_in_ms=50)
+    # stabAtte.add_variable('stateEstimate.roll', 'float')
+    # stabAtte.add_variable('stateEstimate.pitch', 'float')
+    # stabAtte.add_variable('stateEstimate.yaw', 'float')
     
     # stabLvel = LogConfig(name='StabPos', period_in_ms=100)
     # stabLvel.add_variable('stateEstimate.vx', 'float')
@@ -78,17 +78,17 @@ def start_state_rx(scf):
     # mot_req.add_variable('motor.m4req', 'int32_t')
 
     
-    ctrl_req = LogConfig(name='CtrlReq', period_in_ms=20)
-    ctrl_req.add_variable('controller.roll', 'float')
-    ctrl_req.add_variable('controller.pitch', 'float')
-    ctrl_req.add_variable('controller.yawRate', 'float')
-    ctrl_req.add_variable('controller.actuatorThrust', 'float')
+    # ctrl_req = LogConfig(name='CtrlReq', period_in_ms=20)
+    # ctrl_req.add_variable('controller.roll', 'float')
+    # ctrl_req.add_variable('controller.pitch', 'float')
+    # ctrl_req.add_variable('controller.yawRate', 'float')
+    # ctrl_req.add_variable('controller.actuatorThrust', 'float')
 
-    ctrl_set = LogConfig(name='CtrlSet', period_in_ms=20)
-    ctrl_set.add_variable('controller.cmd_roll', 'float')
-    ctrl_set.add_variable('controller.cmd_pitch', 'float')
-    ctrl_set.add_variable('controller.cmd_yaw', 'float')
-    ctrl_set.add_variable('controller.cmd_thrust', 'float')
+    # ctrl_set = LogConfig(name='CtrlSet', period_in_ms=20)
+    # ctrl_set.add_variable('controller.cmd_roll', 'float')
+    # ctrl_set.add_variable('controller.cmd_pitch', 'float')
+    # ctrl_set.add_variable('controller.cmd_yaw', 'float')
+    # ctrl_set.add_variable('controller.cmd_thrust', 'float')
     # ctrl_set.add_variable('controller.r_roll', 'float')
     # ctrl_set.add_variable('controller.r_pitch', 'float')
 
@@ -106,9 +106,9 @@ def start_state_rx(scf):
     # stabAttq.data_received_cb.add_callback(StabAttq_cbk)
     # stabAttq.start()
 
-    scf.cf.log.add_config(stabAtte)
-    stabAtte.data_received_cb.add_callback(StabAtte_cbk)
-    stabAtte.start()
+    # scf.cf.log.add_config(stabAtte)
+    # stabAtte.data_received_cb.add_callback(StabAtte_cbk)
+    # stabAtte.start()
 
 
     # scf.cf.log.add_config(stabLvel)
@@ -162,8 +162,6 @@ def StabZ_cbk(timestamp, data, logconf):
     state_meas[1] = data['stateEstimateZ.y']/1000
     state_meas[2] = data['stateEstimateZ.z']/1000
     
-    #att_cmp[0] = data['stateEstimateZ.quat']
-
     state_meas[7] = data['stateEstimateZ.vx']/1000
     state_meas[8] = data['stateEstimateZ.vy']/1000
     state_meas[9] = data['stateEstimateZ.vz']/1000
@@ -172,6 +170,11 @@ def StabZ_cbk(timestamp, data, logconf):
     state_meas[11] = data['stateEstimateZ.ratePitch']/1000
     state_meas[12] = data['stateEstimateZ.rateYaw']/1000
     
+    att_quat = np.copy(quatDecompress(np.uint32(data['stateEstimateZ.quat'])))
+    state_meas[3] = att_quat[3]                         # qx
+    state_meas[4] = att_quat[0]                         # qy
+    state_meas[5] = att_quat[1]                         # qz
+    state_meas[6] = att_quat[2]                         # qw
     # q_d = np.zeros(4)
     #q = np.uint32(data['stateEstimateZ.quat'])
     #quatdecompress(q, q_d)
@@ -191,32 +194,32 @@ def StabZ_cbk(timestamp, data, logconf):
 #     print(f'Kalman  pos:{state_meas[0]}, {state_meas[1]}, {state_meas[2]}')
 
 
-# def StabAttq_cbk(timestamp, data, logconf):  
-#     state_meas[3] = data['stateEstimate.qw']
-#     state_meas[4] = data['stateEstimate.qx']
-#     state_meas[5] = data['stateEstimate.qy']
-#     state_meas[6] = data['stateEstimate.qz'] 
-#     #print("quat",np.round(np.array([state_meas[3], state_meas[4], state_meas[5], state_meas[6]]), 5))
+def StabAttq_cbk(timestamp, data, logconf):  
+    att_quat[0] = data['stateEstimate.qx']
+    att_quat[1] = data['stateEstimate.qy']
+    att_quat[2] = data['stateEstimate.qz']
+    att_quat[3] = data['stateEstimate.qw'] 
+    #print("quat",np.round(np.array([state_meas[3], state_meas[4], state_meas[5], state_meas[6]]), 5))
 
-def StabAtte_cbk(timestamp, data, logconf):  
-    att_eul[0] = data['stateEstimate.roll']
-    att_eul[1] = data['stateEstimate.pitch']
-    att_eul[2] = data['stateEstimate.yaw']
-    #print("eul", np.round(np.array([att_eul[0], att_eul[1], att_eul[2]]),5))
+# def StabAtte_cbk(timestamp, data, logconf):  
+#     att_eul[0] = data['stateEstimate.roll']
+#     att_eul[1] = data['stateEstimate.pitch']
+#     att_eul[2] = data['stateEstimate.yaw']
+#     #print("eul", np.round(np.array([att_eul[0], att_eul[1], att_eul[2]]),5))
 
-def CtrlPidReq_cbk(timestamp, data, logconf):
-    req_rpyt[0] = data['controller.roll']
-    req_rpyt[1] = data['controller.pitch']
-    req_rpyt[2] = data['controller.yawRate']
-    req_rpyt[3] = data['controller.actuatorThrust']
-    print("REQ RPYT :", req_rpyt)
+# def CtrlPidReq_cbk(timestamp, data, logconf):
+#     req_rpyt[0] = data['controller.roll']
+#     req_rpyt[1] = data['controller.pitch']
+#     req_rpyt[2] = data['controller.yawRate']
+#     req_rpyt[3] = data['controller.actuatorThrust']
+#     print("REQ RPYT :", req_rpyt)
 
-def CtrlPidSet_cbk(timestamp, data, logconf):
-    set_rpyt[0] = data['controller.cmd_roll']
-    set_rpyt[1] = data['controller.cmd_pitch']
-    set_rpyt[2] = data['controller.cmd_yaw']
-    set_rpyt[3] = data['controller.cmd_thrust']
-    print("SET RPYT :", set_rpyt)
+# def CtrlPidSet_cbk(timestamp, data, logconf):
+#     set_rpyt[0] = data['controller.cmd_roll']
+#     set_rpyt[1] = data['controller.cmd_pitch']
+#     set_rpyt[2] = data['controller.cmd_yaw']
+#     set_rpyt[3] = data['controller.cmd_thrust']
+#     print("SET RPYT :", set_rpyt)
 
 # def StabLVel_cbk(timestamp, data, logconf):    
 #     state_meas[7] = data['stateEstimate.vx']
