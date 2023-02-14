@@ -16,7 +16,7 @@ pwm_set =  np.zeros(4)
 pwm_req =  np.zeros(4)
 att_eul = np.zeros(3)
 
-def init_drone(scf):
+def init_comms(scf):
     scf.cf.param.add_update_callback(group='deck', name='bcLighthouse4', cb=deck_light_cbk)
     start_state_rx(scf)
     sleep(1)

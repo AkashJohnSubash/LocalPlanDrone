@@ -28,7 +28,6 @@ def setup_nlp():
         euclid = (ST[0: 3, k] - obst_st[0:3])
         g = vertcat(g , ((euclid.T @ euclid) -( rob_rad + obst_rad)))          
 
-
     OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
     nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
     '''-----------------------Configure solver-----------------------------'''
@@ -51,10 +50,10 @@ def setup_nlp():
     lbx[0:  st_size: n_states] = -1;            ubx[0: st_size: n_states] = 1.5                   # x lower, upper bounds
     lbx[1:  st_size: n_states] = -1;            ubx[1: st_size: n_states] = 1.5                   # y bounds
     lbx[2:  st_size: n_states] = 0;             ubx[2: st_size: n_states] = 2                 # z bounds
-    lbx[3:  st_size: n_states] = -1;            ubx[3:  st_size: n_states] = 1                  # qw bounds TODO find appropriate val
-    lbx[4:  st_size: n_states] = -1;            ubx[4:  st_size: n_states] = 1                  # qx bounds
-    lbx[5:  st_size: n_states] = -1;            ubx[5:  st_size: n_states] = 1                  # qy bounds
-    lbx[6:  st_size: n_states] = -1;            ubx[6:  st_size: n_states] = 1                  # qz bounds
+    lbx[3:  st_size: n_states] = -inf;            ubx[3:  st_size: n_states] = inf                  # qw bounds TODO find appropriate val
+    lbx[4:  st_size: n_states] = -inf;            ubx[4:  st_size: n_states] = inf                  # qx bounds
+    lbx[5:  st_size: n_states] = -inf;            ubx[5:  st_size: n_states] = inf                  # qy bounds
+    lbx[6:  st_size: n_states] = -inf;            ubx[6:  st_size: n_states] = inf                  # qz bounds
     lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
     lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
     lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
@@ -69,13 +68,13 @@ def setup_nlp():
 
     # Bounds on constraints
                     #MS,        Path,       Smoothen
-    lbg = DM.zeros((st_size + (hznLen+1)))# + (hznLen-1), 1))
-    ubg = DM.zeros((st_size + (hznLen+1)))# + (hznLen-1), 1))
+    lbg = DM.zeros((st_size + (hznLen+1)))
+    ubg = DM.zeros((st_size + (hznLen+1)))
 
-    # MS constr: pred_st - optim_st = 0
+    # MS constraints: pred_st - optim_st = 0
     lbg[0 : st_size] = 0;                         ubg[0        : st_size] = 0
 
-    # Path constr: 0 < Euclidian - sum(radii) < inf
+    # Path constraints: 0 < Euclidian - sum(radii) < inf
     lbg[st_size : st_size + (hznLen+1)]   = 0; ubg[st_size  : st_size+ (hznLen+1)] = inf
 
     args = {    'lbg': lbg,                    # constraints lower bound
