@@ -29,7 +29,7 @@ def setup_nlp():
         g = vertcat(g , ((euclid.T @ euclid) -( rob_rad + obst_rad)))          
 
     OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
-    nlp_prob = { 'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
+    nlp_prob = {'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
     '''-----------------------Configure solver-----------------------------'''
 
 
