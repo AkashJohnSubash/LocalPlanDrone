@@ -5,7 +5,7 @@ from casadi import *
 
 
 stepTime = 0.02                        # time between steps in seconds
-hznLen = 10                            # number of look ahead steps
+hznLen = 15                            # number of look ahead steps
 sim_Smax = 10 / stepTime                 # simulation time
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]

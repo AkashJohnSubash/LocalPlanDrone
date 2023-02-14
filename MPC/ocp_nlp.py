@@ -34,7 +34,10 @@ def setup_nlp():
 
 
     opts = {'ipopt'     : { 'max_iter': 1000,'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
-            'print_time': 0 , 'jit': False}
+            'print_time': 0 , 
+            'jit' : True,
+            'jit_options' : {'verbose': True, 'flags' : ['-O3']}, #"compiler": "gcc" ,
+            'jit_cleanup' : True}
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
 
