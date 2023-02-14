@@ -33,8 +33,13 @@ def setup_nlp():
     '''-----------------------Configure solver-----------------------------'''
 
 
-    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6},
-            'print_time': 0 }
+    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6}, #'hessian_approximation': 'limited-memory'},
+            'print_time': 0,
+            'jit' : True,
+            'jit_options' : {'flags' : ['-O3'], 'verbose': True},
+            'jit_cleanup' : True
+            #'compiler': 'shell' , 
+            }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
 
@@ -50,10 +55,10 @@ def setup_nlp():
     lbx[0:  st_size: n_states] = -1;            ubx[0: st_size: n_states] = 1.5                   # x lower, upper bounds
     lbx[1:  st_size: n_states] = -1;            ubx[1: st_size: n_states] = 1.5                   # y bounds
     lbx[2:  st_size: n_states] = 0;             ubx[2: st_size: n_states] = 2                 # z bounds
-    lbx[3:  st_size: n_states] = -inf;            ubx[3:  st_size: n_states] = inf                  # qw bounds TODO find appropriate val
-    lbx[4:  st_size: n_states] = -inf;            ubx[4:  st_size: n_states] = inf                  # qx bounds
-    lbx[5:  st_size: n_states] = -inf;            ubx[5:  st_size: n_states] = inf                  # qy bounds
-    lbx[6:  st_size: n_states] = -inf;            ubx[6:  st_size: n_states] = inf                  # qz bounds
+    lbx[3:  st_size: n_states] = -inf;          ubx[3:  st_size: n_states] = inf                  # qw bounds TODO find appropriate val
+    lbx[4:  st_size: n_states] = -inf;          ubx[4:  st_size: n_states] = inf                  # qx bounds
+    lbx[5:  st_size: n_states] = -inf;          ubx[5:  st_size: n_states] = inf                  # qy bounds
+    lbx[6:  st_size: n_states] = -inf;          ubx[6:  st_size: n_states] = inf                  # qz bounds
     lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
     lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
     lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
