@@ -37,7 +37,7 @@ def setup_nlp():
             'print_time': 0,
             'jit' : True,
             'jit_options' : {'flags' : ['-O3'], 'verbose': True},
-            'jit_cleanup' : True
+            'jit_cleanup' : True,
             #'compiler': 'shell' , 
             }
 
