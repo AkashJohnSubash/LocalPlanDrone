@@ -136,7 +136,7 @@ def start_state_rx(scf):
     # ctrl_set.start()
 
     #Log data from the CF stabilizer via Radio
-    stabZ = LogConfig(name='StabZ', period_in_ms=50)
+    stabZ = LogConfig(name='StabZ', period_in_ms=20)
     stabZ.add_variable('stateEstimateZ.x', 'int16_t')
     stabZ.add_variable('stateEstimateZ.y', 'int16_t')
     stabZ.add_variable('stateEstimateZ.z', 'int16_t')

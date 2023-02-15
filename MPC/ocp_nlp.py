@@ -1,6 +1,8 @@
 from casadi import *
 from common import *
 from sys_dynamics import SysDyn as Sys, Predictor as Pred
+from time import  time
+import subprocess
  
 def setup_nlp():
     
@@ -33,15 +35,19 @@ def setup_nlp():
     '''-----------------------Configure solver-----------------------------'''
 
 
-    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6, 'linear_solver' :'mumps'}, #'hessian_approximation': 'limited-memory'},
+    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8, 'acceptable_obj_change_tol': 1e-6,}, # 'linear_solver' :'mumps','hessian_approximation': 'limited-memory'},
             'print_time': 0, 
-            'jit' : True,
-            'jit_options' : {'flags' : ['-O3'], 'verbose': True},
+            'jit' : False,
+            'jit_options' : { 'verbose': True, 'flags' : ['03']},
             'jit_cleanup' : True,
-            #'compiler': 'shell' , 
             }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
+    # gen_opts = {}
+    # solver.generate_dependencies("nlp.c", gen_opts)
+    # start = time()
+    # subprocess.Popen("gcc -O3 nlp.c -o nlp.dll", shell=True).wait()
+    # print("Compile time was: {}".format(time()-start))
     #solver.print_options()
     st_size = n_states * (hznLen+1)
     U_size = n_controls * hznLen

@@ -6,7 +6,7 @@ from casadi import *
 
 stepTime = 0.02                        # time between steps in seconds
 hznLen = 10                            # number of look ahead steps
-sim_Smax = 10 / stepTime                 # simulation time
+sim_Smax = 2 / stepTime                 # simulation time
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]
 w_max = pi/4  ;   w_min = -pi/4   #  [rad/s]
@@ -16,7 +16,7 @@ del_rpm_max = 0.8                   #  [Krpm]
 n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([0.5,  0.5,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.05                               # radius of the robot sphere
 
 obst_st = np.array([2.5,  2.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
@@ -28,7 +28,7 @@ n_controls = 4
 '------------------------CF parameters--------------------------------'
 
 g0  = 9.80665     # [m.s^2] accerelation of gravity
-mq  = 32e-3      # [kg] total mass (with Lighthouse deck)
+mq  = 31e-3      # [kg] total mass (with Lighthouse deck)
 Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
 Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
 Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
@@ -49,7 +49,7 @@ PITCH_TRIM = 0
 # R = diagcat(0.5, 0.5, 0.5, 0.5)
  
 Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 1, 1e-5, 1e-5, 1e-5) 
-R = diagcat(0.08, 0.08, 0.08, 0.08)
+R = diagcat(0.1, 0.1, 0.1, 0.1)
 '''------------------------------------------------------------------'''
 
 def DM2Arr(dm):
