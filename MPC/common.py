@@ -17,9 +17,9 @@ n_states = 13
                    #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
 targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-rob_rad = 0.05                               # radius of the robot sphere
+rob_rad = 0.04                               # radius of the robot sphere
 
-obst_st = np.array([2.5,  2.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([0.4,  0.4,  0.3,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .05
 
 # Control
@@ -49,7 +49,7 @@ PITCH_TRIM = 0
 # R = diagcat(0.5, 0.5, 0.5, 0.5)
  
 Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 1, 1e-5, 1e-5, 1e-5) 
-R = diagcat(.5, 0.5, 0.5, 0.5)
+R = diagcat(.8, 0.8, 0.8, 0.8)
 '''------------------------------------------------------------------'''
 
 def DM2Arr(dm):

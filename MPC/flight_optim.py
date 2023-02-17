@@ -24,7 +24,7 @@ def simulation():
 
     mpc_iter = 0
     
-    state_error = norm_2(state_init - state_target)
+    state_error = norm_2(state_init[0:3] - state_target[0:3])
     cat_states = DM2Arr(X0)
     cat_controls = DM2Arr(u0[:, 0])
     times = np.array([[0]])
@@ -36,7 +36,7 @@ def simulation():
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
     print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
     main_loop = time()                                                      # return time in sec
-    while (state_error > 1e-1) and (mpc_iter < sim_Smax):
+    while (state_error > 3e-1) and (mpc_iter < sim_Smax):
         t1 = time()                                                         # start iter timer                          
                                                                                                                        
         args['p'] = vertcat( state_init,  state_target)                     # optimization variable current state
@@ -69,7 +69,7 @@ def simulation():
         t2 = time()
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
-        state_error = norm_2(state_init- state_target)
+        state_error = norm_2(state_init[0:3]- state_target[0:3])
 
     main_loop_time = time()
     ss_error_mod = state_error
@@ -100,7 +100,7 @@ def onboard(scf):
 
     mpc_iter = 0
     
-    state_error = norm_2(state_init - state_target)
+    state_error = norm_2(state_init[0:3] - state_target[0:3])
     cat_states = DM2Arr(X0)
     cat_controls = DM2Arr(u0[:, 0])
     times = np.array([[0]])
@@ -127,7 +127,7 @@ def onboard(scf):
     # Stage 2 : Perform overtake
     main_loop = time()
     state_current = np.copy(state_init)
-    while (state_error > 1e-1) and (mpc_iter  < sim_Smax):
+    while (state_error > 3e-1) and (mpc_iter  < sim_Smax):
 
         t1 = time()                                                  # start iter timer          
         args['p'] = vertcat( state_current,  state_target)                                                                                            
@@ -137,7 +137,7 @@ def onboard(scf):
 
         sol = solver( x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
 
-        print(f"  Measured state, ctrl {mpc_iter -1}: \n {np.round(state_meas, 4)} at {round(t0,3)}" ) #\n {np.round(state_init, 4)} 
+        #print(f"  Measured state, ctrl {mpc_iter -1}: \n {np.round(state_meas, 4)} at {round(t0,3)}" ) #\n {np.round(state_init, 4)} 
 
         X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
         u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
@@ -158,12 +158,12 @@ def onboard(scf):
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
         state_current = DM(np.copy(state_meas))
-        state_error = norm_2(state_meas - state_target)
+        state_error = norm_2(state_init[0:3] - state_target[0:3])
 
         # Issue setpoint command (RPYT)
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 0], u[:, 0])
         scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust_norm)
-        print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
+        #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
         #setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
     
     # main_loop_time = time()                                   
