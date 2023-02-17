@@ -37,9 +37,9 @@ def setup_nlp():
     opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8,
                              'acceptable_obj_change_tol': 1e-6,},                            # 'linear_solver' :'mumps','hessian_approximation': 'limited-memory'},
             'print_time': 0, 
-            'jit' : True,
+            'jit' : False,
             'compiler' : 'shell',
-            'jit_options' : { 'verbose': True, 'flags' : ['03']},                                           # ,'
+            'jit_options' : { 'verbose': True, 'flags' : ['-O3']  },                                        # ,'
             'jit_cleanup' : True,
             
             }
