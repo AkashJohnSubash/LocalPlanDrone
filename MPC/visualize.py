@@ -36,12 +36,12 @@ def simulate3D(cat_ST, t):
         # update path
         path.set_data(cat_ST[0:2, 0, :interval])
         path.set_3d_properties(cat_ST[2, 0, :interval])
-
+    
         # update horizon
         horizon.set_data(cat_ST[0, :, interval], cat_ST[1, :, interval])
         horizon.set_3d_properties(cat_ST[2, :, interval])
         
-        # update bot sphere (Not working, TODO find solution) 
+        # update bot sphere position, orientation 
         sphere_i._offsets3d = (cat_ST[0, 0, :interval], cat_ST[1, 0, :interval], cat_ST[2, 0, :interval])
 
         return path, horizon, sphere_i
@@ -69,11 +69,10 @@ def simulate3D(cat_ST, t):
 
     #Sphere around bot
     sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 8000, c='b', alpha=0.2)
-    
-    # TODO understand quiver orientation calculation (3, 4, 5 parameters) 
-    # ax.quiver(init_st[0], init_st[1], init_st[2], 1, 0, 0, color='b', linestyle='dashed')
-    # ax.quiver(init_st[0], init_st[1], init_st[2], 0, 1, 0, color='r', linestyle='dashed')
-    # ax.quiver(init_st[0], init_st[0], init_st[2], 0, 0, 1, color='y', linestyle='dashed')
+       # TODO understand quiver orientation calculation (3, 4, 5 parameters) 
+    #bot_x = ax.quiver(init_st[0], init_st[1], init_st[2], 1, 0, 0, color='b', length=0.2)
+    #bot_y = ax.quiver(init_st[0], init_st[1], init_st[2], 0, 1, 0, color='r', length=0.2, normalize=True)
+    #bot_z = ax.quiver(init_st[0], init_st[0], init_st[2], 0, 0, 1, color='y', length=0.2, normalize=True)
 
     # Sphere around obstacle position
     sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 8000, c='r', alpha=0.2)

@@ -4,9 +4,9 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 
-stepTime = 0.02                        # time between steps in seconds
+stepTime = 0.01                        # time between steps in seconds
 hznLen = 10                            # number of look ahead steps
-sim_Smax = 5 / stepTime                 # simulation time
+sim_Smax = 10 / stepTime                 # simulation time
 
 v_max = 0.2    ;   v_min = -0.2     #  [m/s]
 w_max = pi/4  ;   w_min = -pi/4   #  [rad/s]
@@ -29,8 +29,8 @@ n_controls = 4
 
 g0  = 9.80665     # [m.s^2] accerelation of gravity
 mq  = 31e-3      # [kg] total mass (with Lighthouse deck)
-Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
-Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
+Ixx = 1.395e-5   # [kg.m^2] Inertial moment around x-axis
+Iyy = 1.395e-5   # [kg.m^2] Inertial moment around y-axis
 Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
 Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
 Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
