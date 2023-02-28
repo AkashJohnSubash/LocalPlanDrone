@@ -31,9 +31,9 @@ class SysDyn():
         '''Describes forward Dynamics equations'''
 
         # Rate of change of position
-        dxq = u*(2*q1**2 + 2*q2**2 - 1) - v*(2*q1*q4 - 2*q2*q3)     + w*(2*q1*q3 + 2*q2*q4)
-        dyq = u*(2*q1*q4 + 2*q2*q3)     + v*(2*q1**2 + 2*q3**2 - 1) - w*(2*q1*q2 - 2*q3*q4)
-        dzq = -u*(2*q1*q3 - 2*q2*q4)    + v*(2*q1*q2 + 2*q3*q4)     + w*(2*q1**2 + 2*q4**2 - 1) 
+        dxq = u*(2*(q1**2 + q2**2)- 1)  + v*2*(q2*q3 - q1*q4)           + w*2*(q1*q3 + q2*q4)
+        dyq = u*2*(q1*q4 + q2*q3)       + v*(2*(q1**2 + q3**2) - 1)     + w*2*(q3*q4 - q1*q2)
+        dzq = u*2*(q2*q4 - q1*q3)       + v*(q1*q2 + q3*q4)             + w*(2*(q1**2 + q4**2) - 1) 
         
         # Rate of change of angles (in qaurternion)
         dq1 = - (q2*p)/2 - (q3*q)/2 - (q4*r)/2
