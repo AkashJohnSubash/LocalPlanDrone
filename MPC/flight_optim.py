@@ -164,19 +164,7 @@ def onboard(scf):
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 0], u[:, 0])
         scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust_norm)
         #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
-        #setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
-    
-    # main_loop_time = time()                                   
-
-    # print("Execute offline setpoints")
-    # for i in range(0 ,len(setpoints[:, 0])):
-    #     print(f"Offline MPC Setpoint {i}: {setpoints[i, 0]}, {setpoints[i, 1]}, {setpoints[i, 2]}, {setpoints[i, 3]}")
-    #     scf.cf.commander.send_setpoint(setpoints[i, 0], setpoints[i, 1], setpoints[i, 2], setpoints[i, 3])
-    #     sleep(0.040)
-    #     #print(f"State {np.round(state_meas, 4)}")
-    #     #print(f"Quaternion {att_quat}")
-    # print("\nExecute HOVER2 \n")
-    
+      
     # Stage 3 : Perform landing sequence
     mc.land()
     sleep(3)

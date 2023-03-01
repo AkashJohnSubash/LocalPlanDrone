@@ -58,8 +58,6 @@ def simulate3D(cat_ST, t):
     # horizon
     horizon, = ax.plot([], [],'x-g', alpha=0.5)
 
-    # min_scale = min(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) - 0.5
-    # max_scale = max(init_st[0], init_st[1], init_st[2], targ_st[0], targ_st[1], init_st[2]) + 0.5
     cage_x = [-0.5, 1.5]  #dimensions in meters
     cage_y = [-0.5, 1.5]  #dimensions in meters
     cage_z = [0, 2]       #dimensions in meters
@@ -69,19 +67,12 @@ def simulate3D(cat_ST, t):
 
     #Sphere around bot
     sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 8000, c='b', alpha=0.2)
-       # TODO understand quiver orientation calculation (3, 4, 5 parameters) 
-    #bot_x = ax.quiver(init_st[0], init_st[1], init_st[2], 1, 0, 0, color='b', length=0.2)
-    #bot_y = ax.quiver(init_st[0], init_st[1], init_st[2], 0, 1, 0, color='r', length=0.2, normalize=True)
-    #bot_z = ax.quiver(init_st[0], init_st[0], init_st[2], 0, 0, 1, color='y', length=0.2, normalize=True)
 
     # Sphere around obstacle position
     sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 8000, c='r', alpha=0.2)
     
     # Sphere around target point
     sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 8000, c='g', alpha=0.2)
-    # ax.quiver(targ_st[0], targ_st[1], targ_st[2], 1, 0, 0, color='b', linestyle='dashed')
-    # ax.quiver(targ_st[0], targ_st[1], targ_st[2], 0, 1, 0, color='r', linestyle='dashed')
-    # ax.quiver(targ_st[0], targ_st[1], targ_st[2], 0, 0, 1, color='y', linestyle='dashed')
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
