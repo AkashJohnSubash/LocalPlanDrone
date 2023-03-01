@@ -15,7 +15,7 @@ def setup_nlp():
     U_hov = np.array([hover_krpm, hover_krpm, hover_krpm, hover_krpm])
 
     '''-----------Formulate OCP as inequality constrained NLP------------'''
-    # MPC cost, MS state constraint
+    # MPC cost, Initial value constraint
     for k in range(hznLen):
         st = ST[:, k]
         U_k = U[:, k] 
@@ -31,17 +31,17 @@ def setup_nlp():
 
     OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
     nlp_prob = {'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
+
     '''-----------------------Configure solver-----------------------------'''
 
 
-    opts = {'ipopt'     : { 'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8,
-                             'acceptable_obj_change_tol': 1e-6, 'linear_solver' :'mumps'},
+    opts = {'ipopt'     : {'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8,
+                           'acceptable_obj_change_tol': 1e-6, 'linear_solver' :'mumps'},
             'print_time': 0, 
             'jit' : False,
             'compiler' : 'shell',
             'jit_options' : { 'verbose': True, 'flags' : ['-01']},
             'jit_cleanup' : True,
-            
             }
 
     solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
@@ -56,15 +56,15 @@ def setup_nlp():
     # State bounds
     lbx[0:  st_size: n_states] = -1;            ubx[0: st_size: n_states] = 1.5                   # x lower, upper bounds
     lbx[1:  st_size: n_states] = -1;            ubx[1: st_size: n_states] = 1.5                   # y bounds
-    lbx[2:  st_size: n_states] = 0;             ubx[2: st_size: n_states] = 2                 # z bounds
-    lbx[3:  st_size: n_states] = -inf;          ubx[3:  st_size: n_states] = inf                  # qw bounds TODO find appropriate val
+    lbx[2:  st_size: n_states] = 0;             ubx[2: st_size: n_states] = 2                     # z bounds
+    lbx[3:  st_size: n_states] = -inf;          ubx[3:  st_size: n_states] = inf                  # qw bounds
     lbx[4:  st_size: n_states] = -inf;          ubx[4:  st_size: n_states] = inf                  # qx bounds
     lbx[5:  st_size: n_states] = -inf;          ubx[5:  st_size: n_states] = inf                  # qy bounds
     lbx[6:  st_size: n_states] = -inf;          ubx[6:  st_size: n_states] = inf                  # qz bounds
-    lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max              # u bounds
-    lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max              # v bounds
+    lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max                # u bounds
+    lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max                # v bounds
     lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max              # w bounds
-    lbx[10: st_size: n_states] = w_min;         ubx[10: st_size: n_states] = w_max              # p bounds TODO find appropriate val
+    lbx[10: st_size: n_states] = w_min;         ubx[10: st_size: n_states] = w_max              # p bounds
     lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max              # q bounds
     lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max              # r bounds
     # Control bounds
@@ -74,11 +74,11 @@ def setup_nlp():
     lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_krpm        # w4 bounds
 
     # Bounds on constraints
-                    #MS,        Path,       Smoothen
+    # Initial value,   Path,
     lbg = DM.zeros((st_size )+ (hznLen+1))
     ubg = DM.zeros((st_size )+ (hznLen+1))
 
-    # MS constraints: pred_st - optim_st = 0
+    # Initial value constraints: pred_st - optim_st = 0
     lbg[0 : st_size] = 0;                         ubg[0        : st_size] = 0
 
     # Path constraints: 0 < Euclidian - sum(radii) < inf

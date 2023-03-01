@@ -4,22 +4,23 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 
-stepTime = 0.01                        # time between steps in seconds
-hznLen = 10                            # number of look ahead steps
-sim_Smax = 10 / stepTime                 # simulation time
+stepTime = 0.01                         # time between steps in seconds
+hznLen = 10                             # number of look ahead steps
+sim_Smax = 10 / stepTime                # simulation time
 
-v_max = 0.2    ;   v_min = -0.2     #  [m/s]
-w_max = pi/4  ;   w_min = -pi/4   #  [rad/s]
-del_rpm_max = 0.8                   #  [Krpm]
+v_max = 0.2    ;   v_min = -0.2         #  [m/s]
+w_max = pi/4  ;   w_min = -pi/4         #  [rad/s]
+del_rpm_max = 0.8                       #  [Krpm]
 
 # State
 n_states = 13
-                   #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
+
+#x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
 targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-rob_rad = 0.04                               # radius of the robot sphere
+rob_rad = 0.04                               # radius of the drone sphere
 
-obst_st = np.array([0.4,  0.4,  0.3,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2.4,  2.4,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .05
 
 # Control
@@ -43,10 +44,7 @@ ROLL_TRIM  = 0
 PITCH_TRIM = 0
 
 '''-------------------------Weights---------------------------------'''
-# State, Control weighting for MPC cost function : TODO tune
-
-# Q = diagcat(10, 10, 10, 1, 1, 1, 0.5, 5, 5, 5, 0.5, 0.5, 0.25) 
-# R = diagcat(0.5, 0.5, 0.5, 0.5)
+# State, Control weighting for MPC cost function
  
 Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 1, 1e-5, 1e-5, 1e-5) 
 R = diagcat(.8, 0.8, 0.8, 0.8)
@@ -142,8 +140,8 @@ def calc_thrust_setpoint(St_0, U_0):
     roll_x  = eul_deg[0]                                            # Roll 
     pitch_y  = eul_deg[1]                                           # Pitch
     thrust_z  = krpm2pwm((U_0[0] + U_0[1]+ U_0[2]+ U_0[3])/4)       # convert average prop RPM to PWM                              
-    roll_c   = roll_x + ROLL_TRIM                                   # TODO calibrate !
-    pitch_c  = (pitch_y + PITCH_TRIM)                                 # corrected values
+    roll_c   = roll_x + ROLL_TRIM
+    pitch_c  = (pitch_y + PITCH_TRIM)                               # corrected values
     thrust_c = int(min(max(thrust_z, 0.0), 60000))
     yawrate = St_0[12] * 180 /pi                                    # r in deg/s
     # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
