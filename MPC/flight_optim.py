@@ -119,7 +119,7 @@ def onboard(scf):
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
     setpoints = [0, 0, 0, thrust_norm]
 
-    # Unlock thrust protection
+    # Unlock thrust protection and hover
     scf.cf.commander.send_setpoint(0, 0, 0, 0)
     sleep(0.01)
     scf.cf.commander.send_setpoint(0, 0, 0, thrust_norm)

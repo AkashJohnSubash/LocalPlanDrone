@@ -9,12 +9,7 @@ from common import init_st, quatDecompress
 
 deck_attached_event = Event()
 state_meas =  np.zeros(13)
-set_rpyt = np.zeros(4)
-req_rpyt = np.zeros(4)
 att_quat = np.zeros(4)
-pwm_set =  np.zeros(4)
-pwm_req =  np.zeros(4)
-att_eul = np.zeros(3)
 
 def init_comms(scf):
     scf.cf.param.add_update_callback(group='deck', name='bcLighthouse4', cb=deck_light_cbk)
@@ -26,7 +21,7 @@ def deck_light_cbk(_, value_str):
     if value:
         deck_attached_event.set()
     else:
-        print('Lighthouse deck is NOT attached!')
+        print('NO deck attached! Either lighthouse/ multiranger needed')
         sys.exit(1)
 
 def start_state_rx(scf):
