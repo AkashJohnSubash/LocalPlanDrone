@@ -10,19 +10,23 @@ def plot_dataset(cat_U, timestamp):
     ''' cat_U       -> intial value of each solution in the control history
         timestamp   -> time at each computed solution '''
     # Plot control
-    figU, axsU  = plt.subplots(4, 1, figsize=(7, 15))    
+    figU, axsU  = plt.subplots(1, 1, figsize=(7, 15))    
     w1 = np.ravel(cat_U[n_controls   : -4: n_controls])   # excluding init, final
     w2 = np.ravel(cat_U[n_controls+1 : -4: n_controls])
     w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
     w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
+
+    axsU.stairs(w1, timestamp/stepTime, label='w1 (rad/s)', color='b' )
+    axsU.stairs(w2, timestamp/stepTime, label='w2 (rad/s)', color='g')
+    axsU.stairs(w3, timestamp/stepTime, label='w3 (rad/s)', color='y' )
+    axsU.stairs(w4, timestamp/stepTime, label='w4 (rad/s)', color='r')
     
-    axsU[0].stairs(w1, timestamp, label='w1 (rad/s)', color='b' )
-    axsU[1].stairs(w2, timestamp, label='w2 (rad/s)', color='g')
-    axsU[2].stairs(w3, timestamp, label='w3 (rad/s)', color='y' )
-    axsU[3].stairs(w4, timestamp, label='w4 (rad/s)', color='r')
-    axsU[0].set_title('Control Inputs')
-    for ax in axsU:
-         ax.legend()
+    axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
+
+
+    axsU.set_title('Control inputs')
+    axsU.set_xlabel('MPC iterations')
+    axsU.legend()
     plt.show()
     
 def simulate3D(cat_ST, t):
@@ -49,7 +53,8 @@ def simulate3D(cat_ST, t):
     fig = plt.figure()
     #plt.ion()
     ax = Axes3D(fig, auto_add_to_figure=False)
-    ax.azim = 0
+    ax.azim = -25
+    ax.elev = 15
     fig.add_axes(ax)
     
 

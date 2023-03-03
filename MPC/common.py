@@ -4,9 +4,9 @@ from casadi import *
 '''----------------OCP parammeters-----------------'''
 
 
-stepTime = 0.01                         # time between steps in seconds
+stepTime = 0.02                         # time between steps in seconds
 hznLen = 10                             # number of look ahead steps
-sim_Smax = 10 / stepTime                # simulation time
+sim_Smax = 5 / stepTime                # simulation time
 
 v_max = 0.2    ;   v_min = -0.2         #  [m/s]
 w_max = pi/4  ;   w_min = -pi/4         #  [rad/s]
@@ -20,7 +20,7 @@ init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.04                               # radius of the drone sphere
 
-obst_st = np.array([2.4,  2.4,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([.3,  0.8,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .05
 
 # Control
