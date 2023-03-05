@@ -6,7 +6,7 @@ from casadi import *
 
 stepTime = 0.02                         # time between steps in seconds
 hznLen = 10                             # number of look ahead steps
-sim_Smax = 5 / stepTime                # simulation time
+sim_Smax = 7 / stepTime                # simulation time
 
 v_max = 0.2    ;   v_min = -0.2         #  [m/s]
 w_max = pi/4  ;   w_min = -pi/4         #  [rad/s]
@@ -20,7 +20,7 @@ init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.04                               # radius of the drone sphere
 
-obst_st = np.array([.3,  0.8,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([2.4,  2.3,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .05
 
 # Control
@@ -115,6 +115,7 @@ def krpm2pwm( Krpm):
 
 M_SQRT1_2=0.70710678118654752440
 def quatDecompress(comp):
+    
     q_4 = np.zeros(4)
     mask = np.uint32(1 << 9) - 1
     i_largest = (comp >> 30)
@@ -129,6 +130,7 @@ def quatDecompress(comp):
                 q_4[i] = -q_4[i]
             sum_squares += q_4[i] * q_4[i]
     q_4[i_largest] = float(sqrt(1 - sum_squares))
+
     return q_4
 
 
@@ -143,9 +145,11 @@ def calc_thrust_setpoint(St_0, U_0):
     pitch_c  = (pitch_y + PITCH_TRIM)                               # corrected values
     thrust_c = int(min(max(thrust_z, 0.0), 60000))
     yawrate = St_0[12] * 180 /pi                                    # r in deg/s
-    # print(f"\n DEBUG roll {roll}, pitch {pitch}, yawrate {yawrate}, thrust {thrust}")
+   
     return roll_c, pitch_c, yawrate, thrust_c
 
 def get_error2(diff):
+    
     error = sqrt(diff.T @ diff)
+
     return error

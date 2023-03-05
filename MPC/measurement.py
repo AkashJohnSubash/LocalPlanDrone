@@ -12,11 +12,13 @@ state_meas =  np.zeros(13)
 att_quat = np.zeros(4)
 
 def init_comms(scf):
+    
     scf.cf.param.add_update_callback(group='deck', name='bcLighthouse4', cb=deck_light_cbk)
     start_state_rx(scf)
     sleep(1)
 
 def deck_light_cbk(_, value_str):
+    
     value = int(value_str)
     if value:
         deck_attached_event.set()

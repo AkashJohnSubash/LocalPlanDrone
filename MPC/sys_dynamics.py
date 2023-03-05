@@ -53,6 +53,7 @@ class SysDyn():
         
         f_op = vertcat(dxq, dyq, dzq, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
         fp = Function('f', [state, controls], [f_op])
+        
         return fp
 
 class Predictor:
@@ -63,4 +64,5 @@ class Predictor:
         k3 = Dyn_fp(state + Dt * k2/2, ctrl)
         k4 = Dyn_fp(state + Dt * k3, ctrl)
         st_next_RK4 = state + (Dt /6) * (k1 + 2 * k2 + 2 * k3 + k4)
+        
         return st_next_RK4

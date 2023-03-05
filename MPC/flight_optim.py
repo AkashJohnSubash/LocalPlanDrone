@@ -36,7 +36,7 @@ def simulation():
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
     print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
     main_loop = time()                                                      # return time in sec
-    while (state_error > 2e-1) and (mpc_iter < sim_Smax):
+    while (state_error > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()                                                         # start iter timer                          
                                                                                                                        
         args['p'] = vertcat( state_init,  state_target)                     # optimization variable current state
@@ -127,7 +127,7 @@ def onboard(scf):
     # Stage 2 : Perform overtake
     main_loop = time()
     state_current = np.copy(state_init)
-    while (state_error > 2e-1) and (mpc_iter  < sim_Smax):
+    while (state_error > 1e-1) and (mpc_iter  < sim_Smax):
 
         t1 = time()                                                  # start iter timer          
         args['p'] = vertcat( state_current,  state_target)                                                                                            

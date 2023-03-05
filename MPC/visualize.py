@@ -16,15 +16,16 @@ def plot_dataset(cat_U, timestamp):
     w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
     w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
 
-    axsU.stairs(w1, timestamp/stepTime, label='w1 (rad/s)', color='b' )
-    axsU.stairs(w2, timestamp/stepTime, label='w2 (rad/s)', color='g')
-    axsU.stairs(w3, timestamp/stepTime, label='w3 (rad/s)', color='y' )
-    axsU.stairs(w4, timestamp/stepTime, label='w4 (rad/s)', color='r')
+    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='b' )
+    axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='g')
+    axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='y' )
+    axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='r')
     
     axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
 
 
     axsU.set_title('Control inputs')
+    axsU.set_ylabel('propellor angular velocities (rad/s)')
     axsU.set_xlabel('MPC iterations')
     axsU.legend()
     plt.show()
@@ -32,6 +33,7 @@ def plot_dataset(cat_U, timestamp):
 def simulate3D(cat_ST, t):
 
     def init():
+        
         return path, horizon, sphere_i
 
 
@@ -71,13 +73,13 @@ def simulate3D(cat_ST, t):
     ax.set_zlim3d(bottom = cage_z[0], top = cage_z[1])
 
     #Sphere around bot
-    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 8000, c='b', alpha=0.2)
+    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 14000, c='b', alpha=0.2)
 
     # Sphere around obstacle position
-    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 8000, c='r', alpha=0.2)
+    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 14000, c='r', alpha=0.2)
     
     # Sphere around target point
-    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 8000, c='g', alpha=0.2)
+    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 14000, c='g', alpha=0.2)
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
