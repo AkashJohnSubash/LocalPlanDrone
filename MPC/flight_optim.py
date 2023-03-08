@@ -3,10 +3,8 @@ from ocp_nlp import setup_nlp
 import numpy as np
 from common import *
 from sys_dynamics import SysDyn as Sys, Predictor as Pred
-from measurement import init_comms, state_meas, att_quat#, pwm_req, pwm_set, set_rpyt, req_rpyt
+from measurement import init_comms, state_meas
 from cflib.positioning.motion_commander import MotionCommander
-from cflib.positioning.position_hl_commander import PositionHlCommander
-
 
 def simulation():
     '''Simulate the tajectory with forward dynamics model (No hardware required)'''
@@ -19,7 +17,7 @@ def simulation():
 
     t_step = np.array([])
 
-    u0 = DM(np.full((n_controls, hznLen), hover_krpm))      # initial control
+    u0 = DM(np.full((n_controls, hznLen), u_hov))      # initial control
     X0 = repmat(state_init, 1, hznLen+1)                    # initial state full
 
     mpc_iter = 0

@@ -1,32 +1,7 @@
 import numpy as np
 from casadi import *
 
-'''----------------OCP parammeters-----------------'''
-
-
-stepTime = 0.02                         # time between steps in seconds
-hznLen = 10                             # number of look ahead steps
-sim_Smax = 7 / stepTime                # simulation time
-
-v_max = 0.2    ;   v_min = -0.2         #  [m/s]
-w_max = pi/4  ;   w_min = -pi/4         #  [rad/s]
-del_rpm_max = 0.8                       #  [Krpm]
-
-# State
-n_states = 13
-
-#x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-rob_rad = 0.04                               # radius of the drone sphere
-
-obst_st = np.array([2.4,  2.3,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
-obst_rad = .05
-
-# Control
-n_controls = 4
-
-'------------------------CF parameters--------------------------------'
+'------------------------CF2.1 model parameters--------------------------------'
 
 g0  = 9.80665     # [m.s^2] accerelation of gravity
 mq  = 31e-3      # [kg] total mass (with Lighthouse deck)
@@ -38,7 +13,32 @@ Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
 dq  = 92e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
 max_krpm = 22    # [krpm]
-hover_krpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000 #[krpm]
+
+
+'''----------------OCP parammeters-----------------'''
+
+stepTime = 0.02                         # time between steps in seconds
+hznLen = 20                             # number of look ahead steps
+sim_Smax = 7 / stepTime                # simulation time
+
+v_max = 0.2    ;   v_min = -0.2                     #  [m/s]
+w_max = pi/4   ;   w_min = -pi/4                    #  [rad/s]
+
+u_hov = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000     #[krpm]
+
+# State
+n_states = 13
+
+#x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
+init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+rob_rad = 0.04                               # radius of the drone sphere
+
+obst_st = np.array([0.4,  0.3,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_rad = .05
+
+# Control
+n_controls = 4
 
 ROLL_TRIM  = 0
 PITCH_TRIM = 0
