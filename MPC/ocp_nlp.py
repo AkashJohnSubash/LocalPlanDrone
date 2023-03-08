@@ -1,18 +1,19 @@
 from casadi import *
 from common import *
-from sys_dynamics import SysDyn as Sys, Predictor as Pred
+from sys_dynamics import SysDyn, Predictor
+
 from time import  time
  
 def setup_nlp():
     
     # generates optimal trajectory using an NMPC cost function
-    SysObj = Sys()
+    SysObj = SysDyn()
     ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
     dyn_fp = SysObj.ForwardDynamics()
 
     cost_fn = 0                  # cost function
     g = ST[:, 0] - P[:n_states]  # constraints in the equation
-    U_hov = np.array([hover_krpm, hover_krpm, hover_krpm, hover_krpm])
+    U_hov = np.array([u_hov, u_hov, u_hov, u_hov])
 
     '''-----------Formulate OCP as inequality constrained NLP------------'''
     # MPC cost, Initial value constraint
@@ -21,7 +22,7 @@ def setup_nlp():
         U_k = U[:, k] 
         cost_fn = cost_fn + ((st - P[n_states:]).T @ Q @ (st - P[n_states:])) + (U_k - U_hov).T @ R @ (U_k - U_hov)
         st_opt = ST[:, k+1]
-        st_est = Pred.rk4_integrator(dyn_fp, st, U_k, stepTime)
+        st_est = Predictor.rk4_explicit(dyn_fp, st, U_k, stepTime)
         g = vertcat(g, st_opt - st_est)           
 
     # Path inequality constraint (obstacle avoidance)
@@ -40,7 +41,7 @@ def setup_nlp():
             'print_time': 0, 
             'jit' : False,
             'compiler' : 'shell',
-            'jit_options' : { 'verbose': True, 'flags' : ['-01']},
+            'jit_options' : { 'verbose': True, 'flags' : ['-O1']},
             'jit_cleanup' : True,
             }
 
@@ -79,10 +80,10 @@ def setup_nlp():
     ubg = DM.zeros((st_size )+ (hznLen+1))
 
     # Initial value constraints: pred_st - optim_st = 0
-    lbg[0 : st_size] = 0;                         ubg[0        : st_size] = 0
+    lbg[0 : st_size] = 0;                           ubg[0        : st_size] = 0
 
     # Path constraints: 0 < Euclidian - sum(radii) < inf
-    lbg[st_size : st_size + (hznLen+1)]   = 0; ubg[st_size  : st_size+ (hznLen+1)] = inf
+    lbg[st_size : st_size + (hznLen+1)]   = 0;      ubg[st_size  : st_size+ (hznLen+1)] = inf
 
     args = {    'lbg': lbg,                    # constraints lower bound
                 'ubg': ubg,                    # constraints upper bound
