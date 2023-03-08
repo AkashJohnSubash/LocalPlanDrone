@@ -10,7 +10,7 @@ Control :
 
     Follow a straight trajectory, until an obstacle is generated/ detected.
     Overtake trajectory points generated offboard with MPC ( Python)
-    Setpoints communicated (CrazyRadio) to onboard control loop (EKF + PID) 
+    Setpoints (RPYT) communicated (CrazyRadio) to onboard controller (EKF + PID) 
 
 Obstacle handling : ( milestone based)
 
