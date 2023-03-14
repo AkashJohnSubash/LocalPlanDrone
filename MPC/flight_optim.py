@@ -17,7 +17,7 @@ def simulation():
 
     t_step = np.array([])
 
-    u0 = DM(np.full((n_controls, hznLen), u_hov))      # initial control
+    u0 = DM(np.full((n_controls, hznLen), hov_rpm))           # initial control
     X0 = repmat(state_init, 1, hznLen+1)                    # initial state full
 
     mpc_iter = 0
