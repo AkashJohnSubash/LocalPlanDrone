@@ -36,7 +36,7 @@ class SysDyn():
         return St, U, P        
 
     def model_ode():
-        '''ODEs for system dynamic model'''
+        '''ODEs modelling system dynamics '''
 
         # Rate of change of position
         dx = u*(2*(q1**2 + q2**2)- 1)  + v*2*(q2*q3 - q1*q4)           + w*2*(q1*q3 + q2*q4)

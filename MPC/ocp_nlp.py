@@ -79,15 +79,7 @@ def setup_nlp():
 
     return constraint, model, acados_solver
 
-
-
-
-
-
-
-
-
-
+'''IPOPT OCP fomulation'''
 
 
     # ''# Generates optimal trajectory using an NMPC cost function

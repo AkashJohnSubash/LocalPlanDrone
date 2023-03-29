@@ -2,64 +2,77 @@ from time import time, sleep
 from ocp_nlp import setup_nlp
 import numpy as np
 from common import *
-from sys_dynamics import SysDyn as Sys, Predictor as Pred
+#from sys_dynamics import SysDyn as Sys, Predictor as Pred
 from measurement import init_comms, state_meas
 from cflib.positioning.motion_commander import MotionCommander
 
 def simulation():
-    '''Simulate the tajectory with forward dynamics model (No hardware required)'''
+    '''Simulate the trajectory with forward dynamics model (No hardware required)'''
 
-    args, solver = setup_nlp()                 # define solver, constraints, NLP
+    # Define solver, constraints, NLP
+    constraint, model, solver = setup_nlp()   
 
+    # dimensions
+    nx = model.x.size()[0]
+    nu = model.u.size()[0]
+    ny = nx + nu
+    Nsim = int(sim_Smax * hznLen / stepTime)
+
+    # define data structures
     t0 = 0
-    state_init = DM(np.copy(init_st))                                # initial state
-    state_target = DM(np.copy(targ_st))                              # target state
-
     t_step = np.array([])
-
-    u0 = DM(np.full((n_controls, hznLen), hov_rpm))           # initial control
-    X0 = repmat(state_init, 1, hznLen+1)                    # initial state full
-
-    mpc_iter = 0
     
-    state_error = norm_2(state_init[0:3] - state_target[0:3])
-    cat_states = DM2Arr(X0)
-    cat_controls = DM2Arr(u0[:, 0])
-    times = np.array([[0]])
+    x_0 = DM(np.copy(init_st))                                
+    s_t = DM(np.copy(targ_st))
+    s0 = repmat(state_init, 1, hznLen+1)
 
+    # initialize data structures
+    mpc_iter = 0
+    times = np.array([[0]])
+    u0 = DM(np.full((n_controls, hznLen), hov_rpm))
+    state_error = norm_2(state_init[0:3] - s_t[0:3])
+    
+    cat_states = DM2Arr(s0)
+    cat_controls = DM2Arr(u0[:, 0])
+    
     # Stage 1 : No take-off required for simulation
 
     # Stage 2 : Perform overtake
     setpoints = [0, 0, 0, int(0)]
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
     print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
-    main_loop = time()                                                      # return time in sec
+    main_loop = time()
+    
     while (state_error > 1e-1) and (mpc_iter < sim_Smax):
-        t1 = time()                                                         # start iter timer                          
-                                                                                                                       
-        args['p'] = vertcat( state_init,  state_target)                     # optimization variable current state
-        args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
-                                reshape(u0, n_controls*hznLen, 1))
+        t1 = time()
 
-        # Solve the NLP using IPOPT
-        sol = solver( x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
+        # Update initial condition
+        x0 = solver.get(1, "x")
+        #solver.set(0, "lbx", x0)
+        #solver.set(0, "ubx", x0)
+        s0 = x0[0]
 
-        X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
-        u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
+        # Solve the NLP using acados
+        status = solver.solve()
+        if status != 0:
+            print("acados returned status {} in closed loop iteration {}.".format(status, i))
 
+        # Get solution
+        x0 = solver.get(0, "x")
+        u0 = solver.get(0, "u")
+        
         # Append data to plotting list
-        cat_states = np.dstack(( cat_states, DM2Arr(X0)))
-        cat_controls = np.vstack( (cat_controls, DM2Arr(u[:, 0])))
+        cat_states = np.dstack(( cat_states, DM2Arr(s0)))
+        cat_controls = np.vstack( (cat_controls, DM2Arr(u0)))
         t_step = np.append(t_step, t0)
 
         # Save state and Control for next iteration
         t0 = t0 + stepTime
-        u0 = np.copy(u)
-        state_init = np.copy(X0[:,1]).flatten()
-        X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))        
+        state_init = np.copy(s0[:,1]).flatten()
+        s0 = horzcat( s0[:, 1:], reshape(s0[:, -1], -1, 1))        
 
         # Generate API setpoint
-        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 1], u[:, 1])
+        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s0[:, 1], u0[:, 1])
         print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
         setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
 
@@ -67,7 +80,7 @@ def simulation():
         t2 = time()
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
-        state_error = norm_2(state_init[0:3]- state_target[0:3])
+        state_error = norm_2(state_init[0:3]- s_t[0:3])
 
     main_loop_time = time()
     ss_error_mod = state_error
@@ -93,13 +106,13 @@ def onboard(scf):
 
     t_step = np.array([])
 
-    u0 = DM(np.full((n_controls, hznLen), hover_krpm))      # initial control
-    X0 = repmat(state_init, 1, hznLen+1)                    # initial state full
+    u0 = DM(np.full((n_controls, hznLen), hov_rpm))      # initial control
+    s0 = repmat(state_init, 1, hznLen+1)                    # initial state full
 
     mpc_iter = 0
     
     state_error = norm_2(state_init[0:3] - state_target[0:3])
-    cat_states = DM2Arr(X0)
+    cat_states = DM2Arr(s0)
     cat_controls = DM2Arr(u0[:, 0])
     times = np.array([[0]])
 
@@ -130,26 +143,26 @@ def onboard(scf):
         t1 = time()                                                  # start iter timer          
         args['p'] = vertcat( state_current,  state_target)                                                                                            
         # optimization variable current state
-        args['x0'] = vertcat(   reshape(X0, n_states*(hznLen+1), 1),
+        args['x0'] = vertcat(   reshape(s0, n_states*(hznLen+1), 1),
                                 reshape(u0, n_controls*hznLen, 1))
 
         sol = solver( x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
 
         #print(f"  Measured state, ctrl {mpc_iter -1}: \n {np.round(state_meas, 4)} at {round(t0,3)}" ) #\n {np.round(state_init, 4)} 
 
-        X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
+        s0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
         u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
         
         # Append data to plotting list
-        cat_states = np.dstack(( cat_states, DM2Arr(X0)))
+        cat_states = np.dstack(( cat_states, DM2Arr(s0)))
         cat_controls = np.vstack( (cat_controls, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
 
         # Save state and Control for next iteration
         t0 = t0 + stepTime
         u0 = np.copy(u)
-        #state_init = np.copy(X0[:,1]).flatten()
-        X0 = horzcat( X0[:, 1:], reshape(X0[:, -1], -1, 1))   
+        #state_init = np.copy(s0[:,1]).flatten()
+        s0 = horzcat(s0[:, 1:], reshape(s0[:, -1], -1, 1))   
         
         # update iteration variables
         t2 = time()
@@ -159,7 +172,7 @@ def onboard(scf):
         state_error = norm_2(state_init[0:3] - state_target[0:3])
 
         # Issue setpoint command (RPYT)
-        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(X0[:, 0], u[:, 0])
+        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s0[:, 0], u[:, 0])
         scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust_norm)
         #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
       
