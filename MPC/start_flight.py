@@ -1,5 +1,5 @@
 import flight_optim
-from visualize import simulate3D, plot_dataset
+from visualize import plot_controls, plot_states
 
 import argparse
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
         cat_U, t_step, cat_ST, times_ST = flight_optim.simulation()
 
         '''-------------------- Visualize -----------------------------'''
-    # Plot controls over the simulation period
-    plot_dataset(cat_U, t_step)
+    # Plot controls, state (position) trajectory
+    plot_controls(cat_U, t_step)
     # Plot position( State[0-3]) over simulation period
-    simulate3D(cat_ST, times_ST)
+    plot_states(cat_ST, times_ST)

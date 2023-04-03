@@ -1,6 +1,6 @@
 from casadi import *
 from common import *
-from sys_dynamics import SysDyn, Predictor
+from sys_dynamics import SysDyn
 from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver
 from time import  time
 import scipy
@@ -32,7 +32,7 @@ def setup_nlp():
     model.x0 = np.copy(init_st) # MOVED def from model
 
     # define constraint
-    model_ac.con_h_expr = constraint.expr
+    # model_ac.con_h_expr = constraint.expr
 
     # set dimensions
     nx = model.x.size()[0]
@@ -43,7 +43,7 @@ def setup_nlp():
     ocp.dims.N = hznLen
 
     # set cost
-    ocp.cost.cost_type = "LINEAR_LS"                # TODO check difference without ?
+    ocp.cost.cost_type = "LINEAR_LS"                # TODO Implicitly LLS ?
     ocp.cost.W = scipy.linalg.block_diag(Q, R)
 
     Vx = np.zeros((ny, nx))

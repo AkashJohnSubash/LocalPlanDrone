@@ -18,8 +18,8 @@ max_rpm = 22     # [krpm]
 '''----------------OCP parammeters-----------------'''
 
 stepTime = 0.02                         # Horizon interval
-hznLen = 10                             # Discretization steps
-sim_Smax = 7 / stepTime                # simulation time
+hznLen = 5                             # Discretization steps
+sim_Smax = 10 / stepTime                # simulation time
 
 v_max = 0.2    ;   v_min = -0.2                     #  [m/s]
 w_max = pi/4   ;   w_min = -pi/4                    #  [rad/s]
@@ -30,13 +30,15 @@ hov_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000     #[krpm]
 n_states = 13
 
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-rob_rad = 0.04                               # radius of the drone sphere
+init_st = np.array([0,    0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+targ_st = np.array([1,    1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+obst_st = np.array([2.4,  2.3, .5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 
-obst_st = np.array([2.4,  2.3,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+# radius of the drone, obstacle sphere
+rob_rad = 0.04                               
 obst_rad = .05
 
+init_u = np.array([hov_rpm, hov_rpm,  hov_rpm,  hov_rpm])
 # Control
 n_controls = 4
 

@@ -22,57 +22,65 @@ def simulation():
     t0 = 0
     t_step = np.array([])
     
-    x_0 = DM(np.copy(init_st))                                
-    s_t = DM(np.copy(targ_st))
-    s0 = repmat(state_init, 1, hznLen+1)
+    # States and controls defined as coloumn vectors
+    s_0 = DM(np.copy(init_st)).T                                
+    s_t = DM(np.copy(targ_st)).T
+    u_0 = DM(np.copy(init_u)).T
 
     # initialize data structures
     mpc_iter = 0
     times = np.array([[0]])
-    u0 = DM(np.full((n_controls, hznLen), hov_rpm))
-    state_error = norm_2(state_init[0:3] - s_t[0:3])
+    s0 = DM(repmat(s_0, 1, hznLen+1))
+    u0 = DM(repmat(u_0, 1, hznLen))
+    state_error = norm_2(s_0[0:3] - s_t[0:3])
     
-    cat_states = DM2Arr(s0)
-    cat_controls = DM2Arr(u0[:, 0])
+    # nx * mpc_iter
+    cat_states = s_0
+    # nu * mpc_iter
+    cat_controls = u_0
+    #print("DEBUG0", cat_states)
     
     # Stage 1 : No take-off required for simulation
 
     # Stage 2 : Perform overtake
     setpoints = [0, 0, 0, int(0)]
-    roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(state_init, u0[:, 0])
-    print(f"Hover normaized RPM  {roll, pitch, yawRate, thrust_norm}")
+    roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
+    print(f"Hover normaized RPM {roll, pitch, yawRate, thrust_norm}")
     main_loop = time()
     
     while (state_error > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()
 
         # Update initial condition
-        x0 = solver.get(1, "x")
+        # s_0 = solver.get(1, "x")
         #solver.set(0, "lbx", x0)
         #solver.set(0, "ubx", x0)
-        s0 = x0[0]
 
         # Solve the NLP using acados
         status = solver.solve()
         if status != 0:
-            print("acados returned status {} in closed loop iteration {}.".format(status, i))
+            print(f"acados returned status {status} in closed loop iteration {mpc_iter}.")
 
         # Get solution
-        x0 = solver.get(0, "x")
-        u0 = solver.get(0, "u")
+        s0 = np.reshape(solver.get(0, "x"), (1, nx))
+        u0 = np.reshape(solver.get(0, "u"), (1, nu))
         
         # Append data to plotting list
-        cat_states = np.dstack(( cat_states, DM2Arr(s0)))
-        cat_controls = np.vstack( (cat_controls, DM2Arr(u0)))
+        cat_states = np.concatenate((cat_states, s0), axis = 1)
+        cat_controls = np.concatenate( (cat_controls, u0), axis = 1)
         t_step = np.append(t_step, t0)
 
         # Save state and Control for next iteration
         t0 = t0 + stepTime
-        state_init = np.copy(s0[:,1]).flatten()
-        s0 = horzcat( s0[:, 1:], reshape(s0[:, -1], -1, 1))        
+        s_0 = solver.get(1, "x")
+        solver.set(0, "lbx", s_0)
+        solver.set(0, "ubx", s_0)
+        #print(f"current state :{s0} \nnext state :{s_0}")
+        # state_init = np.copy(s0[:,1]).flatten()
+        # s0 = horzcat( s0[:, 1:], reshape(s0[:, -1], -1, 1))        
 
         # Generate API setpoint
-        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s0[:, 1], u0[:, 1])
+        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s0[0], u0[0])
         print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
         setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
 
@@ -80,14 +88,14 @@ def simulation():
         t2 = time()
         times = np.vstack(( times, t2-t1))
         mpc_iter = mpc_iter + 1
-        state_error = norm_2(state_init[0:3]- s_t[0:3])
+        state_error = norm_2(s_0[0:3]- s_t[0:3])
 
     main_loop_time = time()
     ss_error_mod = state_error
     print('\n\n')
-    print('Total time: ', main_loop_time - main_loop)
-    print('Avg iteration time: ', np.array(times).mean() * 1000, 'ms')
-    print('Final error model: ', ss_error_mod)
+    print(f'Total time: {main_loop_time - main_loop} ms')
+    print(f'Avg iteration time: {np.array(times).mean() * 1000} ms')
+    print(f'Final error model: {ss_error_mod}')
 
     # Stage 3 : No landing required for simulation
     
@@ -98,7 +106,7 @@ def onboard(scf):
 
     '''Execute MPC to issue optimal controls (RPYT) to CF2.1'''
 
-    args, solver = setup_nlp()                              # define solver, constraints, NLP
+    args, solver = setup_nlp()                                  # define solver, constraints, NLP
 
     t0 = 0
     state_init = DM(np.copy(init_st))                           # initial state
@@ -106,8 +114,8 @@ def onboard(scf):
 
     t_step = np.array([])
 
-    u0 = DM(np.full((n_controls, hznLen), hov_rpm))      # initial control
-    s0 = repmat(state_init, 1, hznLen+1)                    # initial state full
+    u0 = DM(np.full((n_controls, hznLen), hov_rpm))             # initial control
+    s0 = repmat(state_init, 1, hznLen+1)                        # initial state full
 
     mpc_iter = 0
     

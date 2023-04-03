@@ -5,7 +5,7 @@ import sys
 from cflib.crazyflie.log import LogConfig
 from threading import Event
 
-from common import init_st, quatDecompress
+from common import quatDecompress
 
 deck_attached_event = Event()
 state_meas =  np.zeros(13)

@@ -6,23 +6,23 @@ from common import *
 
 #Parameters defined in common.py
 
-def plot_dataset(cat_U, timestamp):
+def plot_controls(cat_U, timestamp):
     ''' cat_U       -> intial value of each solution in the control history
         timestamp   -> time at each computed solution '''
     # Plot control
     figU, axsU  = plt.subplots(1, 1, figsize=(7, 15))    
-    w1 = np.ravel(cat_U[n_controls   : -4: n_controls])   # excluding init, final
-    w2 = np.ravel(cat_U[n_controls+1 : -4: n_controls])
-    w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
-    w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
+    # exclude inital, final controls
+    w1 = np.ravel(cat_U[0, n_controls   : -4: n_controls])
+    w2 = np.ravel(cat_U[0, n_controls+1 : -4: n_controls])
+    w3 = np.ravel(cat_U[0, n_controls+2 : -4: n_controls])
+    w4 = np.ravel(cat_U[0, n_controls+3 : -4: n_controls])
 
-    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='b' )
+    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='b')
     axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='g')
     axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='y' )
     axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='r')
     
     axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
-
 
     axsU.set_title('Control inputs')
     axsU.set_ylabel('propellor angular velocities (rad/s)')
@@ -30,7 +30,7 @@ def plot_dataset(cat_U, timestamp):
     axsU.legend()
     plt.show()
     
-def simulate3D(cat_ST, t):
+def plot_states(cat_ST, t):
 
     def init():
         
@@ -40,12 +40,13 @@ def simulate3D(cat_ST, t):
     def animate(interval):
         
         # update path
-        path.set_data(cat_ST[0:2, 0, :interval])
-        path.set_3d_properties(cat_ST[2, 0, :interval])
+        print("animate pos", np.shape(cat_ST), cat_ST)
+        path.set_data(cat_ST[0, 0:2])
+        path.set_3d_properties(cat_ST[0, 2])
     
         # update horizon
         horizon.set_data(cat_ST[0, :, interval], cat_ST[1, :, interval])
-        horizon.set_3d_properties(cat_ST[2, :, interval])
+        horizon.set_3d_properties(cat_ST[0, 2])
         
         # update bot sphere position, orientation 
         sphere_i._offsets3d = (cat_ST[0, 0, :interval], cat_ST[1, 0, :interval], cat_ST[2, 0, :interval])
@@ -65,14 +66,14 @@ def simulate3D(cat_ST, t):
     # horizon
     horizon, = ax.plot([], [],'x-g', alpha=0.5)
 
-    cage_x = [-0.5, 1.5]  #dimensions in meters
-    cage_y = [-0.5, 1.5]  #dimensions in meters
-    cage_z = [0, 2]       #dimensions in meters
+    cage_x = [-0.5, 1.5]  # dimensions in meters
+    cage_y = [-0.5, 1.5]  # dimensions in meters
+    cage_z = [0, 2]       # dimensions in meters
     ax.set_xlim3d(left = cage_x[0], right = cage_x[1])
     ax.set_ylim3d(bottom = cage_y[0], top = cage_y[1])
     ax.set_zlim3d(bottom = cage_z[0], top = cage_z[1])
 
-    #Sphere around bot
+    # Sphere around bot
     sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 14000, c='b', alpha=0.2)
 
     # Sphere around obstacle position

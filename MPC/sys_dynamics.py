@@ -21,22 +21,18 @@ state_dt = vertcat(x_dt, y_dt, z_dt, q1_dt, q2_dt, q3_dt, q4_dt, u_dt, v_dt, w_d
 w1 = SX.sym('w1');  w2 = SX.sym('w2');  w3 = SX.sym('w3');  w4 = SX.sym('w4')
 controls = vertcat( w1, w2, w3, w4) 
 
-class SysDyn():
-    
-    def init():
-        
+class SysDyn():      
+
+    def model_ode():
+        '''ODEs modelling system dynamics '''
+
         stSize = state.numel()
         ctrlSize = controls.numel()
 
         # matrices containing all States, Controls, Paramters over all time steps +1
         St = SX.sym('St', stSize, hznLen + 1)
-        U = SX.sym('U', ctrlSize, hznLen)
-        P = SX.sym('P', stSize + stSize)
-
-        return St, U, P        
-
-    def model_ode():
-        '''ODEs modelling system dynamics '''
+        U  = SX.sym('U', ctrlSize, hznLen)
+        P  = SX.sym('P', stSize + stSize)
 
         # Rate of change of position
         dx = u*(2*(q1**2 + q2**2)- 1)  + v*2*(q2*q3 - q1*q4)           + w*2*(q1*q3 + q2*q4)
@@ -68,7 +64,7 @@ class SysDyn():
         constraint = types.SimpleNamespace()
         model = types.SimpleNamespace()
 
-        f_expl = model_ode()
+        f_expl = SysDyn.model_ode()
         model_name = "CrazyFlie21_model"
         # algebraic variables
         z = vertcat([])
