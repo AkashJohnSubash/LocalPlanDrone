@@ -2,7 +2,6 @@ from casadi import *
 from common import *
 from sys_dynamics import SysDyn
 from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver
-from time import  time
 import scipy
 
 U_hov = np.array([hov_rpm, hov_rpm, hov_rpm, hov_rpm])
@@ -40,7 +39,7 @@ def setup_nlp():
     ny = nx + nu
     #ny_e = nx  # No terminal cost
 
-    ocp.dims.N = hznLen
+    ocp.dims.N = N
 
     # set cost
     ocp.cost.cost_type = "LINEAR_LS"                # TODO Implicitly LLS ?
@@ -93,7 +92,7 @@ def setup_nlp():
 
     # '''-----------Formulate OCP as inequality constrained NLP------------'''
     # # MPC cost, Initial value constraint
-    # for k in range(hznLen):
+    # for k in range(N):
     #     st = ST[:, k]
     #     U_k = U[:, k] 
     #     cost_fn = cost_fn + ((st - P[n_states:]).T @ Q @ (st - P[n_states:])) + (U_k - U_hov).T @ R @ (U_k - U_hov)
@@ -102,7 +101,7 @@ def setup_nlp():
     #     g = vertcat(g, st_opt - st_est)           
 
     # # Path inequality constraint (obstacle avoidance)
-    # for k in range(hznLen +1): 
+    # for k in range(N +1): 
     #     euclid = (ST[0: 3, k] - obst_st[0:3])
     #     g = vertcat(g , ((euclid.T @ euclid) -( rob_rad + obst_rad)))          
 
@@ -122,8 +121,8 @@ def setup_nlp():
     #         }
 
     # solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
-    # st_size = n_states * (hznLen+1)
-    # U_size = n_controls * hznLen
+    # st_size = n_states * (N+1)
+    # U_size = n_controls * N
 
     # '''-----------------------Define NLP bounds-----------------------------'''
 
@@ -152,14 +151,14 @@ def setup_nlp():
 
     # # Bounds on constraints
     # # Initial value,   Path,
-    # lbg = DM.zeros((st_size )+ (hznLen+1))
-    # ubg = DM.zeros((st_size )+ (hznLen+1))
+    # lbg = DM.zeros((st_size )+ (N+1))
+    # ubg = DM.zeros((st_size )+ (N+1))
 
     # # Initial value constraints: pred_st - optim_st = 0
     # lbg[0 : st_size] = 0;                           ubg[0        : st_size] = 0
 
     # # Path constraints: 0 < Euclidian - sum(radii) < inf
-    # lbg[st_size : st_size + (hznLen+1)]   = 0;      ubg[st_size  : st_size+ (hznLen+1)] = inf
+    # lbg[st_size : st_size + (N+1)]   = 0;      ubg[st_size  : st_size+ (N+1)] = inf
 
     # args = {    'lbg': lbg,                    # constraints lower bound
     #             'ubg': ubg,                    # constraints upper bound

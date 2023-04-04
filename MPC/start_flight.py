@@ -30,13 +30,13 @@ if __name__ == '__main__':
         uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E007')
         print("Lab flight")
         with SyncCrazyflie(uri, cf = Crazyflie(rw_cache='./cache')) as scf:
-            cat_U, t_step, cat_ST, times_ST = flight_optim.onboard(scf)
+            traj_U, t_step, traj_ST, times_ST = flight_optim.onboard(scf)
     else:
         print("Simulated flight")
-        cat_U, t_step, cat_ST, times_ST = flight_optim.simulation()
+        traj_U, t_step, traj_ST, times_ST = flight_optim.simulation()
 
         '''-------------------- Visualize -----------------------------'''
     # Plot controls, state (position) trajectory
-    plot_controls(cat_U, t_step)
+    plot_controls(traj_U, t_step)
     # Plot position( State[0-3]) over simulation period
-    plot_states(cat_ST, times_ST)
+    plot_states(traj_ST, times_ST)

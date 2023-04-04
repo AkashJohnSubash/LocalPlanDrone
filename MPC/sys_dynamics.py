@@ -30,8 +30,8 @@ class SysDyn():
         ctrlSize = controls.numel()
 
         # matrices containing all States, Controls, Paramters over all time steps +1
-        St = SX.sym('St', stSize, hznLen + 1)
-        U  = SX.sym('U', ctrlSize, hznLen)
+        St = SX.sym('St', stSize, N + 1)
+        U  = SX.sym('U', ctrlSize, N)
         P  = SX.sym('P', stSize + stSize)
 
         # Rate of change of position

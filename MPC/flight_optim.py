@@ -16,29 +16,30 @@ def simulation():
     nx = model.x.size()[0]
     nu = model.u.size()[0]
     ny = nx + nu
-    Nsim = int(sim_Smax * hznLen / stepTime)
+    Nsim = int(sim_Smax * N / stepTime)
 
     # define data structures
     t0 = 0
     t_step = np.array([])
     
     # States and controls defined as coloumn vectors
-    s_0 = DM(np.copy(init_st)).T                                
-    s_t = DM(np.copy(targ_st)).T
-    u_0 = DM(np.copy(init_u)).T
+    s_0 = DM(np.copy(init_st))                                
+    s_t = DM(np.copy(targ_st))
+    u_0 = DM(np.copy(init_u))
 
     # initialize data structures
     mpc_iter = 0
     times = np.array([[0]])
-    s0 = DM(repmat(s_0, 1, hznLen+1))
-    u0 = DM(repmat(u_0, 1, hznLen))
+    #u0 = DM(repmat(u_0, 1, N))
     state_error = norm_2(s_0[0:3] - s_t[0:3])
     
-    # nx * mpc_iter
-    cat_states = s_0
-    # nu * mpc_iter
-    cat_controls = u_0
-    #print("DEBUG0", cat_states)
+    s_i = np.copy(s_0)
+    s_N = np.copy(s_0)
+    
+    # nx X N X mpc_iter (to plot state during entire Horizon)
+    state_traj = repmat(s_0, 1, N) 
+    # nu X mpc_iter
+    control_traj = repmat(u_0, 1, N) 
     
     # Stage 1 : No take-off required for simulation
 
@@ -51,39 +52,40 @@ def simulation():
     while (state_error > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()
 
-        # Update initial condition
-        # s_0 = solver.get(1, "x")
-        #solver.set(0, "lbx", x0)
-        #solver.set(0, "ubx", x0)
-
         # Solve the NLP using acados
         status = solver.solve()
         if status != 0:
             print(f"acados returned status {status} in closed loop iteration {mpc_iter}.")
 
         # Get solution
-        s0 = np.reshape(solver.get(0, "x"), (1, nx))
-        u0 = np.reshape(solver.get(0, "u"), (1, nu))
+        s_0 = np.reshape(solver.get(0, "x"), (nx, 1))
+        u_0 = np.reshape(solver.get(0, "u"), (nu, 1))
         
         # Append data to plotting list
-        cat_states = np.concatenate((cat_states, s0), axis = 1)
-        cat_controls = np.concatenate( (cat_controls, u0), axis = 1)
+        for i in range(1, N ):
+            s_i = np.reshape(solver.get(i, "x"), (nx, 1))
+            s_N = np.concatenate((s_N, s_i), axis = 1)
+        # print(f"Debug {np.shape(state_traj)} {np.shape(s_N)}")
+        print(f"Debug {mpc_iter} iter:  \n\n {state_traj} \n\n {s_N}")
+        state_traj = np.dstack((state_traj, s_N))
+        # print(f"Debug 2 {state_traj} \n {np.shape(s_N)}")
+        control_traj = np.concatenate((control_traj, u_0), axis = 1)
         t_step = np.append(t_step, t0)
+        print(s_0, state_traj)
 
         # Save state and Control for next iteration
         t0 = t0 + stepTime
-        s_0 = solver.get(1, "x")
-        solver.set(0, "lbx", s_0)
-        solver.set(0, "ubx", s_0)
+        s_ini = solver.get(1, "x")
+        solver.set(0, "lbx", s_ini)
+        solver.set(0, "ubx", s_ini)
         #print(f"current state :{s0} \nnext state :{s_0}")
         # state_init = np.copy(s0[:,1]).flatten()
         # s0 = horzcat( s0[:, 1:], reshape(s0[:, -1], -1, 1))        
 
         # Generate API setpoint
-        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s0[0], u0[0])
-        print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
-        setpoints = np.vstack( (setpoints, np.array([roll, pitch, yawRate, thrust_norm], dtype="object")))
-
+        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
+        # print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
+        
         # update iteration variables
         t2 = time()
         times = np.vstack(( times, t2-t1))
@@ -99,7 +101,7 @@ def simulation():
 
     # Stage 3 : No landing required for simulation
     
-    return cat_controls, t_step, cat_states, times
+    return control_traj, t_step, state_traj, times
 
 
 def onboard(scf):
@@ -114,14 +116,14 @@ def onboard(scf):
 
     t_step = np.array([])
 
-    u0 = DM(np.full((n_controls, hznLen), hov_rpm))             # initial control
-    s0 = repmat(state_init, 1, hznLen+1)                        # initial state full
+    u0 = DM(np.full((n_controls, N), hov_rpm))                  # initial control
+    s0 = repmat(state_init, 1, N+1)                             # initial state full
 
     mpc_iter = 0
     
     state_error = norm_2(state_init[0:3] - state_target[0:3])
-    cat_states = DM2Arr(s0)
-    cat_controls = DM2Arr(u0[:, 0])
+    state_traj = DM2Arr(s0)
+    control_traj = DM2Arr(u0[:, 0])
     times = np.array([[0]])
 
     # start CF interaction
@@ -151,19 +153,19 @@ def onboard(scf):
         t1 = time()                                                  # start iter timer          
         args['p'] = vertcat( state_current,  state_target)                                                                                            
         # optimization variable current state
-        args['x0'] = vertcat(   reshape(s0, n_states*(hznLen+1), 1),
-                                reshape(u0, n_controls*hznLen, 1))
+        args['x0'] = vertcat(   reshape(s0, n_states * (N+1), 1),
+                                reshape(u0, n_controls * N, 1))
 
         sol = solver( x0=args['x0'], lbx=args['lbx'], ubx=args['ubx'], lbg=args['lbg'], ubg=args['ubg'], p=args['p'])
 
         #print(f"  Measured state, ctrl {mpc_iter -1}: \n {np.round(state_meas, 4)} at {round(t0,3)}" ) #\n {np.round(state_init, 4)} 
 
-        s0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
-        u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
+        s0 = reshape(sol['x'][ : n_states * (N+ 1)], n_states, N+1)
+        u =  reshape(sol['x'][n_states * (N+ 1): ], n_controls, N)
         
         # Append data to plotting list
-        cat_states = np.dstack(( cat_states, DM2Arr(s0)))
-        cat_controls = np.vstack( (cat_controls, DM2Arr(u[:, 0])))
+        state_traj = np.dstack(( state_traj, DM2Arr(s0)))
+        control_traj = np.vstack( (control_traj, DM2Arr(u[:, 0])))
         t_step = np.append(t_step, t0)
 
         # Save state and Control for next iteration
@@ -198,4 +200,4 @@ def onboard(scf):
     print('final error sim: ', ss_error_mod)
     print('final error real: ', ss_error_real)
 
-    return cat_controls, t_step, cat_states, times
+    return control_traj, t_step, state_traj, times
