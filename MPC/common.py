@@ -19,7 +19,7 @@ max_rpm = 22     # [krpm]
 
 stepTime = 0.02                         # Horizon interval
 N = 3                                   # Discretization steps
-sim_Smax = 10 / stepTime                # simulation time
+sim_Smax = 20 / stepTime                # simulation time
 
 v_max = 0.2    ;   v_min = -0.2                     #  [m/s]
 w_max = pi/4   ;   w_min = -pi/4                    #  [rad/s]
@@ -138,7 +138,6 @@ def quatDecompress(comp):
 
 def calc_thrust_setpoint(St_0, U_0):
     # euler in deg from q1,      q2,       q3,       q4
-    #print(f"DEBUG state {St_0}")
     eul_deg = quat2rpy([St_0[3], St_0[4], St_0[5], St_0[6]])
 
     roll_x  = eul_deg[0]                                            # Roll 
