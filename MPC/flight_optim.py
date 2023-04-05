@@ -33,9 +33,6 @@ def simulation():
     #u0 = DM(repmat(u_0, 1, N))
     state_error = norm_2(s_0[0:3] - s_t[0:3])
     
-    s_i = np.copy(s_0)
-    s_N = np.copy(s_0)
-    
     # nx X N X mpc_iter (to plot state during entire Horizon)
     state_traj = repmat(s_0, 1, N) 
     # nu X mpc_iter
@@ -51,6 +48,8 @@ def simulation():
     
     while (state_error > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()
+        s_i = np.copy(s_0)
+        s_N = np.copy(s_0)
 
         # Solve the NLP using acados
         status = solver.solve()
@@ -65,13 +64,13 @@ def simulation():
         for i in range(1, N ):
             s_i = np.reshape(solver.get(i, "x"), (nx, 1))
             s_N = np.concatenate((s_N, s_i), axis = 1)
-        # print(f"Debug {np.shape(state_traj)} {np.shape(s_N)}")
-        print(f"Debug {mpc_iter} iter:  \n\n {state_traj} \n\n {s_N}")
+            #print(f"Debug {s_i} \n\n {s_N}")
+        #print(f"Debug {mpc_iter} iter:  \n\n {s_N}")
         state_traj = np.dstack((state_traj, s_N))
         # print(f"Debug 2 {state_traj} \n {np.shape(s_N)}")
         control_traj = np.concatenate((control_traj, u_0), axis = 1)
         t_step = np.append(t_step, t0)
-        print(s_0, state_traj)
+        #print(s_0, state_traj)
 
         # Save state and Control for next iteration
         t0 = t0 + stepTime
@@ -89,6 +88,7 @@ def simulation():
         # update iteration variables
         t2 = time()
         times = np.vstack(( times, t2-t1))
+        #print(f"DEBUG times {mpc_iter}, {times}")
         mpc_iter = mpc_iter + 1
         state_error = norm_2(s_0[0:3]- s_t[0:3])
 

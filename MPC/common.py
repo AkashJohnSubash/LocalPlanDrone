@@ -138,7 +138,7 @@ def quatDecompress(comp):
 
 def calc_thrust_setpoint(St_0, U_0):
     # euler in deg from q1,      q2,       q3,       q4
-    print(f"DEBUG state {St_0}")
+    #print(f"DEBUG state {St_0}")
     eul_deg = quat2rpy([St_0[3], St_0[4], St_0[5], St_0[6]])
 
     roll_x  = eul_deg[0]                                            # Roll 

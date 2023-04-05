@@ -12,10 +12,11 @@ def plot_controls(cat_U, timestamp):
     # Plot control
     figU, axsU  = plt.subplots(1, 1, figsize=(7, 15))    
     # exclude inital, final controls
-    w1 = np.ravel(cat_U[0, n_controls   : -4: n_controls])
-    w2 = np.ravel(cat_U[0, n_controls+1 : -4: n_controls])
-    w3 = np.ravel(cat_U[0, n_controls+2 : -4: n_controls])
-    w4 = np.ravel(cat_U[0, n_controls+3 : -4: n_controls])
+    # print(f"Print control {np.shape(cat_U[0])}, {cat_U[0]}")
+    w1 = np.ravel(cat_U[0, :-4])
+    w2 = np.ravel(cat_U[1, :-4])
+    w3 = np.ravel(cat_U[2, :-4])
+    w4 = np.ravel(cat_U[3, :-4])
 
     axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='b')
     axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='g')
@@ -41,12 +42,12 @@ def plot_states(cat_ST, t):
         
         # update path
         print("animate pos", np.shape(cat_ST), cat_ST)
-        path.set_data(cat_ST[0, 0:2])
-        path.set_3d_properties(cat_ST[0, 2])
+        path.set_data(cat_ST[0:2, 0, :interval])
+        path.set_3d_properties(cat_ST[2, 0, :interval])
     
         # update horizon
-        horizon.set_data(cat_ST[0, :, interval], cat_ST[1, :, interval])
-        horizon.set_3d_properties(cat_ST[0, 2])
+        horizon.set_data(cat_ST[0:2, 0, :interval])
+        horizon.set_3d_properties(cat_ST[2, 0, :interval])
         
         # update bot sphere position, orientation 
         sphere_i._offsets3d = (cat_ST[0, 0, :interval], cat_ST[1, 0, :interval], cat_ST[2, 0, :interval])
