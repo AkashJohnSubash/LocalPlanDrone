@@ -86,7 +86,7 @@ def simulation():
     main_loop_time = time()
     ss_error_mod = state_error
     print('\n\n')
-    print(f'Total time: {main_loop_time - main_loop} ms')
+    print(f'Total time: {(main_loop_time - main_loop)*1000} ms')
     print(f'Avg iteration time: {np.array(times).mean() * 1000} ms')
     print(f'Final error model: {ss_error_mod}')
 
@@ -140,7 +140,6 @@ def onboard(scf):
     sleep(3)
     
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
-    setpoints = [0, 0, 0, thrust_norm]
 
     # Unlock thrust protection and hover
     scf.cf.commander.send_setpoint(0, 0, 0, 0)
@@ -174,8 +173,9 @@ def onboard(scf):
 
         # Save state and Control for initialization in next iteration
         t0 = t0 + stepTime
-        solver.set(0, "lbx", np.copy(state_meas))
-        solver.set(0, "ubx", np.copy(state_meas))    
+        state_current = np.copy(state_meas)
+        solver.set(0, "lbx", state_current)
+        solver.set(0, "ubx", state_current)    
         
         # Issue setpoint command (RPYT)
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
@@ -196,8 +196,8 @@ def onboard(scf):
     ss_error_real = norm_2(state_meas - s_t)
 
     print('\n\n')
-    print('Total time: ', main_loop_time - main_loop)
-    print('avg iteration time: ', np.array(times).mean() * 1000, 'ms')
-    print('final error real: ', ss_error_real)
+    print(f'Total time: {(main_loop_time - main_loop)*1000} ms')
+    print(f'Avg iteration time: {np.array(times).mean() * 1000} ms')
+    print(f'Final error real: {ss_error_real}')
 
     return control_traj, t_step, state_traj, times

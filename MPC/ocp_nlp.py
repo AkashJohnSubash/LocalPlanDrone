@@ -60,12 +60,46 @@ def setup_nlp():
     ocp.cost.yref = np.concatenate((targ_st, U_hov))
     # ocp.cost.yref_e = np.array([0, 0, 0, 0, 0, 0]) # No terminal cost
 
+
+    # Bounds on decision variables
+    
+    # State bounds
+    lbx = [0] * nx;         ubx = [0] * nx
+    lbu = [0] * nu;         ubu = [0] * nu
+    print(f" DEBUG init states constr, lbx {lbx}, ubx {ubx}")
+    
+    lbx[0] = 0;           ubx[0] = 2.5        # x lower, upper bounds
+    lbx[1] = 0;           ubx[1] = 2.5        # y bounds
+    lbx[2] = 0;           ubx[2] = 2          # z bounds
+    lbx[3] = 0;           ubx[3] = 1        # qw bounds
+    lbx[4] = 0;           ubx[4] = 1        # qx bounds
+    lbx[5] = 0;           ubx[5] = 1        # qy bounds
+    lbx[6] = 0;           ubx[6] = 1        # qz bounds
+    lbx[7] = v_min;       ubx[7] = v_max      # u bounds
+    lbx[8] = v_min;       ubx[8] = v_max      # v bounds
+    lbx[9] = v_min;       ubx[9] = v_max      # w bounds
+    lbx[10] = w_min;      ubx[10] = w_max     # p bounds
+    lbx[11] = w_min;      ubx[11] = w_max     # q bounds
+    lbx[12] = w_min;      ubx[12] = w_max     # r bounds
+    
+    # print(f" DEBUG upd states constr, lbx {lbx}, ubx {ubx}")
+    # Control bounds
+    lbu[0] = 0;         ubu[0] = max_rpm        # w1 bounds
+    lbu[1] = 0;         ubu[1] = max_rpm        # w2 bounds
+    lbu[2] = 0;         ubu[2] = max_rpm        # w3 bounds
+    lbu[3] = 0;         ubu[3] = max_rpm        # w4 bounds
+    
     ocp.constraints.x0  = model.x0
-    ocp.constraints.lbu = np.array([      0,       0,       0,        0]) #TODO check, constrain all NuxN controls ?
-    ocp.constraints.ubu = np.array([max_rpm, max_rpm, max_rpm,  max_rpm])
+    # TODO Constrains entire horizon ? Acados syntax.
+    ocp.constraints.lbu = np.array(lbu)
+    ocp.constraints.ubu = np.array(ubu)
     ocp.constraints.idxbu = np.array([0, 1, 2, 3])
 
-    #TODO Constrain state decision variables
+    ocp.constraints.lbx = np.array(lbx)
+    ocp.constraints.ubx = np.array(ubx)
+    ocp.constraints.idxbx = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    print(f"DEBUG constraints {ocp.constraints.ubx}")
+
     # set QP solver and integration
     ocp.solver_options.tf = stepTime
     ocp.solver_options.qp_solver = "PARTIAL_CONDENSING_HPIPM"
@@ -77,94 +111,3 @@ def setup_nlp():
     acados_solver = AcadosOcpSolver(ocp, json_file="acados_ocp.json")
 
     return constraint, model, acados_solver
-
-'''IPOPT OCP fomulation'''
-
-
-    # ''# Generates optimal trajectory using an NMPC cost function
-    # ST, U, P = SysDyn.init()
-    # #ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
-    # dyn_fp = SysDyn.model_ode()
-
-    # cost_fn = 0                  # cost function
-    # g = ST[:, 0] - P[:n_states]  # constraints in the equation
-    # #U_hov = np.array([hov_rpm, hov_rpm, hov_rpm, hov_rpm]) #Duplicate
-
-    # '''-----------Formulate OCP as inequality constrained NLP------------'''
-    # # MPC cost, Initial value constraint
-    # for k in range(N):
-    #     st = ST[:, k]
-    #     U_k = U[:, k] 
-    #     cost_fn = cost_fn + ((st - P[n_states:]).T @ Q @ (st - P[n_states:])) + (U_k - U_hov).T @ R @ (U_k - U_hov)
-    #     st_opt = ST[:, k+1]
-    #     st_est = Predictor.rk4_explicit(dyn_fp, st, U_k, stepTime)
-    #     g = vertcat(g, st_opt - st_est)           
-
-    # # Path inequality constraint (obstacle avoidance)
-    # for k in range(N +1): 
-    #     euclid = (ST[0: 3, k] - obst_st[0:3])
-    #     g = vertcat(g , ((euclid.T @ euclid) -( rob_rad + obst_rad)))          
-
-    # OPT_variables = vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
-    # nlp_prob = {'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
-
-    # '''-----------------------Configure solver-----------------------------'''
-
-
-    # opts = {'ipopt'     : {'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8,
-    #                        'acceptable_obj_change_tol': 1e-6, 'linear_solver' :'mumps'},
-    #         'print_time': 0, 
-    #         'jit' : False,
-    #         'compiler' : 'shell',
-    #         'jit_options' : { 'verbose': True, 'flags' : ['-O1']},
-    #         'jit_cleanup' : True,
-    #         }
-
-    # solver = nlpsol('solver', 'ipopt', nlp_prob, opts)
-    # st_size = n_states * (N+1)
-    # U_size = n_controls * N
-
-    # '''-----------------------Define NLP bounds-----------------------------'''
-
-    # # Bounds on decision variables
-    # lbx = DM.zeros((st_size + U_size, 1))
-    # ubx = DM.zeros((st_size + U_size, 1))
-    # # State bounds
-    # lbx[0:  st_size: n_states] = -1;            ubx[0: st_size: n_states] = 1.5                   # x lower, upper bounds
-    # lbx[1:  st_size: n_states] = -1;            ubx[1: st_size: n_states] = 1.5                   # y bounds
-    # lbx[2:  st_size: n_states] = 0;             ubx[2: st_size: n_states] = 2                     # z bounds
-    # lbx[3:  st_size: n_states] = -inf;          ubx[3:  st_size: n_states] = inf                  # qw bounds
-    # lbx[4:  st_size: n_states] = -inf;          ubx[4:  st_size: n_states] = inf                  # qx bounds
-    # lbx[5:  st_size: n_states] = -inf;          ubx[5:  st_size: n_states] = inf                  # qy bounds
-    # lbx[6:  st_size: n_states] = -inf;          ubx[6:  st_size: n_states] = inf                  # qz bounds
-    # lbx[7:  st_size: n_states] = v_min;         ubx[7:  st_size: n_states] = v_max                # u bounds
-    # lbx[8:  st_size: n_states] = v_min;         ubx[8:  st_size: n_states] = v_max                # v bounds
-    # lbx[9:  st_size: n_states] = v_min;         ubx[9:  st_size: n_states] = v_max                # w bounds
-    # lbx[10: st_size: n_states] = w_min;         ubx[10: st_size: n_states] = w_max                # p bounds
-    # lbx[11: st_size: n_states] = w_min;         ubx[11: st_size: n_states] = w_max                # q bounds
-    # lbx[12: st_size: n_states] = w_min;         ubx[12: st_size: n_states] = w_max                # r bounds
-    # # Control bounds
-    # lbx[st_size    : : n_controls] = 0;         ubx[st_size     : : n_controls] = max_rpm        # w1 bounds
-    # lbx[st_size +1 : : n_controls] = 0;         ubx[st_size+1   : : n_controls] = max_rpm        # w2 bounds
-    # lbx[st_size +2 : : n_controls] = 0;         ubx[st_size+2   : : n_controls] = max_rpm        # w3 bounds
-    # lbx[st_size +3 : : n_controls] = 0;         ubx[st_size+3   : : n_controls] = max_rpm        # w4 bounds
-
-    # # Bounds on constraints
-    # # Initial value,   Path,
-    # lbg = DM.zeros((st_size )+ (N+1))
-    # ubg = DM.zeros((st_size )+ (N+1))
-
-    # # Initial value constraints: pred_st - optim_st = 0
-    # lbg[0 : st_size] = 0;                           ubg[0        : st_size] = 0
-
-    # # Path constraints: 0 < Euclidian - sum(radii) < inf
-    # lbg[st_size : st_size + (N+1)]   = 0;      ubg[st_size  : st_size+ (N+1)] = inf
-
-    # args = {    'lbg': lbg,                    # constraints lower bound
-    #             'ubg': ubg,                    # constraints upper bound
-    #             'lbx': lbx,
-    #             'ubx': ubx}
-
-    # '''---------------------------------------------------------------'''
-
-    # return args, solver

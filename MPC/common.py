@@ -18,8 +18,8 @@ max_rpm = 22     # [krpm]
 '''----------------OCP parammeters-----------------'''
 
 stepTime = 0.02                         # Horizon interval
-N = 3                                   # Discretization steps
-sim_Smax = 20 / stepTime                # simulation time
+N = 10                                   # Discretization steps
+sim_Smax = 10 / stepTime                # simulation time
 
 v_max = 0.2    ;   v_min = -0.2                     #  [m/s]
 w_max = pi/4   ;   w_min = -pi/4                    #  [rad/s]
