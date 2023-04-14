@@ -82,7 +82,6 @@ def setup_nlp():
     lbx[11] = w_min;      ubx[11] = w_max     # q bounds
     lbx[12] = w_min;      ubx[12] = w_max     # r bounds
     
-    # print(f" DEBUG upd states constr, lbx {lbx}, ubx {ubx}")
     # Control bounds
     lbu[0] = 0;         ubu[0] = max_rpm        # w1 bounds
     lbu[1] = 0;         ubu[1] = max_rpm        # w2 bounds
