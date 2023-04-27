@@ -2,7 +2,6 @@ from time import time, sleep
 from ocp_nlp import setup_nlp
 import numpy as np
 from common import *
-#from sys_dynamics import SysDyn as Sys, Predictor as Pred
 from measurement import init_comms, state_meas
 from cflib.positioning.motion_commander import MotionCommander
 
@@ -70,12 +69,14 @@ def simulation():
         # Save state and Control for next iteration
         t0 = t0 + stepTime
         s_ini = solver.get(1, "x")
+        #model.x0 = s_ini
         solver.set(0, "lbx", s_ini)
         solver.set(0, "ubx", s_ini)    
 
         # Generate API setpoint
+        print(f'Soln setpoints {mpc_iter}: {s_0} at {round(t0, 3)} s\t')
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
-        print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
+        #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
         
         # update iteration variables
         t2 = time()
@@ -180,7 +181,7 @@ def onboard(scf):
         # Issue setpoint command (RPYT)
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
         scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust_norm)
-        print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
+        #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
 
         # update iteration variables
         t2 = time()
