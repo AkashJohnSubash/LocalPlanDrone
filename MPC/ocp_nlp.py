@@ -1,7 +1,7 @@
 from casadi import *
 from common import *
 from sys_dynamics import SysDyn
-from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver
+from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver, AcadosSimSolver
 import scipy
 
 U_hov = np.array([hov_rpm, hov_rpm, hov_rpm, hov_rpm])
@@ -119,6 +119,8 @@ def setup_nlp():
     ocp.solver_options.tol = 1e-4   
 
     # create solver
-    acados_solver = AcadosOcpSolver(ocp, json_file="acados_ocp.json")
+    solve_json = "flight_ocp.json"
+    acados_solver = AcadosOcpSolver(ocp, json_file = solve_json)
+    acados_integrate = AcadosSimSolver(ocp, json_file = solve_json)
 
-    return constraint, model, acados_solver
+    return constraint, model, acados_solver, acados_integrate

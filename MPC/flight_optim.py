@@ -8,8 +8,8 @@ from cflib.positioning.motion_commander import MotionCommander
 def simulation():
     '''Simulate the trajectory with forward dynamics model (No hardware required)'''
 
-    # Define solver, constraints, NLP
-    constraint, model, solver = setup_nlp()   
+    # Define NLP, constraints, solver, integrator
+    constraint, model, solver, integrator = setup_nlp()   
 
     # dimensions
     nx = model.x.size()[0]
@@ -100,7 +100,7 @@ def onboard(scf):
 
     '''Execute MPC to issue optimal controls (RPYT) to CF2.1'''
 
-  # Define solver, constraints, NLP
+    # Define solver, constraints, NLP
     constraint, model, solver = setup_nlp()   
 
     # dimensions
