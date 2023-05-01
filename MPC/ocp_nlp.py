@@ -45,7 +45,7 @@ def setup_nlp():
     ocp.cost.cost_type = "LINEAR_LS"                # TODO Implicitly LLS ?
     ocp.cost.cost_type_e = "LINEAR_LS"
     ocp.cost.W = scipy.linalg.block_diag(Q, R)
-    ocp.cost.W_e = 50 * Q
+    ocp.cost.W_e = Q_e
 
     Vx = np.zeros((ny, nx))
     Vx[:nx, :nx] = np.eye(nx)
@@ -63,24 +63,25 @@ def setup_nlp():
     ocp.cost.Vx_e = Vx_e
 
     # set intial references        # nx +  nu
+    u_ref0 = np.zeros((4))
     ocp.cost.yref = np.concatenate((targ_st, U_hov))
-    ocp.cost.yref_e = np.array(targ_st) # No terminal cost
-
+    # print(f"DEBUG cost yref \n {ocp.cost.yref}")
+    ocp.cost.yref_e = np.array(targ_st)
 
     # Bounds on decision variables
     
     # State bounds
     lbx = [0] * nx;         ubx = [0] * nx
     lbu = [0] * nu;         ubu = [0] * nu
-    print(f" DEBUG init states constr, lbx {lbx}, ubx {ubx}")
+    #print(f" DEBUG init states constr, lbx {lbx}, ubx {ubx}")
     
-    lbx[0] = 0;           ubx[0] = 100        # x lower, upper bounds
-    lbx[1] = 0;           ubx[1] = 100        # y bounds
-    lbx[2] = 0;           ubx[2] = 100          # z bounds
-    lbx[3] = 0;           ubx[3] = 100        # qw bounds
-    lbx[4] = 0;           ubx[4] = 100        # qx bounds
-    lbx[5] = 0;           ubx[5] = 100        # qy bounds
-    lbx[6] = 0;           ubx[6] = 100        # qz bounds
+    lbx[0] = 0;           ubx[0] = 2.5        # x lower, upper bounds
+    lbx[1] = 0;           ubx[1] = 2.5        # y bounds
+    lbx[2] = 0;           ubx[2] = 2          # z bounds
+    lbx[3] = 0;           ubx[3] = 1           # qw bounds
+    lbx[4] = 0;           ubx[4] = 1           # qx bounds
+    lbx[5] = 0;           ubx[5] = 1           # qy bounds
+    lbx[6] = 0;           ubx[6] = 1           # qz bounds
     lbx[7] = v_min;       ubx[7] = v_max      # u bounds
     lbx[8] = v_min;       ubx[8] = v_max      # v bounds
     lbx[9] = v_min;       ubx[9] = v_max      # w bounds
@@ -114,9 +115,9 @@ def setup_nlp():
     ocp.solver_options.qp_solver = "PARTIAL_CONDENSING_HPIPM"
     ocp.solver_options.nlp_solver_type = "SQP_RTI"
     ocp.solver_options.hessian_approx = "GAUSS_NEWTON"
-    ocp.solver_options.integrator_type = "ERK"
+    ocp.solver_options.integrator_type = "IRK"
     ocp.solver_options.nlp_solver_max_iter = 100
-    ocp.solver_options.tol = 1e-4   
+    ocp.solver_options.tol = 1e-8  
 
     # create solver
     solve_json = "flight_ocp.json"

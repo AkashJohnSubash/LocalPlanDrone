@@ -22,9 +22,9 @@ def simulation():
     t_step = np.array([])
     
     # States and controls defined as coloumn vectors
-    s_0 = DM(np.copy(init_st))                                
-    s_t = DM(np.copy(targ_st))
-    u_0 = DM(np.copy(init_u))
+    s_0 = np.copy(init_st)                                
+    s_t = np.copy(targ_st)
+    u_0 = np.copy(init_u)
 
     # initialize data structures
     mpc_iter = 0
@@ -33,7 +33,7 @@ def simulation():
     state_error = norm_2(s_0[0:3] - s_t[0:3])
     
     # nx X N X mpc_iter (to plot state during entire Horizon)
-    state_traj = repmat(s_0, 1, N) 
+    state_traj = repmat(s_0, 1, N+1) 
     # nu X mpc_iter
     control_traj = repmat(u_0, 1, N) 
     
@@ -46,8 +46,8 @@ def simulation():
     
     while (state_error > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()
-        s_i = np.copy(s_0)
-        s_N = np.copy(s_0)
+        s_i = np.reshape(np.copy(s_0), (nx, 1))
+        s_N = np.reshape(np.copy(s_0), (nx, 1))
 
         # Solve the NLP using acados
         status = solver.solve()
@@ -55,27 +55,31 @@ def simulation():
             print(f"acados returned status {status} in closed loop iteration {mpc_iter}.")
 
         # Get solution
-        s_0 = np.reshape(solver.get(0, "x"), (nx, 1))
-        u_0 = np.reshape(solver.get(0, "u"), (nu, 1))
-        
-        # Append data to plotting list
-        for i in range(1, N ):
-            s_i = np.reshape(solver.get(i, "x"), (nx, 1))
-            s_N = np.concatenate((s_N, s_i), axis = 1)
-        state_traj = np.dstack((state_traj, s_N))
-        control_traj = np.concatenate((control_traj, u_0), axis = 1)
-        t_step = np.append(t_step, t0)
+        # s_0 = np.reshape(solver.get(0, "x"), (nx, 1))
+        u_0 = solver.solve_for_x0(x0_bar = s_0)
+        s_0 = integrator.simulate(x=s_0, u=u_0)
 
+        # Store horizon for plot
+        for i in range( N ):
+            s_i = np.reshape(s_0, (nx, 1))
+            s_N = np.concatenate((s_N, s_i), axis = 1)
+        #print(f"DEBUG, {s_0}, \n {s_N[:, 1]}")
+
+        # print(f"DEBUG states {s_0}, {s_i}")
+        state_traj = np.dstack((state_traj, s_N))
+        control_traj = np.concatenate((control_traj, np.reshape(u_0, (nu, 1))), axis = 1)
+        t_step = np.append(t_step, t0)
+         
         # Save state and Control for next iteration
         t0 = t0 + stepTime
-        s_ini = solver.get(1, "x")
+        # s_ini = solver.get(1, "x")
         #model.x0 = s_ini
-        solver.set(0, "lbx", s_ini)
-        solver.set(0, "ubx", s_ini)    
+        # solver.set(0, "lbx", s_ini)
+        # solver.set(0, "ubx", s_ini)    
 
         # Generate API setpoint
         print(f'Soln setpoints {mpc_iter}: {s_0} at {round(t0, 3)} s\t')
-        roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
+        # roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
         #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
         
         # update iteration variables
