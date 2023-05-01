@@ -13,36 +13,33 @@ def setup_nlp():
     ocp = AcadosOcp()
 
     # export model
-    model, constraint = SysDyn.acados_model_format()
+    f_expl, f_impl, st, st_dt, ctrl = SysDyn.model_ode()
 
     # define acados ODE
     model_ac = AcadosModel()
-    model_ac.f_impl_expr = model.f_impl_expr
-    model_ac.f_expl_expr = model.f_expl_expr
-    model_ac.x = model.x
-    model_ac.xdot = model.xdot
-    model_ac.u = model.u
-    model_ac.z = model.z
-    model_ac.p = model.p
-    model_ac.name = model.name
+    model_ac.f_impl_expr = f_impl
+    model_ac.f_expl_expr = f_expl
+    model_ac.x = st
+    model_ac.xdot = st_dt
+    model_ac.u = ctrl
+    # model_ac.z = model.z
+    # model_ac.p = model.p
+    model_ac.name = "CrazyFlie21_model"
     ocp.model = model_ac
-
-    # define initial conditions
-    model.x0 = np.copy(init_st) # MOVED def from model
 
     # define constraint
     # model_ac.con_h_expr = constraint.expr
 
     # set dimensions
-    nx = model.x.size()[0]
-    nu = model.u.size()[0]
+    nx = model_ac.x.size()[0]
+    nu = model_ac.u.size()[0]
     ny = nx + nu
     ny_e = nx  # No terminal cost
 
     ocp.dims.N = N
 
     # set cost
-    ocp.cost.cost_type = "LINEAR_LS"                # TODO Implicitly LLS ?
+    ocp.cost.cost_type = "LINEAR_LS"                # TODO Default LLS 
     ocp.cost.cost_type_e = "LINEAR_LS"
     ocp.cost.W = scipy.linalg.block_diag(Q, R)
     ocp.cost.W_e = Q_e
@@ -65,7 +62,7 @@ def setup_nlp():
     # set intial references        # nx +  nu
     u_ref0 = np.zeros((4))
     ocp.cost.yref = np.concatenate((targ_st, U_hov))
-    # print(f"DEBUG cost yref \n {ocp.cost.yref}")
+    print(f"DEBUG cost yref \n {ocp.cost.yref}")
     ocp.cost.yref_e = np.array(targ_st)
 
     # Bounds on decision variables
@@ -78,7 +75,7 @@ def setup_nlp():
     lbx[0] = 0;           ubx[0] = 2.5        # x lower, upper bounds
     lbx[1] = 0;           ubx[1] = 2.5        # y bounds
     lbx[2] = 0;           ubx[2] = 2          # z bounds
-    lbx[3] = 0;           ubx[3] = 1           # qw bounds
+    lbx[3] = -1;          ubx[3] = 1           # qw bounds
     lbx[4] = 0;           ubx[4] = 1           # qx bounds
     lbx[5] = 0;           ubx[5] = 1           # qy bounds
     lbx[6] = 0;           ubx[6] = 1           # qz bounds
@@ -95,16 +92,18 @@ def setup_nlp():
     lbu[2] = 0;         ubu[2] = max_rpm        # w3 bounds
     lbu[3] = 0;         ubu[3] = max_rpm        # w4 bounds
     
-    ocp.constraints.x0  = model.x0
+    # define initial conditions
+    ocp.constraints.x0  = np.copy(init_st)
     
     # bounds on shooting nodes 0 - (N-1)s
     ocp.constraints.lbu = np.array(lbu)
     ocp.constraints.ubu = np.array(ubu)
     ocp.constraints.idxbu = np.array([0, 1, 2, 3])
 
-    ocp.constraints.lbx = np.array(lbx)
-    ocp.constraints.ubx = np.array(ubx)
-    ocp.constraints.idxbx = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    ocp.constraints.lbx = np.array(lbx[3:])
+    ocp.constraints.ubx = np.array(ubx[3:])
+    ocp.constraints.idxbx = np.array([3,4 ,5 ,6, 7, 8, 9, 10, 11, 12])#, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    print(f" DEBUG  bounds, lbx {ocp.constraints.lbx}, ubx {ocp.constraints.ubx}")
 
     # define constraints
     #ocp.constraints.lh = np.array([constraint.along_min])
@@ -124,4 +123,4 @@ def setup_nlp():
     acados_solver = AcadosOcpSolver(ocp, json_file = solve_json)
     acados_integrate = AcadosSimSolver(ocp, json_file = solve_json)
 
-    return constraint, model, acados_solver, acados_integrate
+    return  ocp.model, acados_solver, acados_integrate

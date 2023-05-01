@@ -55,10 +55,11 @@ class SysDyn():
         dq = -(Ct*l*(w1**2 - w2**2 - w3**2 + w4**2) + Ixx*p*r - Izz*p*r)/Iyy
         dr = -(Cd*  (w1**2 - w2**2 + w3**2 - w4**2) - Ixx*p*q + Iyy*p*q)/Izz
         
-        f_op = vertcat(dx, dy, dz, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
+        f_expl = vertcat(dx, dy, dz, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
+        f_impl = state_dt - f_expl
         #fp = Function('f', [state, controls], [f_op])
         
-        return f_op
+        return f_expl, f_impl, state, state_dt, controls
 
     def acados_model_format():
         constraint = types.SimpleNamespace()

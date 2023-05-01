@@ -21,7 +21,7 @@ stepTime = 0.02                         # Horizon interval
 N = 10                                   # Discretization steps
 sim_Smax = 50 / stepTime                # simulation time
 
-v_max = .5    ;   v_min = -.5                     #  [m/s]
+v_max = 0.5    ;   v_min = -0.5                     #  [m/s]
 w_max = pi/3   ;   w_min = -pi/3                    #  [rad/s]
 
 hov_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000     #[krpm]
@@ -31,7 +31,7 @@ n_states = 13
 
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,    0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([0.3, 0.0,  0.7,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([0.4,  0,  0.8,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 obst_st = np.array([2.4,  2.3, .5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 
 # radius of the drone, obstacle sphere

@@ -9,7 +9,7 @@ def simulation():
     '''Simulate the trajectory with forward dynamics model (No hardware required)'''
 
     # Define NLP, constraints, solver, integrator
-    constraint, model, solver, integrator = setup_nlp()   
+    model, solver, integrator = setup_nlp()   
 
     # dimensions
     nx = model.x.size()[0]
@@ -78,7 +78,7 @@ def simulation():
         # solver.set(0, "ubx", s_ini)    
 
         # Generate API setpoint
-        print(f'Soln setpoints {mpc_iter}: {s_0} at {round(t0, 3)} s\t')
+        # print(f'Soln setpoints {mpc_iter}: {s_0} at {round(t0, 3)} s\t')
         # roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
         #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
         
@@ -105,7 +105,7 @@ def onboard(scf):
     '''Execute MPC to issue optimal controls (RPYT) to CF2.1'''
 
     # Define solver, constraints, NLP
-    constraint, model, solver = setup_nlp()   
+    model, solver, integrator = setup_nlp()   
 
     # dimensions
     nx = model.x.size()[0]
