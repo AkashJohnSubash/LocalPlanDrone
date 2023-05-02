@@ -13,13 +13,13 @@ Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
 dq  = 92e-3      # [m] distance between motors' center
 l   = dq/2       # [m] distance between motors' center and the axis of rotation
 max_rpm = 22     # [krpm]
-
+inf_c = 10e15
 
 '''------------------------OCP parammeters------------------------------------'''
 
 stepTime = 0.02                                     # Horizon interval
-N = 10                                              # Discretization steps
-sim_Smax = 30 / stepTime                            # simulation time
+N = 35                                              # Discretization steps
+sim_Smax = 100 / stepTime                            # simulation time
 
 v_max = 1    ;   v_min = -1                         #  [m/s]
 w_max = pi   ;   w_min = -pi                        #  [rad/s]
@@ -32,7 +32,7 @@ n_states = 13
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,  0,  .5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
 targ_st = np.array([1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-obst_st = np.array([2.4, 2.3, .5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+obst_st = np.array([.5, .5, .7,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 
 # radius of the drone, obstacle sphere
 rob_rad =  .05                              

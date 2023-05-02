@@ -14,7 +14,6 @@ def simulation():
     # dimensions
     nx = ocp.model.x.size()[0]
     nu = ocp.model.u.size()[0]
-    ny = nx + nu
     Nsim = int(sim_Smax * N / stepTime)
 
     # define data structures
@@ -74,7 +73,9 @@ def simulation():
   
 
         # Generate API setpoint
-        print(f'Soln setpoints {mpc_iter}: {s_0} at {round(t0, 3)} s\t')
+        euclid = (s_0[0: 3] - obst_st[0:3])
+        obst_err = ((euclid.T @ euclid) -( rob_rad + obst_rad))
+        print(f'Soln setpoints {mpc_iter}: {s_0}, {round(obst_err, 3)} at {round(t0, 3)} s\t')
     
         # update iteration variables
         t2 = time()

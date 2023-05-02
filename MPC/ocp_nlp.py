@@ -13,7 +13,7 @@ def setup_nlp():
     ocp = AcadosOcp()
 
     # export model
-    f_expl, f_impl, st, st_dt, ctrl = SysDyn.model_ode()
+    f_expl, f_impl, st, st_dt, u = SysDyn.model_ode()
 
     # define acados ODE
     model_ac = AcadosModel()
@@ -21,27 +21,26 @@ def setup_nlp():
     model_ac.f_expl_expr = f_expl
     model_ac.x = st
     model_ac.xdot = st_dt
-    model_ac.u = ctrl
+    model_ac.u = u
     # model_ac.z = model.z
     # model_ac.p = model.p
     model_ac.name = "CrazyFlie21_model"
     ocp.model = model_ac
 
     # define constraint
-    # model_ac.con_h_expr = constraint.expr
+    euclid = (st[0: 3] - obst_st[0:3])
+    model_ac.con_h_expr = vertcat(((euclid.T @ euclid) -( rob_rad + obst_rad)))
 
     # set dimensions
     nx = model_ac.x.size()[0]
     nu = model_ac.u.size()[0]
-    ny = nx + nu
-    ny_e = nx  # No terminal cost
 
     ocp.dims.N = N
 
     # set cost
     ocp.cost.cost_type = "EXTERNAL" #"LINEAR_LS"
     ocp.cost.cost_type_e = "EXTERNAL" #"LINEAR_LS"
-    ocp.model.cost_expr_ext_cost = (st - targ_st).T @ Q @ (st - targ_st) + (ctrl - ref_u).T @ R @ (ctrl - ref_u)
+    ocp.model.cost_expr_ext_cost = (st - targ_st).T @ Q @ (st - targ_st) + (u - ref_u).T @ R @ (u - ref_u)
     ocp.model.cost_expr_ext_cost_e = (st - targ_st).T @ Q_e @ (st - targ_st)
 
     # Bounds on decision variables
@@ -53,16 +52,16 @@ def setup_nlp():
     lbx[0] = -2;           ubx[0] = 2           # x lower, upper bounds
     lbx[1] = -2;           ubx[1] = 2           # y bounds
     lbx[2] = -2;           ubx[2] = 2          # z bounds
-    lbx[3] = -10e15;        ubx[3] = 10e15       # qw bounds
-    lbx[4] = -10e15;        ubx[4] = 10e15       # qx bounds
-    lbx[5] = -10e15;        ubx[5] = 10e15       # qy bounds
-    lbx[6] = -10e15;        ubx[6] = 10e15       # qz bounds
+    lbx[3] = -inf_c;       ubx[3] = inf_c       # qw bounds
+    lbx[4] = -inf_c;       ubx[4] = inf_c       # qx bounds
+    lbx[5] = -inf_c;       ubx[5] = inf_c       # qy bounds
+    lbx[6] = -inf_c;       ubx[6] = inf_c       # qz bounds
     lbx[7] = v_min;        ubx[7] = v_max      # u bounds
     lbx[8] = v_min;        ubx[8] = v_max      # v bounds
     lbx[9] = v_min;        ubx[9] = v_max      # w bounds
-    lbx[10] = w_min;        ubx[10] = w_max     # p bounds
-    lbx[11] = w_min;        ubx[11] = w_max     # q bounds
-    lbx[12] = w_min;        ubx[12] = w_max     # r bounds
+    lbx[10] = w_min;       ubx[10] = w_max     # p bounds
+    lbx[11] = w_min;       ubx[11] = w_max     # q bounds
+    lbx[12] = w_min;       ubx[12] = w_max     # r bounds
     
     # Control bounds
     lbu[0] = 0;         ubu[0] = max_rpm        # w1 bounds
@@ -80,12 +79,12 @@ def setup_nlp():
 
     ocp.constraints.lbx = np.array(lbx)
     ocp.constraints.ubx = np.array(ubx)
-    ocp.constraints.idxbx = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])#, 7, 8, 9, 10, 11, 12])
-    print(f" DEBUG  bounds, lbx {ocp.constraints.lbx}, idx {ocp.constraints.idxbx}")
+    ocp.constraints.idxbx = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    # print(f" DEBUG  bounds, lbx {ocp.constraints.lbx}, idx {ocp.constraints.idxbx}")
 
-    # define constraints
-    #ocp.constraints.lh = np.array([constraint.along_min])
-    #ocp.constraints.uh = np.array([constraint.along_max ])
+    # bounds on equality constraints
+    ocp.constraints.lh = np.array([0])
+    ocp.constraints.uh = np.array([inf_c])
 
     # set QP solver and integration
     ocp.solver_options.tf = stepTime
