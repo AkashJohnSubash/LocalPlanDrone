@@ -58,37 +58,24 @@ def simulation():
         # Get solution with previous s_0 and update s_0
         u_0 = solver.solve_for_x0(x0_bar = s_0)
         s_0 = integrator.simulate(x=s_0, u=u_0)
-        # print(f"lbu \n {solver.get_from_qp_in(0, 'lbu')}")
-        # lbu_update = [u_0[0] -del_u, u_0[1] -del_u, u_0[2] -del_u, u_0[3] +del_u] 
-        # ubu_update = [u_0[0] +del_u, u_0[1] +del_u, u_0[2] +del_u, u_0[3] +del_u]
-        # ocp.constraints.lbu = np.array(lbu_update)
-        # ocp.constraints.ubx = np.array(ubu_update)
-        # # solver.constraints_set(0, "lbu", np.array(lbu_update))
-        # solver.constraints_set(0, "ubu", np.array(ubu_update))
+        
         # Store horizon for plot
         
         for i in range( N ):
             s_i = np.reshape(solver.get(i, "x"), (nx, 1))
             s_N = np.concatenate((s_N, s_i), axis = 1)
-        #print(f"DEBUG, {s_0}, \n {s_N[:, 1]}")
-
-        # print(f"DEBUG states {s_0}, {s_i}")
+ 
         state_traj = np.dstack((state_traj, s_N))
         control_traj = np.concatenate((control_traj, np.reshape(u_0, (nu, 1))), axis = 1)
         t_step = np.append(t_step, t0)
          
         # Save state and Control for next iteration
         t0 = t0 + stepTime
-        # s_ini = solver.get(1, "x")
-        #model.x0 = s_ini
-        # solver.set(0, "lbx", s_ini)
-        # solver.set(0, "ubx", s_ini)    
+  
 
         # Generate API setpoint
-        print(f'Soln setpoints {mpc_iter}: {s_0[0:3]} at {round(t0, 3)} s\t')
-        # roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
-        # print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
-        
+        print(f'Soln setpoints {mpc_iter}: {s_0} at {round(t0, 3)} s\t')
+    
         # update iteration variables
         t2 = time()
         times = np.vstack(( times, t2-t1))
@@ -192,8 +179,7 @@ def onboard(scf):
         # Issue setpoint command (RPYT)
         roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
         scf.cf.commander.send_setpoint(roll, pitch, yawRate, thrust_norm)
-        #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
-
+        
         # update iteration variables
         t2 = time()
         times = np.vstack(( times, t2-t1))
