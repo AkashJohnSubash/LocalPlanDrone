@@ -39,31 +39,34 @@ def setup_nlp():
     ocp.dims.N = N
 
     # set cost
-    ocp.cost.cost_type = "LINEAR_LS"                # TODO Default LLS 
-    ocp.cost.cost_type_e = "LINEAR_LS"
-    ocp.cost.W = scipy.linalg.block_diag(Q, R)
-    ocp.cost.W_e = Q_e
+    ocp.cost.cost_type = "EXTERNAL" #"LINEAR_LS"
+    ocp.cost.cost_type_e = "EXTERNAL" #"LINEAR_LS"
+    ocp.model.cost_expr_ext_cost = (st - targ_st).T @ Q @ (st - targ_st) + (ctrl - ref_u).T @ R @ (ctrl - ref_u)
+    ocp.model.cost_expr_ext_cost_e = (st - targ_st).T @ Q_e @ (st - targ_st)
 
-    Vx = np.zeros((ny, nx))
-    Vx[:nx, :nx] = np.eye(nx)
-    ocp.cost.Vx = Vx
+    # ocp.cost.W = scipy.linalg.block_diag(Q, R)
+    # ocp.cost.W_e = Q_e
 
-    Vu = np.zeros((ny, nu))
-    Vu[13,0] = 1.0
-    Vu[14,1] = 1.0
-    Vu[15,2] = 1.0
-    Vu[16,3] = 1.0
-    ocp.cost.Vu = Vu
+    # Vx = np.zeros((ny, nx))
+    # Vx[:nx, :nx] = np.eye(nx)
+    # ocp.cost.Vx = Vx
 
-    Vx_e = np.zeros((ny_e, nx))
-    Vx_e[:nx, :nx] = np.eye(nx)
-    ocp.cost.Vx_e = Vx_e
+    # Vu = np.zeros((ny, nu))
+    # Vu[13,0] = 1.0
+    # Vu[14,1] = 1.0
+    # Vu[15,2] = 1.0
+    # Vu[16,3] = 1.0
+    # ocp.cost.Vu = Vu
+
+    # Vx_e = np.zeros((ny_e, nx))
+    # Vx_e[:nx, :nx] = np.eye(nx)
+    # ocp.cost.Vx_e = Vx_e
 
     # set intial references        # nx +  nu
-    u_ref0 = np.zeros((4))
-    ocp.cost.yref = np.concatenate((targ_st, U_hov))
-    print(f"DEBUG cost yref \n {ocp.cost.yref}")
-    ocp.cost.yref_e = np.array(targ_st)
+    # u_ref0 = np.zeros((4))
+    # ocp.cost.yref = np.concatenate((targ_st, U_hov))
+    # print(f"DEBUG cost yref \n {ocp.cost.yref}")
+    # ocp.cost.yref_e = np.array(targ_st)
 
     # Bounds on decision variables
     
@@ -72,19 +75,19 @@ def setup_nlp():
     lbu = [0] * nu;         ubu = [0] * nu
     #print(f" DEBUG init states constr, lbx {lbx}, ubx {ubx}")
     
-    lbx[0] = 0;           ubx[0] = 2.5        # x lower, upper bounds
-    lbx[1] = 0;           ubx[1] = 2.5        # y bounds
-    lbx[2] = 0;           ubx[2] = 2          # z bounds
+    lbx[0] = -2;           ubx[0] = 2        # x lower, upper bounds
+    lbx[1] = -2;           ubx[1] = 2        # y bounds
+    lbx[2] = -2;           ubx[2] = 2          # z bounds
     lbx[3] = -1;          ubx[3] = 1           # qw bounds
     lbx[4] = 0;           ubx[4] = 1           # qx bounds
     lbx[5] = 0;           ubx[5] = 1           # qy bounds
     lbx[6] = 0;           ubx[6] = 1           # qz bounds
-    lbx[7] = v_min;       ubx[7] = v_max      # u bounds
-    lbx[8] = v_min;       ubx[8] = v_max      # v bounds
-    lbx[9] = v_min;       ubx[9] = v_max      # w bounds
-    lbx[10] = w_min;      ubx[10] = w_max     # p bounds
-    lbx[11] = w_min;      ubx[11] = w_max     # q bounds
-    lbx[12] = w_min;      ubx[12] = w_max     # r bounds
+    lbx[3] = v_min;       ubx[3] = v_max      # u bounds
+    lbx[4] = v_min;       ubx[4] = v_max      # v bounds
+    lbx[5] = v_min;       ubx[5] = v_max      # w bounds
+    lbx[6] = w_min;      ubx[6] = w_max     # p bounds
+    lbx[7] = w_min;      ubx[7] = w_max     # q bounds
+    lbx[8] = w_min;      ubx[8] = w_max     # r bounds
     
     # Control bounds
     lbu[0] = 0;         ubu[0] = max_rpm        # w1 bounds
@@ -100,9 +103,9 @@ def setup_nlp():
     ocp.constraints.ubu = np.array(ubu)
     ocp.constraints.idxbu = np.array([0, 1, 2, 3])
 
-    ocp.constraints.lbx = np.array(lbx[3:])
-    ocp.constraints.ubx = np.array(ubx[3:])
-    ocp.constraints.idxbx = np.array([3,4 ,5 ,6, 7, 8, 9, 10, 11, 12])#, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    ocp.constraints.lbx = np.array(lbx[0:6])
+    ocp.constraints.ubx = np.array(ubx[0:6])
+    ocp.constraints.idxbx = np.array([1,2, 3, 4, 5, 6])#, 7, 8, 9, 10, 11, 12])
     print(f" DEBUG  bounds, lbx {ocp.constraints.lbx}, ubx {ocp.constraints.ubx}")
 
     # define constraints
@@ -113,14 +116,14 @@ def setup_nlp():
     ocp.solver_options.tf = stepTime
     ocp.solver_options.qp_solver = "PARTIAL_CONDENSING_HPIPM"
     ocp.solver_options.nlp_solver_type = "SQP_RTI"
-    ocp.solver_options.hessian_approx = "GAUSS_NEWTON"
+    ocp.solver_options.hessian_approx = "GAUSS_NEWTON" #"EXACT"
     ocp.solver_options.integrator_type = "IRK"
-    ocp.solver_options.nlp_solver_max_iter = 100
-    ocp.solver_options.tol = 1e-8  
+    # ocp.solver_options.nlp_solver_max_iter = 100
+    # ocp.solver_options.tol = 1e-8  
 
     # create solver
     solve_json = "flight_ocp.json"
     acados_solver = AcadosOcpSolver(ocp, json_file = solve_json)
     acados_integrate = AcadosSimSolver(ocp, json_file = solve_json)
 
-    return  ocp.model, acados_solver, acados_integrate
+    return  ocp, acados_solver, acados_integrate

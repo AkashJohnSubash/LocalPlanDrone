@@ -4,9 +4,9 @@ from casadi import *
 '------------------------CF2.1 model parameters--------------------------------'
 
 g0  = 9.80665    # [m.s^2] accerelation of gravity
-mq  = 31e-3      # [kg] total mass (with Lighthouse deck)
+mq  = 33e-3      # [kg] total mass (with Lighthouse deck)
 Ixx = 1.395e-5   # [kg.m^2] Inertial moment around x-axis
-Iyy = 1.395e-5   # [kg.m^2] Inertial moment around y-axis
+Iyy = 1.436e-5   # [kg.m^2] Inertial moment around y-axis
 Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
 Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
 Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
@@ -15,30 +15,30 @@ l   = dq/2       # [m] distance between motors' center and the axis of rotation
 max_rpm = 22     # [krpm]
 
 
-'''----------------OCP parammeters-----------------'''
+'''------------------------OCP parammeters------------------------------------'''
 
-stepTime = 0.02                         # Horizon interval
-N = 10                                   # Discretization steps
-sim_Smax = 50 / stepTime                # simulation time
+stepTime = 0.02                                     # Horizon interval
+N = 10                                              # Discretization steps
+sim_Smax = 20 / stepTime                            # simulation time
 
-v_max = 0.5    ;   v_min = -0.5                     #  [m/s]
+v_max = .2    ;   v_min = -.2                         #  [m/s]
 w_max = pi/3   ;   w_min = -pi/3                    #  [rad/s]
 
-hov_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000     #[krpm]
+hov_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000   #[krpm]
 
 # State
 n_states = 13
 
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0,    0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([0.4,  0,  0.8,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-obst_st = np.array([2.4,  2.3, .5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+init_st = np.array([0,    0,  .5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+targ_st = np.array([0.5,  0.5,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+obst_st = np.array([2.4, 2.3, .5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 
 # radius of the drone, obstacle sphere
 rob_rad =  .05                              
 obst_rad = .05
 
-init_u = np.array([hov_rpm, hov_rpm,  hov_rpm,  hov_rpm])
+ref_u = np.array([hov_rpm, hov_rpm,  hov_rpm,  hov_rpm])
 # Control
 n_controls = 4
 

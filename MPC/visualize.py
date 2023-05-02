@@ -17,11 +17,14 @@ def plot_controls(cat_U, timestamp):
     w2 = np.ravel(cat_U[1, :-N -1])
     w3 = np.ravel(cat_U[2, :-N -1 ])
     w4 = np.ravel(cat_U[3, :-N -1])
+    num_rows = w4.shape[0]
+    w_ref = np.ones(num_rows) * hov_rpm
 
-    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='b')
-    axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='g')
-    axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='y')
-    axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='r')
+    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='lightcoral')
+    axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='moccasin')
+    axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='darkseagreen')
+    axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='lightsteelblue')
+    axsU.stairs(w_ref, timestamp/stepTime, label='w_hov ', color='darkred')
     
     axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
 
@@ -66,7 +69,7 @@ def plot_states(cat_ST, t):
     
 
     # path
-    path = ax.plot([], [], 'b', alpha=0.5, linewidth=0.5)[0]
+    path = ax.plot([], [], 'blue', alpha=0.5, linewidth=0.5)[0]
     # horizon
     horizon, = ax.plot([], [],'x-g', alpha=0.5)
 
@@ -78,13 +81,13 @@ def plot_states(cat_ST, t):
     ax.set_zlim3d(bottom = cage_z[0], top = cage_z[1])
 
     # Sphere around bot
-    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 14000, c='b', alpha=0.2)
+    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 14000, c='blue', alpha=0.2)
 
     # Sphere around obstacle position
-    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 14000, c='r', alpha=0.2)
+    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 14000, c='red', alpha=0.2)
     
     # Sphere around target point
-    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 14000, c='g', alpha=0.2)
+    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 14000, c='green', alpha=0.2)
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')

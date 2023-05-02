@@ -39,7 +39,7 @@ class SysDyn():
         dy = u*2*(q1*q4 + q2*q3)       + v*(2*(q1**2 + q3**2) - 1)     + w*2*(q3*q4 - q1*q2)
         dz = u*2*(q2*q4 - q1*q3)       + v*2*(q1*q2 + q3*q4)           + w*(2*(q1**2 + q4**2) - 1) 
         
-        # Rate of change of angles (in qaurternion)
+        # Rate of change of heading (in quarternion)
         dq1 = - (q2*p)/2 - (q3*q)/2 - (q4*r)/2
         dq2 =   (q1*p)/2 - (q4*q)/2 + (q3*r)/2
         dq3 =   (q4*p)/2 + (q1*q)/2 - (q2*r)/2
@@ -57,45 +57,44 @@ class SysDyn():
         
         f_expl = vertcat(dx, dy, dz, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
         f_impl = state_dt - f_expl
-        #fp = Function('f', [state, controls], [f_op])
         
         return f_expl, f_impl, state, state_dt, controls
 
-    def acados_model_format():
-        constraint = types.SimpleNamespace()
-        model = types.SimpleNamespace()
+    # def acados_model_format():
+    #     constraint = types.SimpleNamespace()
+    #     model = types.SimpleNamespace()
 
-        f_expl = SysDyn.model_ode()
-        model_name = "CrazyFlie21_model"
-        # algebraic variables
-        z = vertcat([])
+    #     f_expl = SysDyn.model_ode()
+    #     model_name = "CrazyFlie21_model"
+    #     # algebraic variables
+    #     z = vertcat([])
 
-        # parameters
-        p = vertcat([])
+    #     # parameters
+    #     p = vertcat([])
 
-        # Define model structure
-        params = types.SimpleNamespace()
-        params.g0 = g0
-        params.mq = mq
-        params.Ixx = Ixx
-        params.Iyy = Iyy
-        params.Izz = Izz
-        params.Cd = Cd
-        params.Ct = Ct
-        params.dq = dq
-        params.l = l
+    #     # Define model structure
+    #     params = types.SimpleNamespace()
+    #     params.g0 = g0
+    #     params.mq = mq
+    #     params.Ixx = Ixx
+    #     params.Iyy = Iyy
+    #     params.Izz = Izz
+    #     params.Cd = Cd
+    #     params.Ct = Ct
+    #     params.dq = dq
+    #     params.l = l
 
-        model.f_impl_expr = state_dt - f_expl
-        model.f_expl_expr = f_expl
-        model.x = state
-        model.xdot = state_dt
-        model.u = controls
-        model.z = z
-        model.p = p
-        model.name = model_name
-        model.params = params
+    #     model.f_impl_expr = state_dt - f_expl
+    #     model.f_expl_expr = f_expl
+    #     model.x = state
+    #     model.xdot = state_dt
+    #     model.u = controls
+    #     model.z = z
+    #     model.p = p
+    #     model.name = model_name
+    #     model.params = params
 
-        return model, constraint
+    #     return model, constraint
     
 class Predictor:
 

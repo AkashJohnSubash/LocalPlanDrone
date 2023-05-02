@@ -9,11 +9,11 @@ def simulation():
     '''Simulate the trajectory with forward dynamics model (No hardware required)'''
 
     # Define NLP, constraints, solver, integrator
-    model, solver, integrator = setup_nlp()   
+    ocp, solver, integrator = setup_nlp()   
 
     # dimensions
-    nx = model.x.size()[0]
-    nu = model.u.size()[0]
+    nx = ocp.model.x.size()[0]
+    nu = ocp.model.u.size()[0]
     ny = nx + nu
     Nsim = int(sim_Smax * N / stepTime)
 
@@ -24,7 +24,7 @@ def simulation():
     # States and controls defined as coloumn vectors
     s_0 = np.copy(init_st)                                
     s_t = np.copy(targ_st)
-    u_0 = np.copy(init_u)
+    u_0 = np.copy(ref_u)
 
     # initialize data structures
     mpc_iter = 0
@@ -43,7 +43,8 @@ def simulation():
     setpoints = [0, 0, 0, int(0)]
     roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
     main_loop = time()
-    
+    # del_u = 0.002
+
     while (state_error > 1e-1) and (mpc_iter < sim_Smax):
         t1 = time()
         s_i = np.reshape(np.copy(s_0), (nx, 1))
@@ -54,14 +55,20 @@ def simulation():
         if status != 0:
             print(f"acados returned status {status} in closed loop iteration {mpc_iter}.")
 
-        # Get solution
-        # s_0 = np.reshape(solver.get(0, "x"), (nx, 1))
+        # Get solution with previous s_0 and update s_0
         u_0 = solver.solve_for_x0(x0_bar = s_0)
         s_0 = integrator.simulate(x=s_0, u=u_0)
-
+        # print(f"lbu \n {solver.get_from_qp_in(0, 'lbu')}")
+        # lbu_update = [u_0[0] -del_u, u_0[1] -del_u, u_0[2] -del_u, u_0[3] +del_u] 
+        # ubu_update = [u_0[0] +del_u, u_0[1] +del_u, u_0[2] +del_u, u_0[3] +del_u]
+        # ocp.constraints.lbu = np.array(lbu_update)
+        # ocp.constraints.ubx = np.array(ubu_update)
+        # # solver.constraints_set(0, "lbu", np.array(lbu_update))
+        # solver.constraints_set(0, "ubu", np.array(ubu_update))
         # Store horizon for plot
+        
         for i in range( N ):
-            s_i = np.reshape(s_0, (nx, 1))
+            s_i = np.reshape(solver.get(i, "x"), (nx, 1))
             s_N = np.concatenate((s_N, s_i), axis = 1)
         #print(f"DEBUG, {s_0}, \n {s_N[:, 1]}")
 
@@ -78,9 +85,9 @@ def simulation():
         # solver.set(0, "ubx", s_ini)    
 
         # Generate API setpoint
-        # print(f'Soln setpoints {mpc_iter}: {s_0} at {round(t0, 3)} s\t')
+        print(f'Soln setpoints {mpc_iter}: {s_0[0:3]} at {round(t0, 3)} s\t')
         # roll, pitch, yawRate, thrust_norm = calc_thrust_setpoint(s_0, u_0)
-        #print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
+        # print(f'Soln setpoints {mpc_iter}: {roll}, {pitch}, {yawRate}, {thrust_norm} at {round(t0,3)} s\t') 
         
         # update iteration variables
         t2 = time()
@@ -120,7 +127,7 @@ def onboard(scf):
     # States and controls defined as coloumn vectors
     s_0 = DM(np.copy(init_st))                                
     s_t = DM(np.copy(targ_st))
-    u_0 = DM(np.copy(init_u))
+    u_0 = DM(np.copy(ref_u))
 
     # initialize data structures
     mpc_iter = 0
