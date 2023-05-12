@@ -17,12 +17,12 @@ inf_c = 10e15
 
 '''------------------------OCP parammeters------------------------------------'''
 
-stepTime = 0.02                                     # Horizon interval
-N = 35                                              # Discretization steps
+stepTime = 0.04                                  # Horizon interval
+N = 30                                              # Discretization steps
 sim_Smax = 100 / stepTime                            # simulation time
 
-v_max = 1    ;   v_min = -1                         #  [m/s]
-w_max = pi   ;   w_min = -pi                        #  [rad/s]
+v_min = -2  ;   v_max = 2                           #  [m/s]
+w_min = -pi ;   w_max = pi                          #  [rad/s]
 
 hov_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000   #[krpm]
 
@@ -32,7 +32,7 @@ n_states = 13
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0,  0,  .5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
 targ_st = np.array([1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-obst_st = np.array([.5, .5, .7,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+obst_st = np.array([.5, .5, 0.7,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 
 # radius of the drone, obstacle sphere
 rob_rad =  .05                              
@@ -48,9 +48,9 @@ PITCH_TRIM = 0
 '''-------------------------Weights---------------------------------'''
 # State, Control weighting for MPC cost function
 
-R = np.diag([5, 5, 5, 5])
-Q = np.diag([120, 100, 100, 1e-5, 1e-5, 1e-5, 1e-5, 2, 2, 2, 2, 2, 2]) 
-Q_e = 7 * Q
+R = np.diag([2.5, 2.5, 2.5, 2.5])
+Q = np.diag([100, 100, 100, 1e-5, 1e-5, 1e-5, 1e-5, 1, 1, 1, 1, 1, 1]) 
+Q_e = 10 * Q
 
 '''------------------------------------------------------------------'''
 

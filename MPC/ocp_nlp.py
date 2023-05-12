@@ -2,6 +2,9 @@ from casadi import *
 from common import *
 from sys_dynamics import SysDyn
 from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver, AcadosSimSolver
+from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver, AcadosSimSolver
+import scipy
+from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver, AcadosSimSolver 
 import scipy
 
 U_hov = np.array([hov_rpm, hov_rpm, hov_rpm, hov_rpm])
@@ -28,8 +31,7 @@ def setup_nlp():
     ocp.model = model_ac
 
     # define constraint
-    euclid = (st[0: 3] - obst_st[0:3])
-    model_ac.con_h_expr = vertcat(((euclid.T @ euclid) -( rob_rad + obst_rad)))
+    model_ac.con_h_expr = (norm_2(st[0: 3] - obst_st[0:3])  - (rob_rad * 2))
 
     # set dimensions
     nx = model_ac.x.size()[0]
@@ -38,8 +40,8 @@ def setup_nlp():
     ocp.dims.N = N
 
     # set cost
-    ocp.cost.cost_type = "EXTERNAL" #"LINEAR_LS"
-    ocp.cost.cost_type_e = "EXTERNAL" #"LINEAR_LS"
+    ocp.cost.cost_type = "EXTERNAL"
+    ocp.cost.cost_type_e = "EXTERNAL"
     ocp.model.cost_expr_ext_cost = (st - targ_st).T @ Q @ (st - targ_st) + (u - ref_u).T @ R @ (u - ref_u)
     ocp.model.cost_expr_ext_cost_e = (st - targ_st).T @ Q_e @ (st - targ_st)
 
@@ -49,13 +51,13 @@ def setup_nlp():
     lbx = [0] * nx;         ubx = [0] * nx
     lbu = [0] * nu;         ubu = [0] * nu
     
-    lbx[0] = -2;           ubx[0] = 2           # x lower, upper bounds
-    lbx[1] = -2;           ubx[1] = 2           # y bounds
+    lbx[0] = -2;           ubx[0] = 2          # x lower, upper bounds
+    lbx[1] = -2;           ubx[1] = 2          # y bounds
     lbx[2] = -2;           ubx[2] = 2          # z bounds
-    lbx[3] = -inf_c;       ubx[3] = inf_c       # qw bounds
-    lbx[4] = -inf_c;       ubx[4] = inf_c       # qx bounds
-    lbx[5] = -inf_c;       ubx[5] = inf_c       # qy bounds
-    lbx[6] = -inf_c;       ubx[6] = inf_c       # qz bounds
+    lbx[3] = -inf_c;       ubx[3] = inf_c      # qw bounds
+    lbx[4] = -inf_c;       ubx[4] = inf_c      # qx bounds
+    lbx[5] = -inf_c;       ubx[5] = inf_c      # qy bounds
+    lbx[6] = -inf_c;       ubx[6] = inf_c      # qz bounds
     lbx[7] = v_min;        ubx[7] = v_max      # u bounds
     lbx[8] = v_min;        ubx[8] = v_max      # v bounds
     lbx[9] = v_min;        ubx[9] = v_max      # w bounds

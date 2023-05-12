@@ -56,12 +56,14 @@ def plot_states(cat_ST, t):
         horizon.set_3d_properties(cat_ST[2, 0, :iter])
         
         # update bot sphere position, orientation 
+        # sphere_i.set_alpha(0)
         sphere_i._offsets3d = (cat_ST[0:3, 0, :iter])
+        # sphere_i.set_alpha(0.2)
 
         return path, horizon, sphere_i
 
     fig = plt.figure()
-    #plt.ion()
+    # plt.ion()
     ax = Axes3D(fig, auto_add_to_figure=False)
     ax.azim = -25
     ax.elev = 15
@@ -81,13 +83,13 @@ def plot_states(cat_ST, t):
     ax.set_zlim3d(bottom = cage_z[0], top = cage_z[1])
 
     # Sphere around bot
-    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 14000, c='blue', alpha=0.2)
+    sphere_i = ax.scatter(init_st[0], init_st[1], init_st[2], s=pi * rob_rad**2 * 10000, c='blue', alpha=0.2)
 
     # Sphere around obstacle position
-    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 14000, c='red', alpha=0.2)
+    sphere_o = ax.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 10000, c='red', alpha=0.2)
     
     # Sphere around target point
-    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 14000, c='green', alpha=0.2)
+    sphere_t = ax.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 10000, c='green', alpha=0.2)
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')

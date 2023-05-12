@@ -59,42 +59,6 @@ class SysDyn():
         f_impl = state_dt - f_expl
         
         return f_expl, f_impl, state, state_dt, controls
-
-    # def acados_model_format():
-    #     constraint = types.SimpleNamespace()
-    #     model = types.SimpleNamespace()
-
-    #     f_expl = SysDyn.model_ode()
-    #     model_name = "CrazyFlie21_model"
-    #     # algebraic variables
-    #     z = vertcat([])
-
-    #     # parameters
-    #     p = vertcat([])
-
-    #     # Define model structure
-    #     params = types.SimpleNamespace()
-    #     params.g0 = g0
-    #     params.mq = mq
-    #     params.Ixx = Ixx
-    #     params.Iyy = Iyy
-    #     params.Izz = Izz
-    #     params.Cd = Cd
-    #     params.Ct = Ct
-    #     params.dq = dq
-    #     params.l = l
-
-    #     model.f_impl_expr = state_dt - f_expl
-    #     model.f_expl_expr = f_expl
-    #     model.x = state
-    #     model.xdot = state_dt
-    #     model.u = controls
-    #     model.z = z
-    #     model.p = p
-    #     model.name = model_name
-    #     model.params = params
-
-    #     return model, constraint
     
 class Predictor:
 
