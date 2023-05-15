@@ -18,10 +18,10 @@ def plot_dataset(cat_U, timestamp):
     w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
     w_ref = np.ones(w4.shape[0]) * u_hov
 
-    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='b' )
-    axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='g')
-    axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='y' )
-    axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='r')
+    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='lightcoral' )
+    axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='moccasin')
+    axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='darkseagreen' )
+    axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='lightsteelblue')
     axsU.stairs(w_ref, timestamp/stepTime, label='w_hov ', color='darkred')
     
     axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
