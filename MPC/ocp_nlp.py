@@ -42,7 +42,7 @@ def setup_nlp():
     # set cost
     ocp.cost.cost_type = "EXTERNAL"
     ocp.cost.cost_type_e = "EXTERNAL"
-    ocp.model.cost_expr_ext_cost = (st - targ_st).T @ Q @ (st - targ_st) + (u - ref_u).T @ R @ (u - ref_u)
+    ocp.model.cost_expr_ext_cost = (st - targ_st).T @ Q @ (st - targ_st) + (u  - ref_u).T @ R @ (u - ref_u)
     ocp.model.cost_expr_ext_cost_e = (st - targ_st).T @ Q_e @ (st - targ_st)
 
     # Bounds on decision variables
@@ -79,9 +79,9 @@ def setup_nlp():
     ocp.constraints.ubu = np.array(ubu)
     ocp.constraints.idxbu = np.array([0, 1, 2, 3])
 
-    ocp.constraints.lbx = np.array(lbx)
-    ocp.constraints.ubx = np.array(ubx)
-    ocp.constraints.idxbx = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    ocp.constraints.lbx = np.array(lbx[0:7])
+    ocp.constraints.ubx = np.array(ubx[0:7])
+    ocp.constraints.idxbx = np.array([0, 1, 2, 3, 4, 5, 6])
     # print(f" DEBUG  bounds, lbx {ocp.constraints.lbx}, idx {ocp.constraints.idxbx}")
 
     # bounds on equality constraints
@@ -92,8 +92,8 @@ def setup_nlp():
     ocp.solver_options.tf = stepTime
     ocp.solver_options.qp_solver = "PARTIAL_CONDENSING_HPIPM"
     ocp.solver_options.nlp_solver_type = "SQP_RTI"
-    ocp.solver_options.hessian_approx = "GAUSS_NEWTON" #"EXACT"
-    ocp.solver_options.integrator_type = "IRK"
+    ocp.solver_options.hessian_approx = "GAUSS_NEWTON" # "EXACT"
+    ocp.solver_options.integrator_type = "ERK"
     # ocp.solver_options.nlp_solver_max_iter = 100
     # ocp.solver_options.tol = 1e-8  
 

@@ -75,7 +75,7 @@ def simulation():
         # Generate API setpoint
         displt = (s_0[0: 3] - obst_st[0:3])
         euclid = sqrt(displt.T @ displt)
-        obst_err = ((euclid) - (rob_rad *3))
+        obst_err = ((euclid) - (rob_rad *2))
         print(f'Soln setpoints {mpc_iter}: pos {np.round(s_0,3)}, euclid {round(euclid, 3)}, error {round(obst_err, 3)} at {round(t0, 3)} s\t')
     
         # update iteration variables

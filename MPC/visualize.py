@@ -47,7 +47,7 @@ def plot_states(cat_ST, t):
         # update path
         # print("animate pos", np.shape(cat_ST), cat_ST)
         global iter
-        iter = iter +1
+        iter = iter +10
         path.set_data(cat_ST[0:2, 0, :iter])
         path.set_3d_properties(cat_ST[2, 0, :iter])
     
@@ -75,8 +75,8 @@ def plot_states(cat_ST, t):
     # horizon
     horizon, = ax.plot([], [],'x-g', alpha=0.5)
 
-    cage_x = [-0.5, 1.5]  # dimensions in meters
-    cage_y = [-0.5, 1.5]  # dimensions in meters
+    cage_x = [-0.5, 2.5]  # dimensions in meters
+    cage_y = [-0.5, 2.5]  # dimensions in meters
     cage_z = [0, 2]       # dimensions in meters
     ax.set_xlim3d(left = cage_x[0], right = cage_x[1])
     ax.set_ylim3d(bottom = cage_y[0], top = cage_y[1])
@@ -94,6 +94,6 @@ def plot_states(cat_ST, t):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, interval=0.005, frames=len(t),  blit=True)
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, interval=80, frames=len(t),  blit=True)
 
     plt.show()
