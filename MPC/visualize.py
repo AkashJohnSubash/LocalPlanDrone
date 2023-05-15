@@ -1,5 +1,5 @@
 import numpy as np 
-from numpy import sin, cos, pi
+from numpy import pi
 from matplotlib import pyplot as plt, animation
 from mpl_toolkits.mplot3d import Axes3D
 from common import *
@@ -48,16 +48,16 @@ def plot_states(cat_ST, t):
         # print("animate pos", np.shape(cat_ST), cat_ST)
         global iter
         iter = iter +10
-        path.set_data(cat_ST[0:2, 0, :iter])
-        path.set_3d_properties(cat_ST[2, 0, :iter])
+        path.set_data(cat_ST[0:2, 0, :interval])
+        path.set_3d_properties(cat_ST[2, 0, :interval])
     
         # update horizon
-        horizon.set_data(cat_ST[0:2, 0, :iter])
-        horizon.set_3d_properties(cat_ST[2, 0, :iter])
+        horizon.set_data(cat_ST[0:2, :, interval])
+        horizon.set_3d_properties(cat_ST[2, :, interval])
         
         # update bot sphere position, orientation 
         # sphere_i.set_alpha(0)
-        sphere_i._offsets3d = (cat_ST[0:3, 0, :iter])
+        sphere_i._offsets3d = (cat_ST[0:3, 0:1, interval])
         # sphere_i.set_alpha(0.2)
 
         return path, horizon, sphere_i
@@ -94,6 +94,6 @@ def plot_states(cat_ST, t):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, interval=80, frames=len(t),  blit=True)
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, interval=20, frames=len(t),  blit=True)
 
     plt.show()

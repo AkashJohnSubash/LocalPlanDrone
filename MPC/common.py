@@ -18,7 +18,7 @@ inf_c = 10e15
 '''------------------------OCP parammeters------------------------------------'''
 
 stepTime = 0.04                                  # Horizon interval
-N = 50                                              # Discretization steps
+N = 20                                              # Discretization steps
 sim_Smax = 100 / stepTime                            # simulation time
 
 v_min = -2  ;   v_max = 2                           #  [m/s]
