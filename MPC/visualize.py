@@ -47,11 +47,11 @@ def simulate3D(cat_ST, t):
         path.set_3d_properties(cat_ST[2, 0, :interval])
     
         # update horizon
-        horizon.set_data(cat_ST[0, :, interval], cat_ST[1, :, interval])
+        horizon.set_data(cat_ST[0:2, :, interval])
         horizon.set_3d_properties(cat_ST[2, :, interval])
         
         # update bot sphere position, orientation 
-        sphere_i._offsets3d = (cat_ST[0, 0, :interval], cat_ST[1, 0, :interval], cat_ST[2, 0, :interval])
+        sphere_i._offsets3d = (cat_ST[0:3, 0:1, interval])
 
         return path, horizon, sphere_i
 
