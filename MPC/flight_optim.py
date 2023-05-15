@@ -46,6 +46,9 @@ def simulation():
 
         X0 = reshape(sol['x'][ : n_states * (hznLen+ 1)], n_states, hznLen+1)
         u =  reshape(sol['x'][n_states * (hznLen+ 1): ], n_controls, hznLen)
+        if (solver.stats()["success"]!= True):
+            print(f"\n ERROR Sol infeasible at state{X0[:, 0]} in closed loop iter {mpc_iter}")
+            break
 
         # Append data to plotting list
         cat_states = np.dstack(( cat_states, DM2Arr(X0)))

@@ -1,10 +1,11 @@
 import numpy as np 
-from numpy import sin, cos, pi
+from numpy import pi
 from matplotlib import pyplot as plt, animation
 from mpl_toolkits.mplot3d import Axes3D
 from common import *
 
-#Parameters defined in common.py
+# Animation fails with MacOs backend
+plt.rcParams["backend"] = "TkAgg"
 
 def plot_dataset(cat_U, timestamp):
     ''' cat_U       -> intial value of each solution in the control history
@@ -15,11 +16,13 @@ def plot_dataset(cat_U, timestamp):
     w2 = np.ravel(cat_U[n_controls+1 : -4: n_controls])
     w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
     w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
+    w_ref = np.ones(w4.shape[0]) * u_hov
 
-    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='b' )
-    axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='g')
-    axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='y' )
-    axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='r')
+    axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='lightcoral' )
+    axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='moccasin')
+    axsU.stairs(w3, timestamp/stepTime, label='w3 ', color='darkseagreen' )
+    axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='lightsteelblue')
+    axsU.stairs(w_ref, timestamp/stepTime, label='w_hov ', color='darkred')
     
     axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
 
@@ -44,11 +47,11 @@ def simulate3D(cat_ST, t):
         path.set_3d_properties(cat_ST[2, 0, :interval])
     
         # update horizon
-        horizon.set_data(cat_ST[0, :, interval], cat_ST[1, :, interval])
+        horizon.set_data(cat_ST[0:2, :, interval])
         horizon.set_3d_properties(cat_ST[2, :, interval])
         
         # update bot sphere position, orientation 
-        sphere_i._offsets3d = (cat_ST[0, 0, :interval], cat_ST[1, 0, :interval], cat_ST[2, 0, :interval])
+        sphere_i._offsets3d = (cat_ST[0:3, 0:1, interval])
 
         return path, horizon, sphere_i
 
@@ -84,6 +87,6 @@ def simulate3D(cat_ST, t):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=stepTime*hznLen, blit=True)
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=20, blit=True)
 
     plt.show()
