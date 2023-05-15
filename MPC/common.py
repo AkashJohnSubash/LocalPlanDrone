@@ -21,7 +21,7 @@ stepTime = 0.02                         # time between steps in seconds
 hznLen = 20                             # number of look ahead steps
 sim_Smax = 7 / stepTime                # simulation time
 
-v_max = 0.2    ;   v_min = -0.2                     #  [m/s]
+v_max = 0.5    ;   v_min = -0.5                     #  [m/s]
 w_max = pi/4   ;   w_min = -pi/4                    #  [rad/s]
 
 u_hov = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000     #[krpm]
@@ -46,7 +46,7 @@ PITCH_TRIM = 0
 '''-------------------------Weights---------------------------------'''
 # State, Control weighting for MPC cost function
  
-Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 0.7, 1, 1, 1e-5, 1e-5, 1e-5) 
+Q = diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 1, 1, 1, 1e-5, 1e-5, 1e-5) 
 R = diagcat(.8, 0.8, 0.8, 0.8)
 '''------------------------------------------------------------------'''
 

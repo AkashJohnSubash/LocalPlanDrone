@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt, animation
 from mpl_toolkits.mplot3d import Axes3D
 from common import *
 
-#Parameters defined in common.py
+# Animation fails with MacOs backend
+plt.rcParams["backend"] = "TkAgg"
 
 def plot_dataset(cat_U, timestamp):
     ''' cat_U       -> intial value of each solution in the control history
@@ -84,6 +85,6 @@ def simulate3D(cat_ST, t):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=stepTime*hznLen, blit=True)
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, frames=len(t), interval=20, blit=True)
 
     plt.show()
