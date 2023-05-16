@@ -30,15 +30,16 @@ hov_rpm = int(sqrt(.25 * 1e6* mq * g0 /Ct)) /1000   #[krpm]
 n_states = 13
 
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0,  0,  .5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+init_st = np.array([0,  0,  .5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0, hov_rpm, hov_rpm, hov_rpm, hov_rpm])            
 targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-obst_st = np.array([0.5, 0.5, 0.5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+obst_st = np.array([1.5, 1.5, 0.5])
 
 # radius of the drone, obstacle sphere
 rob_rad =  .05                              
 obst_rad = .05
 
-ref_u = np.array([hov_rpm, hov_rpm,  hov_rpm,  hov_rpm])
+hov_u = np.array([hov_rpm, hov_rpm,  hov_rpm,  hov_rpm])
+ref_st =  np.append(targ_st, hov_u)
 # Control
 n_controls = 4
 

@@ -94,6 +94,6 @@ def plot_states(cat_ST, t):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, interval=20, frames=len(t),  blit=True)
+    anim = animation.FuncAnimation(fig=fig, func=animate, init_func=init, interval=0.2, frames=len(t),  blit=True)
 
     plt.show()

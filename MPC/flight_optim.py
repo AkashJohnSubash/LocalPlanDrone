@@ -23,7 +23,7 @@ def simulation():
     # States and controls defined as coloumn vectors
     s_0 = np.copy(init_st)                                
     s_t = np.copy(targ_st)
-    u_0 = np.copy(ref_u)
+    u_0 = np.copy(hov_u)
 
     # initialize data structures
     mpc_iter = 0
@@ -76,7 +76,7 @@ def simulation():
         displt = (s_0[0: 3] - obst_st[0:3])
         euclid = sqrt(displt.T @ displt)
         obst_err = ((euclid) - (rob_rad *2))
-        print(f'Soln setpoints {mpc_iter}: pos {np.round(s_0,3)}, euclid {round(euclid, 3)}, error {round(obst_err, 3)} at {round(t0, 3)} s\t')
+        # print(f'Soln setpoints {mpc_iter}: pos {np.round(s_0,3)}, euclid {round(euclid, 3)}, error {round(obst_err, 3)} at {round(t0, 3)} s\t')
     
         # update iteration variables
         t2 = time()
