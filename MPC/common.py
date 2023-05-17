@@ -49,7 +49,7 @@ PITCH_TRIM = 0
 '''-------------------------Weights---------------------------------'''
 # State, Control weighting for MPC cost function
 
-R = np.diag([2, 2, 2, 2])
+R = np.diag([0.05, 0.05, 0.05, 0.05])
 Q = np.diag([100, 100, 100, 1e-5, 1e-5, 1e-5, 1e-5, 1, 1, 1, 1, 1, 1]) 
 Q_e = 10 * Q
 

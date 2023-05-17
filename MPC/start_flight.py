@@ -37,6 +37,6 @@ if __name__ == '__main__':
 
         '''-------------------- Visualize -----------------------------'''
     # Plot controls, state (position) trajectory
-    plot_controls(traj_U, t_step)
+    plot_controls(traj_ST,t_step)
     # Plot position( State[0-3]) over simulation period
     plot_states(traj_ST, times_ST)

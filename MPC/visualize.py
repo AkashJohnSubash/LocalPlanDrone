@@ -7,18 +7,19 @@ from common import *
 # Animation fails with MacOs backend
 plt.rcParams["backend"] = "TkAgg"
 
-def plot_controls(cat_U, timestamp):
+def plot_controls(cat_ST, timestamp):
     ''' cat_U       -> intial value of each solution in the control history
         timestamp   -> time at each computed solution '''
     # Plot control
     figU, axsU  = plt.subplots(1, 1, figsize=(7, 15))    
     # exclude inital, final controls
-    w1 = np.ravel(cat_U[0, :-N -1])
-    w2 = np.ravel(cat_U[1, :-N -1])
-    w3 = np.ravel(cat_U[2, :-N -1 ])
-    w4 = np.ravel(cat_U[3, :-N -1])
+    w1 = np.ravel(cat_ST[13, 0, :-2])
+    w2 = np.ravel(cat_ST[14, 0, :-2])
+    w3 = np.ravel(cat_ST[15, 0, :-2])
+    w4 = np.ravel(cat_ST[16, 0, :-2])
     num_rows = w4.shape[0]
     w_ref = np.ones(num_rows) * hov_rpm
+    # print(f"debug state{np.shape(cat_ST)}, control{np.shape(cat_U)}")
 
     axsU.stairs(w1, timestamp/stepTime, label='w1 ', color='lightcoral')
     axsU.stairs(w2, timestamp/stepTime, label='w2 ', color='moccasin')
@@ -26,7 +27,7 @@ def plot_controls(cat_U, timestamp):
     axsU.stairs(w4, timestamp/stepTime, label='w4 ', color='lightsteelblue')
     axsU.stairs(w_ref, timestamp/stepTime, label='w_hov ', color='darkred')
     
-    axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
+    axsU.set_ylim(np.amin(cat_ST[13:]) - 0.1, np.amax(cat_ST[13:]) + 0.1)
 
     axsU.set_title('Control inputs')
     axsU.set_ylabel('propellor angular velocities (rad/s)')
@@ -34,7 +35,6 @@ def plot_controls(cat_U, timestamp):
     axsU.legend()
     plt.show()
     
-iter = 0
 
 def plot_states(cat_ST, t):
 
@@ -46,8 +46,6 @@ def plot_states(cat_ST, t):
         
         # update path
         # print("animate pos", np.shape(cat_ST), cat_ST)
-        global iter
-        iter = iter +10
         path.set_data(cat_ST[0:2, 0, :interval])
         path.set_3d_properties(cat_ST[2, 0, :interval])
     

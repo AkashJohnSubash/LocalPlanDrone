@@ -23,7 +23,7 @@ def simulation():
     # States and controls defined as coloumn vectors
     s_0 = np.copy(init_st)                                
     s_t = np.copy(targ_st)
-    u_0 = np.copy(hov_u)
+    u_0 = np.array([0,0,0, 0])
 
     # initialize data structures
     mpc_iter = 0
@@ -71,12 +71,11 @@ def simulation():
         # Save state and Control for next iteration
         t0 = t0 + stepTime
   
-
         # Generate API setpoint
         displt = (s_0[0: 3] - obst_st[0:3])
         euclid = sqrt(displt.T @ displt)
         obst_err = ((euclid) - (rob_rad *2))
-        # print(f'Soln setpoints {mpc_iter}: pos {np.round(s_0,3)}, euclid {round(euclid, 3)}, error {round(obst_err, 3)} at {round(t0, 3)} s\t')
+        print(f'Soln setpoints {mpc_iter}: State {np.round(s_0,3)}, \n Ctrl {np.round(u_0, 3)} \t')
     
         # update iteration variables
         t2 = time()
@@ -116,7 +115,6 @@ def onboard(scf):
     # States and controls defined as coloumn vectors
     s_0 = DM(np.copy(init_st))                                
     s_t = DM(np.copy(targ_st))
-    u_0 = DM(np.copy(ref_u))
 
     # initialize data structures
     mpc_iter = 0
