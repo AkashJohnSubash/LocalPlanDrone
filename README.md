@@ -8,8 +8,8 @@ Problem Statement: Perform an overtake manoeuvre for an drone.
 
 Control :
 
-    Follow a straight trajectory, until an obstacle is generated/ detected.
-    Overtake trajectory points generated offboard with MPC ( Python)
+    Setpoint tracking, with obstacle avoidance.
+    Overtake trajectory points computed with MPC ( Python, Ipopt) online, offboard, closed loop. 
     Setpoints (RPYT) communicated (CrazyRadio) to onboard controller (EKF + PID) 
 
 Obstacle handling : ( milestone based)
