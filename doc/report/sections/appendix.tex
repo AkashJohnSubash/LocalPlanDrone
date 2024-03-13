@@ -1,0 +1,201 @@
+\appendix
+\section{Report Instructions}
+\label{sec:appendix}
+Your technical report should focus on the work that you have done in the project. Additionally, you should also provide brief descriptions of the components/parts that you rely on in your work. Make sure to describe everything in your own words!
+
+This template includes the basic structure for your final technical report. You should keep the overall structure by not changing the \textit{sections}. You can still adjust the structure a bit by adding \textit{subsections}. In the appendix, you find these instructions as well as some \LaTeX{} examples. Before you hand in the report, makes sure you have deleted all \textit{lipsum} fillings and the instructions/examples from the appendix.
+
+
+
+\subsection*{Abstract}
+\begin{itemize}
+    \item Maximum length: 10 lines!
+    \item Important: Do not put references into the abstract
+    \item Content of the abstract:
+        \begin{itemize}
+        \item Punchline
+        \item Introduction. Why should I care?
+        \item What is the problem? How did you tackled the problem?
+        \item How did you go about doing the research that follows from your idea?
+        \item What’s the key impact of your research?
+    \end{itemize}
+\end{itemize}
+
+
+\subsection*{Main Part}
+\begin{itemize}
+    \item Main Part consists of 6 sections: Introduction, Dataset, Methodology, Methods, Evaluation, Conclusion
+    \item Maximum(!) length without figures/tables: 3 pages
+    \item Suggested length with figures/tables: 4 pages
+    \item Additional content should be put in appendix.
+    \item Content in appendix must not be required to understand the main part.
+\end{itemize}
+
+
+\subsubsection*{Introduction}
+\begin{itemize}
+    \item General introduction of the problem that you were trying to solve. 
+    \item What is the brief problem description? 
+    \item Why is it important/interesting/challenging? 
+\end{itemize}
+
+
+\subsubsection*{Dataset}
+\begin{itemize}
+    \item General description of the dataset that you were using. 
+    \item Important details about the dataset. 
+    \item What modifications/preprocessing did you do (if any)? Only mention things here that you used for all of your methods later, e.g., resizing, cropping, or combining images. 
+    \item What are the details of the final modified dataset that you used. 
+\end{itemize}
+
+
+\subsubsection*{Methodology}
+\begin{itemize}
+    \item What do you want to do? What kind of problem is it?
+    \item What is the dataset?
+    \item What is the input of each part?
+    \item What is the output of each part?
+    \item What is/are the metric/s you want to evaluate on?
+\end{itemize}
+% protocol, metric, etc.
+
+Remember: show your reader the wall before you begin to examine the bricks.
+
+% Methodology (protocol, metric, etc.)
+% a. If you tackled the project by solving two problems, describe the two methodologies here.
+
+\subsubsection*{Methods}
+\begin{itemize}
+    \item Methods that you tried
+\end{itemize}
+
+
+\subsubsection*{Evaluation}
+\begin{itemize}
+    \item Evaluation of the methods with the described metric
+    \item Comparison of your methods
+\end{itemize}
+
+
+\subsubsection*{Conclusion}
+\begin{itemize}
+    \item Conclusion of your work
+    \item What is working? What does not work? Where could your methods be improved?
+\end{itemize}
+
+
+\subsection*{Appendix}
+\begin{itemize}
+    \item Additional content can be put in the appendix.
+    \item Appendix must not be required to understand the main part.
+    \item You should still not dump all images and data into the appendix. You should make a selection of useful additions.
+    \item Appendix is not required.
+\end{itemize}
+
+
+\clearpage
+\section{\LaTeX{} Examples}
+The following examples should help you to write your technical report using \LaTeX{}. You'll find here the examples of tables, figures, citations and references. For other features of \LaTeX{}, see tutorials on \href{https://www.overleaf.com/learn}{\textbf{Overleaf}} or use this \href{https://wch.github.io/latexsheet/}{\textbf{cheatsheet}}. To work with this template, download its entire folder (including /sections, /bibliography and /figures), and run your \LaTeX{} editor like \href{https://www.overleaf.com}{\textbf{Overleaf}}.
+
+
+\subsection*{Example Citation}
+Example of citation: \cite{Smith_2013} and \cite{Smith_2012}. 
+
+
+\subsection*{Example References}
+Example of table reference: see Table \ref{tab:example}. \\
+Example of equation reference: see Equation \eqref{eq:emc}. \\
+Example of reference to Section \ref{sec:methods}. \\
+Example of reference to Subsection \ref{sec:dataset:subsection}. \\
+Example of figure reference: see Figure \ref{fig:example}.\\
+Example of subfigure reference: see Figure \ref{fig:multiple:example11}.\\
+
+
+\subsection*{Example list}
+\begin{itemize}
+\item Bullet point one
+\item Bullet point two
+\item Nested list items:
+\begin{itemize}
+\item Nested item one
+\item Nested item two
+\end{itemize}
+\end{itemize}
+
+\subsection*{Enumerations}
+\begin{enumerate}
+\item Numbered list item one
+\item Numbered list item two
+\item Nested list items:
+\begin{enumerate}
+\item Nested item one
+\item Nested item two
+\end{enumerate}
+\end{enumerate}
+
+
+\subsection*{Example Table}
+
+\begin{table}[h] 
+\centering
+\begin{tabular}{l l l}
+\hline
+\textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
+\hline
+Treatment 1 & 0.0003262 & 0.562 \\
+Treatment 2 & 0.0015681 & 0.910 \\
+Treatment 3 & 0.0009271 & 0.296 \\
+\hline
+\end{tabular}
+\caption{Table caption}
+\label{tab:example}
+\end{table}
+
+
+
+\subsection*{Example Equation}
+Equations within the text: $e = mc^2$. Equation with label on its own line:
+\begin{equation} \label{eq:emc}
+    e = mc^2
+\end{equation}
+
+
+
+
+\subsection*{Example Figures}
+
+\begin{figure}[ht]
+    \centering\includegraphics[width=0.4\linewidth]{placeholder}
+    \caption{An example of simple figure.}
+    \label{fig:example}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering\includegraphics[width=1\linewidth]{placeholder}
+        \caption{An example of multiple figures in one frame.}
+        \label{fig:multiple:example11}
+    \end{subfigure}
+    %
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering\includegraphics[width=1\linewidth]{placeholder}
+        \caption{Next subfigure.}
+        \label{fig:multiple:example12}
+    \end{subfigure}
+    %
+    \\
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering\includegraphics[width=1\linewidth]{placeholder}
+        \caption{Subfigure on another line.}
+        \label{fig:multiple:example21}
+    \end{subfigure}
+    %
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering\includegraphics[width=1\linewidth]{placeholder}
+        \caption{Yet another subfigure.}
+        \label{fig:multiple:example22}
+    \end{subfigure}
+    \caption{More figures in appendix.}
+    \label{fig:multiple}
+\end{figure}
