@@ -2,10 +2,10 @@
 \IEEEoverridecommandlockouts
 % The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 
-%\usepackage{booktab}
+\usepackage{booktabs}
 \usepackage{amsmath,amssymb,amsfonts, mathabx}
-\usepackage[backend=biber,style=alphabetic,sorting=ynt]{biblatex}
-\addbibresource{sample.bib} %Import the bibliography file
+% \usepackage[backend=biber,style=alphabetic,sorting=ynt]{biblatex}
+% \addbibresource{sample.bib} %Import the bibliography file
 \usepackage{enumitem}
 \usepackage{algorithmic}
 \usepackage{physics}
@@ -27,7 +27,7 @@ MatrNr. 5253501}
 \maketitle
 
 \begin{abstract}
-This project report describes the formulation of an optimal overtake aerial manoeuvre computed in real time using Model Predictive Control (MPC). Limited implementation details in python with CasADi and the crazyFlie 2.1 drone are also mentioned.
+This project report describes the formulation of an optimal overtake aerial maneuver computed in real time using Model Predictive Control (MPC). Limited implementation details in python with CasADi and the crazyFlie 2.1 drone are also mentioned.
 
 \end{abstract}
 
@@ -46,57 +46,70 @@ of simulation and flight tests. Finally, section \hyperref[Section7]{VII}, \hype
 As depicted in \hyperref[Fig1]{Fig. 1}, a body frame located at the centre of mass of the quadcopter aligned with the East-North-Up inertial frame is used here, with $\varphi$, $\theta$, $\psi$ representing roll, pitch and yaw in the Euler notation respectively.
 
 \subsection{Physical model of the drone}
-The state $\zeta$ $\in$ $\mathbb{R}$ $\mathrm{^{13}}$ of the drone can be described by position $p$ = ($x$, $y$, $z$)$\mathrm{^{T}}$, attitude in Quaternion notation $q$ = ($q_{w}$, $q_{x}$, $q_{y}$, $q_{z}$)$\mathrm{^{T}}$, linear velocities $v$ = ($v_x$, $v_y$, $v_z$)$\mathrm{^{T}}$, and angular velocities $\omega$ = ($\omega_x$, $\omega_y$, $\omega_z$)$\mathrm{^{T}}$. It's non-linear dynamics are given by the ODE, which are adapted from [2] and [3], making changes to describe attitude in Quaternion instead of Euler notation.\\
+The state $\zeta$ $\in$ $\mathbb{R}$ $\mathrm{^{13}}$ of the drone can be described by position $p$ = ($x$, $y$, $z$)$\mathrm{^{T}}$, attitude in Quaternion notation $q$ = ($q_{w}$, $q_{x}$, $q_{y}$, $q_{z}$)$\mathrm{^{T}}$, linear velocities $v$ = ($v_x$, $v_y$, $v_z$)$\mathrm{^{T}}$, and angular velocities $\omega$ = ($\omega_x$, $\omega_y$, $\omega_z$)$\mathrm{^{T}}$. It's non-linear dynamics are given by the ODE, which are adapted from \cite{carlos_efficient_2020} and \cite{Luis_2016}, making changes to describe attitude in Quaternion instead of Euler notation.\\
 
-$\dot{\zeta}$ = $f(\zeta, $u$)$ =
+\begin{align*}
+\dot{\zeta} &= \begin{bmatrix}
+	\dot{p} \\
+	\dot{q}\\
+	\dot{v}\\
+	\dot{\omega}
+\end{bmatrix} &=
 \begin{bmatrix}
     Sv \\
     \frac{1}{2}q\times \omega\\
     \frac{1}{m}F - S\mathrm{^{T}}g1_z - q \times v\\ 
     J\mathrm{^{-1}}(M - \omega \times J \omega)\\
 \end{bmatrix}\\
- \\
+\end{align*}
  
 The model parameters are described in \hyperref[table1]{Table I}. The quaternion rotation matrix $S$ $\in$ $\mathbb{R}$ $\mathrm{^{3\times3}}$, external force matrix $F$ $\in$ $\mathbb{R}$ $\mathrm{^{3\times1}}$, external momentum matrix $M$ $\in$ $\mathbb{R}$ $\mathrm{^{3\times1}}$, and inertial matrix $J$ $\in$ $\mathbb{R}$ $\mathrm{^{3\times3}}$ are described below.\\
 \hfill\break
 
-$S$ =
-\begin{bmatrix}
-    2(q_w \mathrm{^{2}} + q_x \mathrm{^{2}}) - 1 & 
-    2(q_x q_y - q_w q_z) & 
-    2(q_w q_y + q_y q_z) \\
-    2(q_w q_z + q_x q_y) &
-    2(q_w \mathrm{^{2}} + q_y \mathrm{^{2}}) - 1 & 
-    2(q_y q_z - q_w q_x) \\
-    2(q_x q_z - q_w q_y) & 
-    2(q_w q_x + q_y q_z) & 
-    2(q_w \mathrm{^{2}} + q_z \mathrm{^{2}}) - 1\\
-\end{bmatrix}\\
+\begin{align*}
+	S &=
+	\begin{bmatrix}
+		2(q_w \mathrm{^{2}} + q_x \mathrm{^{2}}) - 1 & 
+		2(q_x q_y - q_w q_z) & 
+		2(q_w q_y + q_y q_z) \\
+		2(q_w q_z + q_x q_y) &
+		2(q_w \mathrm{^{2}} + q_y \mathrm{^{2}}) - 1 & 
+		2(q_y q_z - q_w q_x) \\
+		2(q_x q_z - q_w q_y) & 
+		2(q_w q_x + q_y q_z) & 
+		2(q_w \mathrm{^{2}} + q_z \mathrm{^{2}}) - 1\\
+	\end{bmatrix}
+\end{align*}
 \hfill\break
 
-$F$ =
-\begin{bmatrix}
-    0 \\
-    0 \\
-    C_t(\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\ 
-\end{bmatrix}\\
+\begin{align*}
+	F &=
+	\begin{bmatrix}
+		0 \\
+		0 \\
+		C_t(\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\ 
+	\end{bmatrix}
+\end{align*}
 \hfill\break
 
-$J$ =   
-\begin{bmatrix}
-    I_{xx} & 0 & 0\\
-    0 & I_{yy} & 0\\
-    0 & 0 & I_{zz}\\ 
-\end{bmatrix}\\
+\begin{align*}
+	J &=   
+	\begin{bmatrix}
+		I_{xx} & 0 & 0\\
+		0 & I_{yy} & 0\\
+		0 & 0 & I_{zz}\\ 
+	\end{bmatrix}
+\end{align*}
 \hfill\break
 
-$M$ =
-\begin{bmatrix}
-    \frac{1}{\sqrt{2}}dC_t(-\Omega_1\mathrm{^{2}} - \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
-    \frac{1}{\sqrt{2}}dC_t(-\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} - \Omega_4\mathrm{^{2}})\\
-    C_d(-\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} - \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
-\end{bmatrix}\\
-
+\begin{align*}
+	M &=
+	\begin{bmatrix}
+		\frac{1}{\sqrt{2}}dC_t(-\Omega_1\mathrm{^{2}} - \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
+		\frac{1}{\sqrt{2}}dC_t(-\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} - \Omega_4\mathrm{^{2}})\\
+		C_d(-\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} - \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
+	\end{bmatrix}
+\end{align*}
 Given the possibility to individually change the angular velocities of the propellers, the control vector is defined as: \\                          
 $u$ := ($\Omega_{1}$, $\Omega_{2}$, $\Omega_{3}$, $\Omega_{4}$)$\mathrm{^{T}}$ $\in$ $\mathbb{R}\mathrm{^{4}}$
 
@@ -128,17 +141,17 @@ $u$ := ($\Omega_{1}$, $\Omega_{2}$, $\Omega_{3}$, $\Omega_{4}$)$\mathrm{^{T}}$ $
 
 \subsection{State Predictor}
 
-A state predictor based on the explicit fourth order Runge-Kutta (RK-4) integrator was implemented to approximate the state evolution. Starting from the current measured state, forward iterations of the system dynamics are performed with an appropriate time step ($\tau_{s}$) chosen to minimize the approximation error in the state evolution.
+A state predictor based on the explicit Runge-Kutta integrator (RK4) was implemented to approximate the state evolution. Starting from the current measured state, forward iterations of the system dynamics are performed with an appropriate time step ($\tau_{s}$) chosen to minimize the approximation error in the state evolution.
 
 To solve the control problem in real time, it's important to consider the radio communication latency between the off-board processor running the MPC algorithm and the quadcopter. This impacts the delay in receiving measurements ($\tau_{r}$) from the quadcopter and sending control commands to it ($\tau_{t}$). Additionally, with an associated computational delay ($\tau_{c}$) for calculating optimal solutions, the round trip delay of $\tau_{trr}$ = $\tau_r$ + $\tau_t$ + $\tau_c$ is defined. While $\tau_{r}$, $\tau_{t}$ are considered constants, the impact of variation of $\tau_{c}$ is discussed in the following chapters.
 
 \section{Problem Formulation}\label{Section3}
 
-In this section, the discretized Optimal Control Problem (OCP) and it's constrained Non-Linear Program (NLP) are defined using direct multiple shooting [4] to discretize the underlying continuous time OCP.
+In this section, the discretized Optimal Control Problem (OCP) and its constrained Non-Linear Program (NLP) are defined using direct multiple shooting \cite{bock_multiple_1984} to discretize the underlying continuous time OCP.
 
 \subsection{Optimal Control Problem}
 
-The initial state is defined as the quadcopter hovering at a height $z$ = 0.5 m, and the goal is to to reach a specified target state avoiding another quadcopter along the way, at position  $p_\mathrm{b}$ = ($x_\mathrm{b}$, $y_\mathrm{b}$, $z_\mathrm{b}$)$\mathrm{^{T}}$
+The initial state is defined as the quadcopter hovering at a height $z$ = 0.5 m, and the goal is to reach a specified target state avoiding another quadcopter along the way, at position  $p_\mathrm{b}$ = ($x_\mathrm{b}$, $y_\mathrm{b}$, $z_\mathrm{b}$)$\mathrm{^{T}}$
 
 The discretized cost function is defined as :
 \begin{align}
@@ -178,23 +191,23 @@ $R$ = diag\begin{footnotesize}$(8 \times 10^{-1}, 8\times 10^{-1}, 8\times 10^{-
 \end{flushleft}
 
 \section{Open-loop Control }\label{Section4}
-The open-loop control of the drone without the obstacle to be avoided was implemented with a horizon of $N = 10$ in python using the CasADi [5] framework with IPOPT [6] as the interior point NLP solver. Using the next state predicted by the RK4 integrator from the current state and controls, the MPC computes the optimal solution iteratively. The optimal open-loop controls for each time could only be fed with minimal delay to the quadcopter, by solving the problem offline. 
+The open-loop control of the drone without the obstacle to be avoided was implemented with a horizon of $N = 10$ in python using the CasADi \cite{andersson_casadi_2019} framework with IPOPT \cite{wachter_implementation_2006} as the interior point NLP solver. Using the next state predicted by the RK4 integrator from the current state and controls, the MPC computes the optimal solution iteratively. The optimal open-loop controls for each time could only be fed with minimal delay to the quadcopter, by solving the problem offline. 
 
 
 However, the large error propagation causing the quadcopter to quickly veer off the estimated trajectory, warrants the closed loop problem, and argues against placing the obstacle in the quadcopter's flight path in open loop.
 The appropriate set-point command API provided by the open source crazy-flie libraries allowed to communicate the controls as a set of roll, pitch, yaw rate, and thrust. 
 
 \section{Closed-loop Control }\label{Section5}
-Using the same solver framework, the  estimated state from the Extended Kalman filter onboard the Crazyflie sampled at 50 Hz, was fed back to the MPC algorithm for closed loop control. To minimize radio communication latency arising from reception of multiple data frames, it was read in a compressed format via a single frame from the stabilizer module onboard and decoded on the PC. The sampling rate was determined by the lower bound on achievable computation time of the solver. Using MPC to control the system, an instance of (2) is solved iteratively at each sampling time point, with the current value of the state estimate $\zeta_k$. 
+Using the same solver framework, the estimated state from the Extended Kalman filter onboard the Crazyflie sampled at 50 Hz, was fed back to the MPC algorithm for closed loop control. To minimize radio communication latency arising from the reception of multiple data frames, it was read in a compressed format via a single frame from the stabilizer module onboard and decoded on the PC. The sampling rate was determined by the lower bound on the achievable computation time of the solver. Using MPC to control the system, an instance of (2) is solved iteratively at each sampling time point, with the current value of the state estimate $\zeta_k$. 
 
 The closed loop architecture differs from Figure 2, only in the feedback path, where the predictor computes $\hat{\zeta}_{k+1}$ from $\hat{\zeta}_{\mathrm{est}}$ instead of $\zeta^*_{k}$.
-In closed loop, adding the obstacle to be avoided necessitated increasing the horizon to $N$ = 20 for a smooth control, and state trajectory which led to a large increase in computation time ($\tau_c$). In order to use the fedback state estimated, online iterations of the MPC was mandatory. As a consequence, the 500 Hz MPC computation rate could no longer be maintained and fell significantly to 50 Hz.
+In closed loop, adding the obstacle to be avoided necessitated increasing the horizon to $N$ = 20 for a smooth control, and state trajectory which led to a large increase in computation time ($\tau_c$). In order to use the state estimated in the feedback path, online iterations of the MPC was mandatory. As a consequence, the 500 Hz MPC computation rate could no longer be maintained and fell significantly to 50 Hz.
 
 \section{Closed-loop Control Results}\label{Section6}
 
 The most important factor to consider while moving from simulations to hardware flights were delays. The choice of 
 $\tau_s$ was made to ensure the quadcopter's state, control trajectory evolution were plausible, while trying to maintain a minimal $\tau_c$. A value of $\tau_s$ = 20 ms was found to provide a good trade-off between the two. 
-The round trip delay $\tau_{trr}$ was found to be dominated by $\tau_{c}$ which is dependant on choice of the solver framework, and the integration step ($\tau_s$) of the non-linear system dynamics, among other factors.
+The round trip delay $\tau_{trr}$ was found to be dominated by $\tau_{c}$ which is dependant on the choice of the solver framework, and the integration step ($\tau_s$) of the non-linear system dynamics, among other factors.
 
 \begin{figure}[htbp]
 	\centerline{\includegraphics[scale = 0.4]{figures/Screenshot_OL_ST.png} }
@@ -209,49 +222,21 @@ The round trip delay $\tau_{trr}$ was found to be dominated by $\tau_{c}$ which 
 \end{figure} 
 
 
-In the open, and closed loop flights without the obstacle, $\tau_{trr}$ was sufficiently small to observe stable flights. In closed loop, with the obstacle and $N$ = 10, the quadcopter's attempt at aggressively avoiding the obstacle  would cause the state estimated by the online stabilizer module to have large errors, arguing for a larger horizon length $N$. Choosing $N$ = 20 provided a smooth control trajectories in simulation, but at the expense of a large $\tau_{c}$ which was no longer sufficient to control the quadcopter in a stable flight path. 
+In the open, and closed loop flights without the obstacle, $\tau_{trr}$ was sufficiently small to observe stable flights. In closed loop, with the obstacle and $N$ = 10, the quadcopter's attempt at aggressively avoiding the obstacle would cause the state estimated by the online stabilizer module to have large errors, arguing for a larger horizon length $N$. Choosing $N$ = 20 provided a smooth control trajectories in simulation, but at the expense of a large $\tau_{c}$ which was no longer sufficient to control the quadcopter in a stable flight path. 
 
-The average iteration time achieved in closed-loop for computation without obstacle avoidance was $\tau_{c}$ = 40 ms, and $\tau_{c}$ = 100 ms with obstacle avoidance on an Intel i7-8750H processor @2.2Ghz running Windows. Future attempts could include reformulating the NLP as a sequential quadratic program (SQP) and using acados [7] with structure exploiting solvers to further reduce $\tau_c$ to achieve the overtake manoeuvre in real time.
-
-\begin{figure*}[htbp]
+\begin{figure*}[t!]
 	\centerline{\includegraphics[scale = 0.45]{figures/Screenshot_OL_U.png} }
 	\caption{Open loop controls without obstacle for $N$ = 10, $\tau_s$ = 20ms, $\tau_c$ = 40ms}
 	\label{Fig5}
 \end{figure*}
 
-\begin{figure*}[htbp]
-	\centerline{\includegraphics[scale = 0.45]{figures/Screenshot_OLwO_U.png} }
-	\caption{Open loop controls with obstacle for $N$ = 20, $\tau_s$ = 20ms, $\tau_c$ = 100ms}
-	\label{Fig6}
-\end{figure*}
+The average iteration time achieved in closed-loop for computation without obstacle avoidance was $\tau_{c}$ = 40 ms, and $\tau_{c}$ = 100 ms with obstacle avoidance on an Intel i7-8750H processor @2.2Ghz running Windows. Future attempts could include reformulating the NLP as a sequential quadratic program (SQP) and using acados \cite{verschueren_acados_2020} with structure exploiting solvers to further reduce $\tau_c$ to achieve the overtake maneuver in real time.
+
+
 
 \section{Acknowledgements}\label{Section7}
 I would like to thank Mohammed Hababeh, Jakob Harzer, Andrea Ghezzi and Prof. Dr. Moritz Diehl for their supervision and guidance in this project.
 
-\section{References}\label{Section8}
-[1] www.bitcraze.io/documentation/system/platform/cf2-coordinate-system/
-
-[2] B. Barros Carlos, T. Sartor, A. Zanelli, G. Frison, W. Bugard, M. Diehl, G. Oriolo, “An Efficient Real-Time NMPC for Quadrotor Position Control under Communication Time-Delay” 2020. [Online]. Available:https://arxiv.org/abs/2010.11264
-
-[3] C. Luis and J. L. Ny, “Design of a trajectory tracking
-controller for a nanoquadcopter,” 2016. [Online]. Available:
-https://arxiv.org/abs/1608.05786
-
-[4] H. G. Bock and K. J. Plitt, “A multiple shooting algorithm for direct
-solution of optimal control problems,” 9th IFAC World Congress,
-vol. 17, no. 2, pp. 1603–1608, 1984.
-
-[5] Joel A E Andersson et al. “CasADi – A software frame-
-work for nonlinear optimization and optimal control”. In:
-Mathematical Programming Computation 11.1 (2019),
-pp. 1–36. DOI: 10.1007/s12532-018-0139-4.
-
-[6] A. Wachter and L. T. Biegler. “On the implementation
-of an interior-point filter line-search algorithm for large-
-scale nonlinear programming”. In: Mathematical Pro-
-gramming 106.1 (2006), pp. 25–57.
-
-[7] R. Verschueren, G. Frison, D. Kouzoupis, N. van Duijkeren, A. Zanelli, B. Novoselnik, J. Frey, T. Albin, R. Quirynen, and M. Diehl, “acados: a modular open-source framework for fast embedded optimal control,” 2019. [Online]. Available: https://arxiv.org/abs/1910.13753
-
-\printbibliography
+\bibliographystyle{ieeetr}
+\bibliography{./bibliography/sample.bib}
 \end{document}
