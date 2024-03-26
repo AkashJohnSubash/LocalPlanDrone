@@ -46,7 +46,7 @@ of simulation and flight tests. Finally, section \hyperref[Section7]{VII}, \hype
 As depicted in \hyperref[Fig1]{Fig. 1}, a body frame located at the centre of mass of the quadcopter aligned with the East-North-Up inertial frame is used here, with $\varphi$, $\theta$, $\psi$ representing roll, pitch and yaw in the Euler notation respectively.
 
 \subsection{Physical model of the drone}
-The state $\zeta$ $\in$ $\mathbb{R}$ $\mathrm{^{13}}$ of the drone can be described by position $p$ = ($x$, $y$, $z$)$\mathrm{^{T}}$, attitude in Quaternion notation $q$ = ($q_{w}$, $q_{x}$, $q_{y}$, $q_{z}$)$\mathrm{^{T}}$, linear velocities $v$ = ($v_x$, $v_y$, $v_z$)$\mathrm{^{T}}$, and angular velocities $\omega$ = ($\omega_x$, $\omega_y$, $\omega_z$)$\mathrm{^{T}}$. It's non-linear dynamics are given by the ODE, which are adapted from \cite{carlos_efficient_2020} and \cite{Luis_2016}, making changes to describe attitude in Quaternion instead of Euler notation.\\
+The state $\zeta$ $\in$ $\mathbb{R}$ $\mathrm{^{13}}$ of the drone can be described by position $p$ = ($x$, $y$, $z$)$\mathrm{^{T}}$, attitude in quaternion notation $q$ = ($q_{w}$, $q_{x}$, $q_{y}$, $q_{z}$)$\mathrm{^{T}}$, linear velocities $v$ = ($v_x$, $v_y$, $v_z$)$\mathrm{^{T}}$, and angular velocities $\omega$ = ($\omega_x$, $\omega_y$, $\omega_z$)$\mathrm{^{T}}$. It's non-linear dynamics are given by the ODE, which are adapted from \cite{carlos_efficient_2020} and \cite{Luis_2016}, making changes to describe attitude in quaternion instead of Euler notation.\\
 
 \begin{align*}
 \dot{\zeta} &= \begin{bmatrix}
@@ -54,7 +54,7 @@ The state $\zeta$ $\in$ $\mathbb{R}$ $\mathrm{^{13}}$ of the drone can be descri
 	\dot{q}\\
 	\dot{v}\\
 	\dot{\omega}
-\end{bmatrix} &=
+\end{bmatrix} =
 \begin{bmatrix}
     Sv \\
     \frac{1}{2}q\times \omega\\
@@ -105,32 +105,33 @@ The model parameters are described in \hyperref[table1]{Table I}. The quaternion
 \begin{align*}
 	M &=
 	\begin{bmatrix}
-		\frac{1}{\sqrt{2}}dC_t(-\Omega_1\mathrm{^{2}} - \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
-		\frac{1}{\sqrt{2}}dC_t(-\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} - \Omega_4\mathrm{^{2}})\\
+		\frac{1}{\sqrt{2}}\,dC_t(-\Omega_1\mathrm{^{2}} - \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
+		\frac{1}{\sqrt{2}}\,dC_t(-\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} - \Omega_4\mathrm{^{2}})\\
 		C_d(-\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} - \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
 	\end{bmatrix}
 \end{align*}
 Given the possibility to individually change the angular velocities of the propellers, the control vector is defined as: \\                          
 $u$ := ($\Omega_{1}$, $\Omega_{2}$, $\Omega_{3}$, $\Omega_{4}$)$\mathrm{^{T}}$ $\in$ $\mathbb{R}\mathrm{^{4}}$
 
-\begin{table}[htbp]\label{table1}
-	\caption{Parameters of the model}
+\begin{table}[htbp]
+	\small
 	\begin{center}
 		\begin{tabular}{lccccl}\toprule
-            \hline
-			\textbf{Symbol} & \textbf{Value} & \textbf{Unit} & \textbf{Description}\\\midrule
-			\hline
-            $m$ & 31 x $\mathrm{10^{-3}}$ & $\mathrm{kg}$ & Mass of the drone \\
-			$d$ & 46 x $\mathrm{10^{-3}}$ & $\mathrm{m}$ & Length of the drone's arm \\
-			$I_{xx}$ & 1.395 x $\mathrm{10^{-5}}$ & $\mathrm{kg.m^2}$ & Inertial moment around x-axis \\
-            $I_{yy}$ & 1.395 x $\mathrm{10^{-5}}$ & $\mathrm{kg.m^2}$ & Inertial moment around y-axis \\
-            $I_{zz}$ & 2.173 x $\mathrm{10^{-5}}$ & $\mathrm{kg.m^2}$ & Inertial moment around z-axis \\
-            $C_d$ & 7.93 x $\mathrm{10^{-12}}$ & $\mathrm{N.RPM^{-2}}$ & Co-efficient of drag\\
-			$C_t$ & 3.25 x $\mathrm{10^{-10}}$ & $\mathrm{N.RPM^{-2}}$ & Co-efficient of thrust \\
-			$g$ & 9.81 & $\mathrm{m.s^{-2}}$ & Gravitational acceleration \\\bottomrule
-			\hline
+			\textbf{Description} &  \textbf{Symbol}\\
+			\midrule
+            $\mathrm{Mass\,of\,the\,drone} \,m$ & $\mathrm{31 \cdot 10^{-3}\,\mathrm{kg}}$  \\
+			$\mathrm{Drone\,arm\,length} \,d$ & $46 \cdot \mathrm{10^{-3}}\,\mathrm{m}$ \\
+			$\mathrm{Inertial\,moment} \,I_{xx}$ & $1.395 \cdot\,\mathrm{10^{-5}} \mathrm{kg\,m^2}$ \\
+            $\mathrm{Inertial\,moment} \,I_{yy}$ & $1.395 \cdot\,\mathrm{10^{-5}} \mathrm{kg\,m^2}$ \\
+            $\mathrm{Inertial\,moment} \,I_{zz}$ & $2.173 \cdot\,\mathrm{10^{-5}} \mathrm{kg\,m^2}$ \\
+            $\mathrm{Coefficient\,of\,drag} \,C_d$ & $\mathrm{7.93 \cdot 10^{-12}}\,\mathrm{N\,RPM^{-2}}$ \\
+			$\mathrm{Coefficient\,of\,thrust} \,C_t$ & $\mathrm{3.25 \cdot 10^{-10}}\,\mathrm{N\,RPM^{-2}}$ \\
+			$\mathrm{Gravitational\,acceleration} \,g$ & $\mathrm{9.81 \cdot\,m\,s^{-2}}$ \\
+			\bottomrule
 		\end{tabular}
 	\end{center}
+	\caption{Parameters of the model}
+	\label{table1}
 \end{table}
 
 \begin{figure*}[htbp]
@@ -164,28 +165,28 @@ The OCP is then formulated as :
 	\text{s.t} \quad 
 	& \zeta_0 - \bar{\zeta_0} \hspace{0.42in} = 0\\
     & \zeta_k - F(\zeta_k, u_k) = 0, \hspace{0.1in}\quad\qquad k = 0,..,N-1 \\
-    & 3d \hspace{0.15in} \le \lVert p_k - p_{\mathrm{b}} \rVert \le  \infty, \qquad  k = 0,..,N-1 \\
+    & 3\,\mathrm{d} \hspace{0.1in} \le \lVert p_k - p_{\mathrm{b}} \rVert \le  \infty, \qquad  k = 0,..,N-1 \\
 	& \zeta_{\mathrm{min}} \le \hspace{0.22in} \zeta_k \hspace{0.25in} \le \zeta_{\mathrm{max}}, \quad k = 0,..,N-1 \\
     & 0 \hspace{0.2in} \le \hspace{0.23in} u_k \hspace{0.22in} \le U_{\mathrm{max}} \quad k = 0,..,N-1
 \end{align}
 
 \begin{flushleft}
-$\bar{\zeta_0}$ \hspace{0.18in}= $(0, 0, \frac{1}{2}, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)^T$\\
+$\bar{\zeta_0}$ \hspace{0.18in}= $(0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)^T$\\
 $\zeta_{\mathrm{trg}}$ \hspace{0.08in}= $( 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)^T$\\
-$\zeta_{\mathrm{max}}$ \hspace{0.03in}= $(\frac{3}{2},\frac{3}{2},\frac{3}{2},\infty,\infty,\infty,\infty,\frac{1}{4},\frac{1}{4},\frac{1}{4},\frac{\pi}{4},\frac{\pi}{4},\frac{\pi}{4})^T$\\
+$\zeta_{\mathrm{max}}$ \hspace{0.03in}= $(1.5,1.5,1.5,\infty,\infty,\infty,\infty,0.25,0.25,0.25,\frac{\pi}{4},\frac{\pi}{4},\frac{\pi}{4})^T$\\
 $\zeta_{\mathrm{min}}$ \hspace{0.05in}= -$\zeta_{\mathrm{max}}$\\
 $U_{\mathrm{max}}$ = $(22000, 22000, 22000, 22000)^T$\\
-$p_\mathrm{b}$ \hspace{0.18in}= $(\frac{1}{2}, \frac{1}{2}, \frac{1}{2})^T$\\
+$p_\mathrm{b}$ \hspace{0.18in}= $(0.5, 0.5, 0.5)^T$\\
 \end{flushleft}
 
-Where $\zeta := (\zeta_0, .., \zeta_N)^T$, and $u := (u_0, .., u_{N-1})^T$ denote the state and control trajectories of the discrete time system. The discretized dynamics are given by the RK-4 integrator $F :$ $\mathbb{R}^{n_{\zeta}} \times \mathbb{R}^{n_{u}} \rightarrow \mathbb{R}^{n_{\zeta}}$ (Referred to as predictor in Figure 2). The horizon length and the estimated state of the system at the current time instant $k$ are denoted by $N$, and $\zeta_k$ respectively.
+Where $\zeta := (\zeta_0, .., \zeta_N)^T$, and $u := (u_0, .., u_{N-1})^T$ denote the state and control trajectories of the discrete time system. The discretized dynamics are given by the RK-4 integrator $F :$ $\mathbb{R}^{n_{\zeta}} \cdot \mathbb{R}^{n_{u}} \rightarrow \mathbb{R}^{n_{\zeta}}$ (Referred to as predictor in Figure 2). The horizon length and the estimated state of the system at the current time instant $k$ are denoted by $N$, and $\zeta_k$ respectively.
 
- $Q$ $\in$ $\mathbb{R}^{n_{\zeta} \times n_{\zeta}}$ and $R$ $\in$ $\mathbb{R}^{n_{u} \times n_{u}}$ are positive definite weighting matrices, tuned experimentally for the specific flight trajectory to be executed.
+ $Q$ $\in$ $\mathbb{R}^{n_{\zeta} \cdot n_{\zeta}}$ and $R$ $\in$ $\mathbb{R}^{n_{u} \cdot n_{u}}$ are positive definite weighting matrices, tuned experimentally for the specific flight trajectory to be executed.
 \begin{flushleft}
 \begin{small}
 $Q$ = diag\begin{footnotesize}$(120, 100, 100, 10^{-3}, 10^{-3},10^{-3},1, 1, 1, 1, 10^{-5}, 10^{-5}, 10^{-5})$\\
 \end{footnotesize}
-$R$ = diag\begin{footnotesize}$(8 \times 10^{-1}, 8\times 10^{-1}, 8\times 10^{-1}, 8\times 10^{-1})$\\
+$R$ = diag\begin{footnotesize}$(8 \cdot 10^{-1}, 8\cdot 10^{-1}, 8\cdot 10^{-1}, 8\cdot 10^{-1})$\\
 \end{footnotesize}
 \end{small}
 \end{flushleft}
