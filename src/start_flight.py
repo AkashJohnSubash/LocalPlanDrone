@@ -1,5 +1,5 @@
 import flight_optim
-from visualize import simulate3D, plot_dataset
+from visualize import animOptVars, plot_dataset
 
 import argparse
 
@@ -30,13 +30,13 @@ if __name__ == '__main__':
         uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E007')
         print("Lab flight")
         with SyncCrazyflie(uri, cf = Crazyflie(rw_cache='./cache')) as scf:
-            cat_U, t_step, cat_ST, times_ST = flight_optim.onboard(scf)
+            cat_U, t_step, cat_ST = flight_optim.onboard(scf)
     else:
         print("Simulated flight")
-        cat_U, t_step, cat_ST, times_ST = flight_optim.simulation()
+        cat_U, t_step, cat_ST = flight_optim.simulation()
 
         '''-------------------- Visualize -----------------------------'''
     # Plot controls over the simulation period
-    plot_dataset(cat_U, t_step)
+    # plot_dataset(cat_U, t_step)
     # Plot position( State[0-3]) over simulation period
-    simulate3D(cat_ST, times_ST)
+    animOptVars(t_step, cat_ST, cat_U)

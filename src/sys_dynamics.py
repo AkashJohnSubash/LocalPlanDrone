@@ -1,18 +1,18 @@
-from casadi import *
+import casadi as ca
 from common import *
 
 '-------------------Symbolic variables---------------------------'
 # State variables
-x = SX.sym('x');    y = SX.sym('y');    z = SX.sym('z')                         # (in inertial frame)
-q1 = SX.sym('q1');  q2 = SX.sym('q2');  q3 = SX.sym('q3');  q4 = SX.sym('q4')   # quarternion angle representation
-u = SX.sym('u');    v = SX.sym('v');    w = SX.sym('w')                         # linear velocities (in body frame)
-p = SX.sym('p');    q = SX.sym('q');    r = SX.sym('r')                         # angular velocities w.r.t phi(roll), theta(pitch), psi(yaw)
+x = ca.SX.sym('x');    y = ca.SX.sym('y');    z = ca.SX.sym('z')                         # (in inertial frame)
+q1 = ca.SX.sym('q1');  q2 = ca.SX.sym('q2');  q3 = ca.SX.sym('q3');  q4 = ca.SX.sym('q4')   # quarternion angle representation
+u = ca.SX.sym('u');    v = ca.SX.sym('v');    w = ca.SX.sym('w')                         # linear velocities (in body frame)
+p = ca.SX.sym('p');    q = ca.SX.sym('q');    r = ca.SX.sym('r')                         # angular velocities w.r.t phi(roll), theta(pitch), psi(yaw)
 
-state = vertcat(x, y, z, q1, q2, q3, q4, u, v, w, p, q, r)
+state = ca.vertcat(x, y, z, q1, q2, q3, q4, u, v, w, p, q, r)
 
 # Control variable angles (Motor RPM)
-w1 = SX.sym('w1');  w2 = SX.sym('w2');  w3 = SX.sym('w3');  w4 = SX.sym('w4')
-controls = vertcat( w1, w2, w3, w4) 
+w1 = ca.SX.sym('w1');  w2 = ca.SX.sym('w2');  w3 = ca.SX.sym('w3');  w4 = ca.SX.sym('w4')
+controls = ca.vertcat( w1, w2, w3, w4) 
 
 class SysDyn():
     
@@ -22,9 +22,9 @@ class SysDyn():
         self.ctrlSize = controls.numel()
 
         # matrices containing all States, Controls, Paramters over all time steps +1
-        self.St = SX.sym('St', self.stSize, hznLen + 1)
-        self.U = SX.sym('U', self.ctrlSize, hznLen)
-        self.P = SX.sym('P', self.stSize + self.stSize)
+        self.St = ca.SX.sym('St', self.stSize, hznLen + 1)
+        self.U = ca.SX.sym('U', self.ctrlSize, hznLen)
+        self.P = ca.SX.sym('P', self.stSize + self.stSize)
 
 
     def ForwardDynamics(self):
@@ -51,8 +51,8 @@ class SysDyn():
         dq = -(Ct*l*(w1**2 - w2**2 - w3**2 + w4**2) + Ixx*p*r - Izz*p*r)/Iyy
         dr = -(Cd*  (w1**2 - w2**2 + w3**2 - w4**2) - Ixx*p*q + Iyy*p*q)/Izz
         
-        f_op = vertcat(dx, dy, dz, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
-        fp = Function('f', [state, controls], [f_op])
+        f_op = ca.vertcat(dx, dy, dz, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
+        fp = ca.Function('f', [state, controls], [f_op])
         
         return fp
 
