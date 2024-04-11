@@ -26,6 +26,7 @@ w_max = np.pi/4   ;   w_min = -np.pi/4                    #  [rad/s]
 
 u_hov = int(np.sqrt(.25 * 1e6* mq * g0 /Ct)) /1000     #[krpm]
 
+print("DEBUG", u_hov)
 # State
 n_states = 13
 

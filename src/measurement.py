@@ -50,7 +50,8 @@ def start_state_rx(scf):
 
 
 def StabZ_cbk(timestamp, data, logconf):
-    '''Callback function to decode state data from stateEstimateZ group'''
+    '''Callback function to decode state data from stateEstimateZ group 
+     Transalational measurements in global, rotational in body frames'''
 
     state_meas[0] = data['stateEstimateZ.x']/1000
     state_meas[1] = data['stateEstimateZ.y']/1000

@@ -35,6 +35,10 @@ class SysDyn():
         dy = u*2*(q1*q4 + q2*q3)       + v*(2*(q1**2 + q3**2) - 1)     + w*2*(q3*q4 - q1*q2)
         dz = u*2*(q2*q4 - q1*q3)       + v*2*(q1*q2 + q3*q4)           + w*(2*(q1**2 + q4**2) - 1) 
         
+        # dx = u
+        # dy = v
+        # dz = w
+
         # Rate of change of angles (in qaurternion)
         dq1 = - (q2*p)/2 - (q3*q)/2 - (q4*r)/2
         dq2 =   (q1*p)/2 - (q4*q)/2 + (q3*r)/2

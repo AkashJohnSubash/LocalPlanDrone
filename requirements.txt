@@ -1,5 +1,5 @@
 casadi==3.5.5
 matplotlib==3.6.2
 numpy==1.23.5
-cflib
+cflib==0.1.24
 cfclient

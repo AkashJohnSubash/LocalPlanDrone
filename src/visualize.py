@@ -8,7 +8,7 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt, animation
 import shutil
 
-plt.rcParams["backend"] = "TkAgg"
+# plt.rcParams["backend"] = "TkAgg"
 
 text_usetex = True if shutil.which('latex') else False
 params = {
@@ -36,11 +36,11 @@ def plot_dataset(cat_U, timestamp):
     w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
     w_ref = np.ones(w4.shape[0]) * u_hov
 
-    axsU.stairs(w1, timestamp/stepTime, label='$\\omega_{1}$', color='lightcoral' )
-    axsU.stairs(w2, timestamp/stepTime, label='$\\omega_{2}$', color='moccasin')
+    axsU.stairs(w1, timestamp/stepTime, label='$\\omega_{1}$', color='darksalmon' )
+    axsU.stairs(w2, timestamp/stepTime, label='$\\omega_{2}$', color='lightsalmon')
     axsU.stairs(w3, timestamp/stepTime, label='$\\omega_{3}$', color='darkseagreen' )
-    axsU.stairs(w4, timestamp/stepTime, label='$\\omega_{4}$', color='lightsteelblue')
-    axsU.stairs(w_ref, timestamp/stepTime, label='$\\omega_{\mathrm{ref}}$', color='darkred')
+    axsU.stairs(w4, timestamp/stepTime, label='$\\omega_{4}$', color='darkseagreen')
+    axsU.stairs(w_ref, timestamp/stepTime, label='$\\omega_{\mathrm{ref}}$', color='lightseagreen')
     
     axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
 
@@ -89,27 +89,28 @@ def animOptVars(time_stamps, traj_zeta0, traj_u0):
 
         return path, horizon, sphere_i
 
-    fig = plt.figure()
-    
+    fig = plt.figure(figsize=(15,9))
+
     # plot control u at (1,3) bottom right
     u = fig.add_subplot(3, 3, 1)
     u.set_ylim(np.amin(np.ravel(traj_u0[:, :-2])) - 0.2, 
                np.amax(np.ravel(traj_u0[:, :-2])) + 0.2)
     u.set_xlim(0, np.amax(time_stamps[:]) + 0.2)
     u.set_xlabel('time (s)')
-    u.set_ylabel('u')
+    u.set_ylabel('$u\,\mathrm{(rad s^{-1})}$')
 
-    omg0Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{0}\,(rad s^{-1})$", color="teal")
-    omg1Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{1}\,(rad s^{-1})$", color="lightcoral" )
-    omg2Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{2}\,(rad s^{-1})$", color="plum" )
-    omg3Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{3}\,(rad s^{-1})$", color="blue" )
-    
+    omg0Ax = u.stairs([], [0], baseline=None,label="$\\omega_{0}$", color="lightcoral")
+    omg1Ax = u.stairs([], [0], baseline=None,label="$\\omega_{1}$", color="plum" )
+    omg2Ax = u.stairs([], [0], baseline=None,label="$\\omega_{2}$", color="darkseagreen" )
+    omg3Ax = u.stairs([], [0], baseline=None,label="$\\omega_{3}$", color="lightsteelblue" )
+    u.legend(loc='upper right', ncol=2)
+
     # plot cartesian 3D view
     ax3d = fig.add_subplot(3, 3, (5, 9), projection='3d')
     ax3d.azim = -25
     ax3d.elev = 15
     fig.add_axes(ax3d)
-    
+
     # time field 
     time_text = ax3d.text2D(0.02, 0.95, '', transform=ax3d.transAxes)
 
@@ -146,7 +147,7 @@ def animOptVars(time_stamps, traj_zeta0, traj_u0):
                                    frames=len(time_stamps), 
                                    interval=60, 
                                    repeat=True,
-                                   blit=True)
+                                   blit=False)
 
     fig.tight_layout()
     plt.show()
