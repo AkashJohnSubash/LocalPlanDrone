@@ -31,9 +31,9 @@ class SysDyn():
         '''ODEs for system dynamic model'''
 
         #Rate of change of position
-        dx = u*(2*(q1**2 + q2**2)- 1)  + v*2*(q2*q3 - q1*q4)           + w*2*(q1*q3 + q2*q4)
-        dy = u*2*(q1*q4 + q2*q3)       + v*(2*(q1**2 + q3**2) - 1)     + w*2*(q3*q4 - q1*q2)
-        dz = u*2*(q2*q4 - q1*q3)       + v*2*(q1*q2 + q3*q4)           + w*(2*(q1**2 + q4**2) - 1) 
+        dx = vx * (2*(q1**2 + q2**2)- 1)  + vy *2*(q2*q3 - q1*q4)           + vz *2*(q1*q3 + q2*q4)
+        dy = vx * 2*(q1*q4 + q2*q3)       + vy *(2*(q1**2 + q3**2) - 1)     + vz *2*(q3*q4 - q1*q2)
+        dz = vx * 2*(q2*q4 - q1*q3)       + vy *2*(q1*q2 + q3*q4)           + vz *(2*(q1**2 + q4**2) - 1) 
         
         # dx = vx
         # dy = vy
