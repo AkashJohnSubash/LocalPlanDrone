@@ -37,6 +37,6 @@ if __name__ == '__main__':
 
         '''-------------------- Visualize -----------------------------'''
     # Plot controls over the simulation period
-    # plot_dataset(cat_U, t_step)
+    plot_dataset(t_step, cat_U)
     # Plot position( State[0-3]) over simulation period
     animOptVars(t_step, cat_ST, cat_U)

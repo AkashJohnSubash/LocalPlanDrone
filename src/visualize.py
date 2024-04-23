@@ -25,30 +25,33 @@ params = {
 mpl.rcParams.update(params)
 
 
-def plot_dataset(cat_U, timestamp):
+def plot_dataset(timestamps, hist_u):
     ''' cat_U       -> intial value of each solution in the control history
         timestamp   -> time at each computed solution '''
     # Plot control
-    figU, axsU  = plt.subplots(1, 1, figsize=(16, 9))    
-    w1 = np.ravel(cat_U[n_controls   : -4: n_controls])   # excluding init, final
-    w2 = np.ravel(cat_U[n_controls+1 : -4: n_controls])
-    w3 = np.ravel(cat_U[n_controls+2 : -4: n_controls])
-    w4 = np.ravel(cat_U[n_controls+3 : -4: n_controls])
+    figU, axsU  = plt.subplots(1, 1, figsize=(4.8, 2.7))    
+    w1 = np.ravel(hist_u[0, 2:-4])   # excluding init, final
+    w2 = np.ravel(hist_u[1, 2:-4])
+    w3 = np.ravel(hist_u[2, 2:-4])
+    w4 = np.ravel(hist_u[3, 2:-4])
     w_ref = np.ones(w4.shape[0]) * u_hov
 
-    axsU.stairs(w1, timestamp/stepTime, label='$\\omega_{1}$', color='darksalmon' )
-    axsU.stairs(w2, timestamp/stepTime, label='$\\omega_{2}$', color='lightsalmon')
-    axsU.stairs(w3, timestamp/stepTime, label='$\\omega_{3}$', color='darkseagreen' )
-    axsU.stairs(w4, timestamp/stepTime, label='$\\omega_{4}$', color='darkseagreen')
-    axsU.stairs(w_ref, timestamp/stepTime, label='$\\omega_{\mathrm{ref}}$', color='lightseagreen')
+    axsU.stairs(w1, timestamps[2:-2], label='$\\Omega_{1}$', color='lightcoral' )
+    axsU.stairs(w2, timestamps[2:-2], label='$\\Omega_{2}$', color='plum')
+    axsU.stairs(w3, timestamps[2:-2], label='$\\Omega_{3}$', color='darkseagreen' )
+    axsU.stairs(w4, timestamps[2:-2], label='$\\Omega_{4}$', color='lightsteelblue')
+    # axsU.stairs(w_ref, timestamps[:], label='$\\Omega_{\mathrm{ref}}$', color='lightseagreen')
     
-    axsU.set_ylim(np.amin(cat_U) - 0.1, np.amax(cat_U) + 0.1)
+    axsU.set_ylim(np.amin(hist_u) - 0.1, np.amax(hist_u) + 0.1)
 
 
-    axsU.set_title('Control inputs')
-    axsU.set_ylabel('u')
-    axsU.set_xlabel('MPC iterations')
-    axsU.legend()
+    # axsU.set_title('Control inputs')
+    axsU.set_ylabel('$u\,\mathrm{(rad\,s^{-1})}$')
+    axsU.set_xlabel('time (s)')
+    axsU.legend(loc='upper right', ncol=2)
+    axsU.grid()
+
+    figU.savefig('u.pdf', format='pdf', bbox_inches='tight')
     plt.show()
     
 def animOptVars(time_stamps, traj_zeta0, traj_u0):
@@ -97,12 +100,12 @@ def animOptVars(time_stamps, traj_zeta0, traj_u0):
                np.amax(np.ravel(traj_u0[:, :-2])) + 0.2)
     u.set_xlim(0, np.amax(time_stamps[:]) + 0.2)
     u.set_xlabel('time (s)')
-    u.set_ylabel('$u\,\mathrm{(rad s^{-1})}$')
+    u.set_ylabel('$u\,\mathrm{(rad\,s^{-1})}$')
 
-    omg0Ax = u.stairs([], [0], baseline=None,label="$\\omega_{0}$", color="lightcoral")
-    omg1Ax = u.stairs([], [0], baseline=None,label="$\\omega_{1}$", color="plum" )
-    omg2Ax = u.stairs([], [0], baseline=None,label="$\\omega_{2}$", color="darkseagreen" )
-    omg3Ax = u.stairs([], [0], baseline=None,label="$\\omega_{3}$", color="lightsteelblue" )
+    omg0Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{0}$", color="lightcoral")
+    omg1Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{1}$", color="plum" )
+    omg2Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{2}$", color="darkseagreen" )
+    omg3Ax = u.stairs([], [0], baseline=None,label="$\\Omega_{3}$", color="lightsteelblue" )
     u.legend(loc='upper right', ncol=2)
 
     # plot cartesian 3D view
