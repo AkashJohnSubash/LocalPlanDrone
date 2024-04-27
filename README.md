@@ -4,7 +4,7 @@ Indoor Positioning : https://www.bitcraze.io/documentation/lighthouse/
 
 # ControlLab
 
-Problem Statement: Perform an overtake manoeuvre for a drone.
+Problem Statement: Perform an overtake manoeuvre for a drone.(Deatailed MPC formulation in doc\report.tex)
 
 Control :
 
@@ -20,4 +20,3 @@ Obstacle handling : ( milestone based)
     Ambitious milestones :
         Real, stationary (hanging object), dynamically detected.  (Multiranger, flow deck, local coordinates converted to global coordinates)
         Real, moving drone, dynamically detected during flight.
-
