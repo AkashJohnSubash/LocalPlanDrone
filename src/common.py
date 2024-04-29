@@ -35,7 +35,7 @@ init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.04                               # radius of the drone sphere
 
-obst_st = np.array([0.5,  0.5,  .5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
+obst_st = np.array([0.5,  0.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = .05
 
 # Control
@@ -48,7 +48,7 @@ PITCH_TRIM = 0
 # State, Control weighting for MPC cost function
  
 Q = ca.diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 1, 1, 1, 1e-5, 1e-5, 1e-5) 
-R = ca.diagcat(.8, 0.8, 0.8, 0.8)
+R = ca.diagcat(1, 1, 1, 1)
 '''------------------------------------------------------------------'''
 
 def DM2Arr(dm):
