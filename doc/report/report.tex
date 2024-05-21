@@ -30,9 +30,9 @@ This report describes a real-time waypoint tracking Model Predictive Control (MP
 \end{abstract}
 
 \section{Introduction}\label{Introduction}
-The optimal controls computed offboard using MPC are fed to the crazyFlie, with the intention to overtake a second quadcopter (henceforth referred to as obstacle). The crazyFlie is a agile, underactuated platform which we specify suffiently accurate dynamics  for the problem at hand.
+The optimal controls computed offboard using MPC are fed to the crazyFlie, with the intention to overtake a second quadcopter (henceforth referred to as obstacle). The crazyFlie is an agile, underactuated platform for which we specify sufficiently accurate dynamics.
 
-Section \hyperref[Section2]{II} describes the dynamics of the crazyFlie 2.1 quadcopter using Ordinary Differential Equations (ODE). Section \hyperref[Section3]{III} details the optimal control problem, its Non-Linear Program (NLP) and Section \hyperref[Section4]{IV} the control scheme. Section \hyperref[Section5]{V} presents the results of simulation and flight tests and Section \hyperref[Section6]{VI} subsequently outlines the ongoing reformulation for trajectory tracking and its foreseen timeline. 
+Section \hyperref[Section2]{II} describes the dynamics of the crazyFlie 2.1 quadcopter using Ordinary Differential Equations (ODE). Section \hyperref[Section3]{III} details the optimal control problem, its Non-Linear Program (NLP) and Section \hyperref[Section4]{IV} the control scheme. Section \hyperref[Section5]{V} presents the results of simulation and flight tests and Section \hyperref[Section6]{VI} subsequently outlines the ongoing reformulation for trajectory tracking and its foreseen timeline.
 \section{System Modelling}\label{Section2}
 \begin{figure}[htbp]
 	\centerline{\includegraphics[scale = 0.4]{figures/ordinate.png} }
@@ -42,7 +42,7 @@ Section \hyperref[Section2]{II} describes the dynamics of the crazyFlie 2.1 quad
 As depicted in \hyperref[Fig1]{Fig. 1}, a body frame located at the center of mass of the quadcopter aligned with the East-North-Up inertial frame is used here, with $\varphi$, $\theta$, $\psi$ representing roll, pitch and yaw in the Euler notation respectively.
 
 \subsection{Dynamic Model}\
-The state ${\zeta\,\in\,\mathbb{R}\,\mathrm{^{13}}}$ of the drone described by position ${p = (x, y, z)^{\mathrm{T}}}$ and transalational velocities ${v = (v_x, v_y, v_z)^\mathrm{T}}$ in the inertial frame $\mathcal{I}$, attitude in quaternion ${q = (q_{0}, q_{1}, q_{2}, q_{3})^{\mathrm{T}}}$, and angular velocities ${\omega = (\omega_{\phi}, \omega_{\theta}, \omega_{\psi})^{\mathrm{T}}}$ in the body frame $\mathcal{B}$. Its non-linear dynamics adapted from \cite{carlos_efficient_2020} are given by the ODEs 
+The state ${\zeta\,\in\,\mathbb{R}\,\mathrm{^{13}}}$ of the drone described by position ${p = (x, y, z)^{\mathrm{T}}}$ and transalational velocities ${v = (v_x, v_y, v_z)^\mathrm{T}}$ in the inertial frame $\mathcal{I}$, attitude in quaternion ${q = (q_{0}, q_{1}, q_{2}, q_{3})^{\mathrm{T}}}$, and angular velocities ${\omega = (\omega_{\phi}, \omega_{\theta}, \omega_{\psi})^{\mathrm{T}}}$ in the body frame $\mathcal{B}$. Its non-linear dynamics adapted from \cite{carlos_efficient_2020} are given by the ODEs
 
 \begin{align}
 \dot{\zeta} &= \begin{bmatrix}
@@ -54,7 +54,7 @@ The state ${\zeta\,\in\,\mathbb{R}\,\mathrm{^{13}}}$ of the drone described by p
 \begin{bmatrix}
     v \\
     \dfrac{1}{2}q\times \omega\\
-    \dfrac{1}{m}F - S\mathrm{^{T}}g1_z - \dfrac{C_d}{m} v\\ 
+    \dfrac{1}{m}F - S\mathrm{^{T}}g1_z - \dfrac{C_d}{m} v\\
     J\mathrm{^{-1}}\left(M - \omega \times J \omega\right)
 \end{bmatrix}.
 \end{align}
@@ -64,14 +64,14 @@ The model parameters described in \hyperref[table1]{Table I} are used in conjunc
 \begin{align}
 	S &= 2 \cdot
 	\begin{bmatrix}
-		q_{0}^{2} + q_{1}^{2} - \dfrac{1}{2} & 
-		q_1 q_2 - q_0 q_3 & 
+		q_{0}^{2} + q_{1}^{2} - \dfrac{1}{2} &
+		q_1 q_2 - q_0 q_3 &
 		q_0 q_2 + q_2 q_3 \\
 		q_0 q_3 + q_1 q_2 &
-		q_{0}^{2} + q_{2}^{2} - \dfrac{1}{2} & 
+		q_{0}^{2} + q_{2}^{2} - \dfrac{1}{2} &
 		q_2 q_3 - q_0 q_1 \\
-		q_1 q_3 - q_0 q_2 & 
-		q_0 q_1 + q_2 q_3 & 
+		q_1 q_3 - q_0 q_2 &
+		q_0 q_1 + q_2 q_3 &
 		q_{0}^{2} + q_{3}^{2} - \dfrac{1}{2}\\
 	\end{bmatrix}
 \end{align}
@@ -81,16 +81,16 @@ The model parameters described in \hyperref[table1]{Table I} are used in conjunc
 	\begin{bmatrix}
 		0 \\
 		0 \\
-		C_t(\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\ 
+		C_t(\Omega_1\mathrm{^{2}} + \Omega_2\mathrm{^{2}} + \Omega_3\mathrm{^{2}} + \Omega_4\mathrm{^{2}})\\
 	\end{bmatrix}
 \end{align}
 
 \begin{align}
-	J &=   
+	J &=
 	\begin{bmatrix}
 		I_{x} & 0 & 0\\
 		0 & I_{y} & 0\\
-		0 & 0 & I_{z}\\ 
+		0 & 0 & I_{z}\\
 	\end{bmatrix}
 \end{align}
 
@@ -190,7 +190,7 @@ The closed loop architecture differs from Figure 2, only in the feedback path, w
 
 \subsection{Delay Compensation}
 
-The round trip delay is computed as the sum of radio communication latency between the off-board processor and the quadcopter, and NLP solution times ( $\tau_{tr}$ = $\tau_{t}$ + $\tau_{r}$ + $\tau_{c}$). The inherent challenge of measuring one-way latency is accounted for and handled to retain  optimality as in \cite{carlos_efficient_2020} by introducing a delay compensation block marked as predictor in Figure 2.
+The round trip delay is computed as the sum of radio communication latency between the off-board processor and the quadcopter, and NLP solution times ( $\tau_{tr}$ = $\tau_{t}$ + $\tau_{r}$ + $\tau_{c}$). The inherent challenge of measuring one-way latency is accounted for and handled to retain optimality as in \cite{carlos_efficient_2020} by introducing a delay compensation block marked as the predictor in Figure 2.
 
 \subsection{Closed-loop Control}\label{Section5}
 
@@ -207,9 +207,8 @@ Since the choice of $N$ trades off control trajectory smoothness and $\tau_{c}$,
 
 The average closed-loop iteration times were $\tau_{c}$ = 40 ms, and $\tau_{c}$ = 100 ms without and with active collision constraints on an Intel i7-8750H processor @2.2Ghz running Windows.
 \section{Proposal}\label{Section6}
-\par For a more intuitive representation of progress we propose the spatial reformulation of the dynamics in the Frenet Coordinate Frame as in \cite{arrizabalaga_towards_2022} while retaining convex constraint guarantees using the lifted and direct elimination controllers as in \cite{reiter_frenet-cartesian_2023}. The convergence properties of the Quadratic Program (QP) with the coordinate transformed environment encoding is proven to be superior for progress maximization problems in \cite{werling_invariant_2010}.
-To achieve a real-time feasible scheme we aim to use hardware-tailored linear algebra libraries \cite{frison_blasfeo_2018} in acados \cite{verschueren_acados_2020} with the real-time iteration \cite{gros_linear_2020} (RTI) and partial condensing to exploit the structured QP subproblem \cite{frison_hpipm_2020}.
-Subsequently, the constraint tightening \cite{reiter_progressive_nodate} shows promise for improved solution times for the demanding geometric collision constraints, while avoiding slacks.
+\par The superior convergence properties of the spatial reformulation for trajectory tracking problems introduced in \cite{werling_invariant_2010}, is partially utilized for drone dynamics in \cite{arrizabalaga_towards_2022}. Although position derivates are sufficient for the trajectory tracking problem here, collision constraints would additionally need to parametrize the heading angles. To retain convex constraint guarantees using the lifted and direct elimination controllers as in \cite{reiter_frenet-cartesian_2023}, we need to specify the full transforms in 3 dimensions using the Frenet-Serret theorem. Subsequently, the constraint tightening \cite{reiter_progressive_nodate} shows promise for improved geometric specification for the demanding geometric collision constraints, while avoiding slacks.
+Verifying observer design and delay modeling in the feedback path could be simplified with a data-driven high-fidelity model \cite{llanes_crazysim_nodate} in simulation. To achieve a real-time feasible scheme we aim to use hardware-tailored linear algebra libraries \cite{frison_blasfeo_2018} in acados \cite{verschueren_acados_2020} with the real-time iteration \cite{gros_linear_2020} (RTI) and partial condensing to exploit the structured QP subproblem \cite{frison_hpipm_2020}.
 \begin{figure}[t!]
 	\centerline{\includegraphics[scale = 0.4]{figures/Screenshot_OLwO_ST.png} }
 	\caption{Position vector $(p)$ for active collision constraints, with a numerical plant simulation}

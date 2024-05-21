@@ -32,11 +32,11 @@ n_states = 13
 
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
 init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
-targ_st = np.array([1,  1,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([1, 1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.04                               # radius of the drone sphere
 
 obst_st = np.array([0.5,  0.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
-obst_rad = .05
+obst_rad = 0.1
 
 # Control
 n_controls = 4
