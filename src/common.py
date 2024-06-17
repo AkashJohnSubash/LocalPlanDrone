@@ -31,7 +31,7 @@ print("DEBUG", u_hov)
 n_states = 13
 
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])            
+init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])s
 targ_st = np.array([1, 1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
 rob_rad = 0.04                               # radius of the drone sphere
 
@@ -77,7 +77,7 @@ def quat2rpy(qoid):
         reference math3d.h crazyflie-firmware'''
 
     r	  =  ca.atan2( 2 * (qoid[0]*qoid[1] + qoid[2]*qoid[3]), 1 - 2 * (qoid[1]**2 + qoid[2]**2 ))
-    p     =  ca.asin( 2 *  (qoid[0]*qoid[2] - qoid[1]*qoid[3]))          
+    p     =  ca.asin( 2 *  (qoid[0]*qoid[2] - qoid[1]*qoid[3]))
     y	  =  ca.atan2( 2 * (qoid[0]*qoid[3] + qoid[1]*qoid[2]), 1 - 2 * (qoid[2]**2 + qoid[3]**2 ))
 
     r_d = r * 180 / np.pi          # roll in degrees
@@ -90,7 +90,7 @@ def eul2quat(eul):
     ''' eul ->  [phi, theta, psi] in degrees
         a.k.a roll, pitch, yaw
         reference NMPC'''
-    
+
     phi = 0.5* eul[0] * np.pi / 180
     th  = 0.5* eul[1] * np.pi / 180
     psi = 0.5* eul[2] * np.pi / 180
@@ -104,8 +104,8 @@ def eul2quat(eul):
       qw = -qw
       qx = -qx
       qy = -qy
-      qz = -qz  
-    
+      qz = -qz
+
     return [qw, qx, qy, qz]
 
 def krpm2pwm( Krpm):
@@ -116,7 +116,7 @@ def krpm2pwm( Krpm):
 
 M_SQRT1_2=0.70710678118654752440
 def quatDecompress(comp):
-    
+
     q_4 = np.zeros(4)
     mask = np.uint32(1 << 9) - 1
     i_largest = (comp >> 30)
@@ -139,18 +139,18 @@ def calc_thrust_setpoint(St_0, U_0):
     # euler in deg from q1,      q2,       q3,       q4
     eul_deg = quat2rpy([St_0[3], St_0[4], St_0[5], St_0[6]])
 
-    roll_x  = eul_deg[0]                                            # Roll 
+    roll_x  = eul_deg[0]                                            # Roll
     pitch_y  = eul_deg[1]                                           # Pitch
-    thrust_z  = krpm2pwm((U_0[0] + U_0[1]+ U_0[2]+ U_0[3])/4)       # convert average prop RPM to PWM                              
+    thrust_z  = krpm2pwm((U_0[0] + U_0[1]+ U_0[2]+ U_0[3])/4)       # convert average prop RPM to PWM
     roll_c   = roll_x + ROLL_TRIM
     pitch_c  = (pitch_y + PITCH_TRIM)                               # corrected values
     thrust_c = int(min(max(thrust_z, 0.0), 60000))
     yawrate = St_0[12] * 180 /np.pi                                    # r in deg/s
-   
+
     return roll_c, pitch_c, yawrate, thrust_c
 
 def get_error2(diff):
-    
+
     error = np.sqrt(diff.T @ diff)
 
     return error

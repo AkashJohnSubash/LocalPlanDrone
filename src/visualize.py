@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 from numpy import pi
 # from matplotlib import pyplot as plt, animation
 from mpl_toolkits.mplot3d import Axes3D
@@ -29,7 +29,7 @@ def plot_dataset(timestamps, hist_u):
     ''' cat_U       -> intial value of each solution in the control history
         timestamp   -> time at each computed solution '''
     # Plot control
-    figU, axsU  = plt.subplots(1, 1, figsize=(4.8, 2.7))    
+    figU, axsU  = plt.subplots(1, 1, figsize=(4.8, 2.7))
     w1 = np.ravel(hist_u[0, 2:-4])   # excluding init, final
     w2 = np.ravel(hist_u[1, 2:-4])
     w3 = np.ravel(hist_u[2, 2:-4])
@@ -41,7 +41,7 @@ def plot_dataset(timestamps, hist_u):
     axsU.stairs(w3, timestamps[2:-2], label='$\\Omega_{3}$', color='darkseagreen' )
     axsU.stairs(w4, timestamps[2:-2], label='$\\Omega_{4}$', color='lightsteelblue')
     # axsU.stairs(w_ref, timestamps[:], label='$\\Omega_{\mathrm{ref}}$', color='lightseagreen')
-    
+
     axsU.set_ylim(np.amin(hist_u) - 0.1, np.amax(hist_u) + 0.1)
 
 
@@ -53,7 +53,7 @@ def plot_dataset(timestamps, hist_u):
 
     figU.savefig('u.pdf', format='pdf', bbox_inches='tight')
     plt.show()
-    
+
 def animOptVars(time_stamps, traj_zeta0, traj_u0):
     anim_running = True
     def init():
@@ -72,19 +72,19 @@ def animOptVars(time_stamps, traj_zeta0, traj_u0):
 
 
     def animate(iter):
-        
+
         # update path
         path.set_data(traj_zeta0[0:2, 0, :iter])
         path.set_3d_properties(traj_zeta0[2, 0, :iter])
-    
+
         # update horizon
         horizon.set_data(traj_zeta0[0:2, :, iter])
         horizon.set_3d_properties(traj_zeta0[2, :, iter])
-        
-        # update bot sphere position, orientation 
+
+        # update bot sphere position, orientation
         sphere_i._offsets3d = (traj_zeta0[0:3, 0:1, iter])
 
-        # Update control plot 
+        # Update control plot
         omg0Ax.set_data(traj_u0[0, :iter], time_stamps[:iter +1] )
         omg1Ax.set_data(traj_u0[1, :iter], time_stamps[ :iter +1] )
         omg2Ax.set_data(traj_u0[2, :iter], time_stamps[ :iter +1] )
@@ -96,7 +96,7 @@ def animOptVars(time_stamps, traj_zeta0, traj_u0):
 
     # plot control u at (1,3) bottom right
     u = fig.add_subplot(3, 3, 1)
-    u.set_ylim(np.amin(np.ravel(traj_u0[:, :-2])) - 0.2, 
+    u.set_ylim(np.amin(np.ravel(traj_u0[:, :-2])) - 0.2,
                np.amax(np.ravel(traj_u0[:, :-2])) + 0.2)
     u.set_xlim(0, np.amax(time_stamps[:]) + 0.2)
     u.set_xlabel('time (s)')
@@ -114,7 +114,7 @@ def animOptVars(time_stamps, traj_zeta0, traj_u0):
     ax3d.elev = 15
     fig.add_axes(ax3d)
 
-    # time field 
+    # time field
     time_text = ax3d.text2D(0.02, 0.95, '', transform=ax3d.transAxes)
 
     # path
@@ -135,20 +135,20 @@ def animOptVars(time_stamps, traj_zeta0, traj_u0):
 
     # Sphere around obstacle position
     sphere_o = ax3d.scatter( obst_st[0], obst_st[1], obst_st[2], s=pi * obst_rad**2 * 14000, c='r', alpha=0.2)
-    
+
     # Sphere around target point
     sphere_t = ax3d.scatter( targ_st[0], targ_st[1], targ_st[2], s=pi * rob_rad**2 * 14000, c='g', alpha=0.2)
 
     ax3d.set_xlabel('X')
     ax3d.set_ylabel('Y')
     ax3d.set_zlabel('Z')
-    
+
     fig.canvas.mpl_connect('button_press_event', onClick)
-    anim = animation.FuncAnimation(fig=fig, 
+    anim = animation.FuncAnimation(fig=fig,
                                    func=animate,
-                                   init_func=init, 
-                                   frames=len(time_stamps), 
-                                   interval=60, 
+                                   init_func=init,
+                                   frames=len(time_stamps),
+                                   interval=60,
                                    repeat=True,
                                    blit=False)
 

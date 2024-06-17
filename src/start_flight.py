@@ -20,10 +20,10 @@ def argparse_init():
     return parser
 
 if __name__ == '__main__':
-    
+
     parser = argparse_init()
     args = parser.parse_args()
-    
+
     if args.lab:
         # URI to the Crazyflie to connect to
         cflib.crtp.init_drivers()

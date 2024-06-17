@@ -3,9 +3,9 @@ from common import *
 from sys_dynamics import SysDyn, Predictor
 
 from time import  time
- 
+
 def setup_nlp():
-    
+
     # generates optimal trajectory using an NMPC cost function
     SysObj = SysDyn()
     ST = SysObj.St;   U = SysObj.U;   P = SysObj.P
@@ -19,7 +19,7 @@ def setup_nlp():
     # MPC cost, Initial value constraint
     for k in range(hznLen):
         st = ST[:, k]
-        U_k = U[:, k] 
+        U_k = U[:, k]
         cost_fn = cost_fn + ((st - P[n_states:]).T @ Q @ (st - P[n_states:])) + (U_k - U_hov).T @ R @ (U_k - U_hov)
         st_opt = ST[:, k+1]
         st_est = Predictor.rk4_explicit(dyn_fp, st, U_k, stepTime)
@@ -38,7 +38,7 @@ def setup_nlp():
 
     opts = {'ipopt'     : {'max_iter': 1000, 'print_level': 0, 'acceptable_tol': 1e-8,
                            'acceptable_obj_change_tol': 1e-6, 'linear_solver' :'mumps'},
-            'print_time': 0, 
+            'print_time': 0,
             'jit' : False,
             'compiler' : 'shell',
             'jit_options' : { 'verbose': True, 'flags' : ['-O1']},
@@ -54,7 +54,7 @@ def setup_nlp():
     # Bounds on decision variables
     lbx = -ca.inf * ca.DM.ones((st_size + U_size, 1))
     ubx = ca.inf * ca.DM.ones((st_size + U_size, 1))
-    
+
     # State bounds
     lbx[0:  st_size: n_states] = -1;            ubx[0: st_size: n_states] = 1.5                   # x lower, upper bounds
     lbx[1:  st_size: n_states] = -1;            ubx[1: st_size: n_states] = 1.5                   # y bounds
@@ -90,7 +90,5 @@ def setup_nlp():
                 'ubg': ubg,                    # constraints upper bound
                 'lbx': lbx,
                 'ubx': ubx}
-
-    '''---------------------------------------------------------------'''
 
     return args, solver

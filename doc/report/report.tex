@@ -39,7 +39,7 @@ Section \hyperref[Section2]{II} describes the dynamics of the crazyFlie 2.1 quad
 	\caption{Reference coordinate system [1]}
 	\label{Fig1}
 \end{figure}
-As depicted in \hyperref[Fig1]{Fig. 1}, a body frame located at the center of mass of the quadcopter aligned with the East-North-Up inertial frame is used here, with $\varphi$, $\theta$, $\psi$ representing roll, pitch and yaw in the Euler notation respectively.
+As depicted in \hyperref[Fig1]{Fig. 1}, a body frame located at the center of mass of the quadcopter aligned with the East-North-Up inertial frame is used here, with $\varphi$, $\theta$, $\psi$ representing roll, pitch and yaw Euler angles respectively.
 
 \subsection{Dynamic Model}\
 The state ${\zeta\,\in\,\mathbb{R}\,\mathrm{^{13}}}$ of the drone described by position ${p = (x, y, z)^{\mathrm{T}}}$ and transalational velocities ${v = (v_x, v_y, v_z)^\mathrm{T}}$ in the inertial frame $\mathcal{I}$, attitude in quaternion ${q = (q_{0}, q_{1}, q_{2}, q_{3})^{\mathrm{T}}}$, and angular velocities ${\omega = (\omega_{\phi}, \omega_{\theta}, \omega_{\psi})^{\mathrm{T}}}$ in the body frame $\mathcal{B}$. Its non-linear dynamics adapted from \cite{carlos_efficient_2020} are given by the ODEs
