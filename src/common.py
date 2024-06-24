@@ -19,21 +19,21 @@ max_krpm = 22    # [krpm]
 
 stepTime = 0.02                         # time between steps in seconds
 hznLen = 20                             # number of look ahead steps
-sim_Smax = 3 / stepTime                # simulation time
+sim_Smax = 3 / stepTime                 # simulation time
 
-v_max = 0.5    ;   v_min = -0.5                     #  [m/s]
-w_max = np.pi/4   ;   w_min = -np.pi/4                    #  [rad/s]
+v_max = 0.5    ;   v_min = -0.5                       #  [m/s]
+w_max = np.pi/4   ;   w_min = -np.pi/4                #  [rad/s]
 
-u_hov = int(np.sqrt(.25 * 1e6* mq * g0 /Ct)) /1000     #[krpm]
+u_hov = int(np.sqrt(.25 * 1e6* mq * g0 /Ct)) /1000    #[krpm]
 
 print("DEBUG", u_hov)
 # State
-n_states = 13
+n_states = 12
 
 #x,  y,  z, qw, qx, qy, qz,  u,  v,  w,  p,  q,  r
-init_st = np.array([0, 0,  0.5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])s
-targ_st = np.array([1, 1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0])
-rob_rad = 0.04                               # radius of the drone sphere
+init_st = np.array([0, 0,  0.5,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+targ_st = np.array([1, 1,  0.5,  0,  0,  0,  0,  0,  0,  0,  0,  0])
+rob_rad = 0.04                           # radius of the drone sphere
 
 obst_st = np.array([0.5,  0.5,  0.5,  0,   0,  0, 0, 0, 0, 0, 0, 0])
 obst_rad = 0.1
@@ -46,8 +46,8 @@ PITCH_TRIM = 0
 
 '''-------------------------Weights---------------------------------'''
 # State, Control weighting for MPC cost function
- 
-Q = ca.diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1e-3, 1, 1, 1, 1e-5, 1e-5, 1e-5) 
+
+Q = ca.diagcat(120, 100, 100, 1e-3, 1e-3, 1e-3, 1, 1, 1, 1e-5, 1e-5, 1e-5)
 R = ca.diagcat(1, 1, 1, 1)
 '''------------------------------------------------------------------'''
 
@@ -145,7 +145,7 @@ def calc_thrust_setpoint(St_0, U_0):
     roll_c   = roll_x + ROLL_TRIM
     pitch_c  = (pitch_y + PITCH_TRIM)                               # corrected values
     thrust_c = int(min(max(thrust_z, 0.0), 60000))
-    yawrate = St_0[12] * 180 /np.pi                                    # r in deg/s
+    yawrate = St_0[11] * 180 /np.pi                                    # r in deg/s
 
     return roll_c, pitch_c, yawrate, thrust_c
 

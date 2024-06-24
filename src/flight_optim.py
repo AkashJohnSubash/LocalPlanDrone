@@ -88,7 +88,7 @@ def simulation():
     return cat_controls, t_step, cat_states
 
 
-def onboard(scf):
+#def onboard(scf):
 
     # '''Execute MPC to issue optimal controls (RPYT) to CF2.1'''
 

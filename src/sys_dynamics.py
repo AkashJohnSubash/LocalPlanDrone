@@ -9,11 +9,14 @@ x = ca.SX.sym('x')
 y = ca.SX.sym('y')
 z = ca.SX.sym('z')
 
-# Quarternion heading (body frame )
-q1 = ca.SX.sym('q1')
-q2 = ca.SX.sym('q2')
-q3 = ca.SX.sym('q3')
-q4 = ca.SX.sym('q4')
+# # Quarternion heading (body frame )
+# q1 = ca.SX.sym('q1')
+# q2 = ca.SX.sym('q2')
+# q3 = ca.SX.sym('q3')
+# q4 = ca.SX.sym('q4')
+phi = ca.SX.sym('phi') #Roll
+tht = ca.SX.sym('theta')
+psi = ca.SX.sym('psi')
 
 # Transaltional velocities (inertial frame, m/s)
 vx = ca.SX.sym('vx')
@@ -26,7 +29,7 @@ wr = ca.SX.sym('wr')
 wp = ca.SX.sym('wp')
 wy = ca.SX.sym('wy')
 
-zeta = ca.vertcat(x, y, z, q1, q2, q3, q4, vx, vy, vz, wr, wp, wy)
+zeta = ca.vertcat(x, y, z, phi, tht, psi, vx, vy, vz, wr, wp, wy)
 
 # Control variable angles (Motor RPM)
 ua = ca.SX.sym('ua')
@@ -60,11 +63,14 @@ class SysDyn():
         dy = vy
         dz = vz
 
-        # Rate of change of angles (in qaurternion)
-        dq1 = (-(q2 * wr) - (q3 * wp) - (q4 * wy))/2
-        dq2 = ( (q1 * wr) - (q4 * wp) + (q3 * wy))/2
-        dq3 = ( (q4 * wr) + (q1 * wp) - (q2 * wy))/2
-        dq4 = (-(q3 * wr) + (q2 * wp) + (q1 * wy))/2
+        # # Rate of change of angles (in qauternion)
+        # dq1 = (-(q2 * wr) - (q3 * wp) - (q4 * wy))/2
+        # dq2 = ( (q1 * wr) - (q4 * wp) + (q3 * wy))/2
+        # dq3 = ( (q4 * wr) + (q1 * wp) - (q2 * wy))/2
+        # dq4 = (-(q3 * wr) + (q2 * wp) + (q1 * wy))/2
+        dphi =  wr + wp * ca.sin(phi) * ca.tan(tht) + wy * ca.cos(phi) * ca.tan(tht)
+        dtht =  wp * ca.cos(phi) - wy * ca.sin(phi)
+        dpsi =  wp * ca.sin(phi)/ ca.cos(tht) + wy * ca.cos(phi) / ca.cos(tht)
 
         #  Rate of change of transalational velocity
         # du =   -vz * wp  + vy * wy  + 2 * g0 * (q1 * q3 + q2 * q4)
@@ -72,16 +78,20 @@ class SysDyn():
         # dw =   -vy * wr  + vx * wp  - 2 * g0 * (q1**2 + q4**2 - 0.5) + (Ct*( ua**2 + ub**2 + uc**2 + ud**2))/mq
 
         # Rate of change of transalational velocity
-        du =    2 * (Ct/mq) *(q1 * q3 + q2 * q4) *(ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vx
-        dv =   -2 * (Ct/mq) *(q1 * q2 - q3 * q4) *(ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vy
-        dw =   -g0 + 2 * Ct/mq *(q1**2 + q4**2 -0.5) * (ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vz
+        # du =    2 * (Ct/mq) *(q1 * q3 + q2 * q4) *(ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vx
+        # dv =   -2 * (Ct/mq) *(q1 * q2 - q3 * q4) *(ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vy
+        # dw =   -g0 + 2 * Ct/mq *(q1**2 + q4**2 -0.5) * (ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vz
+
+        du =    (Ct/mq) *( ca.cos(phi) * ca.sin(tht) * ca.cos(psi) + ca.sin(phi) * ca.sin(psi)) *(ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vx
+        dv =   (Ct/mq) *( ca.cos(phi) * ca.sin(tht) * ca.sin(psi) - ca.sin(phi) * ca.cos(psi)) *(ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vy
+        dw =   -g0 + (Ct/mq) * ca.cos(phi) * ca.cos(tht) * (ua**2  + ub**2  + uc**2  + ud**2 ) - (Cd/mq) * vz
 
         # Rate of change of angular velocity
         dp = -(Ct*l*(ua**2 + ub**2 - uc**2 - ud**2) - Iy * wp * wy + Iz * wp * wy) / Ix
         dq = -(Ct*l*(ua**2 - ub**2 - uc**2 + ud**2) + Ix * wr * wy - Iz * wr * wy) / Iy
         dr = -(Cd*  (ua**2 - ub**2 + uc**2 - ud**2) - Ix * wr * wp + Iy * wr * wp) / Iz
 
-        f_op = ca.vertcat(dx, dy, dz, dq1, dq2, dq3, dq4, du, dv, dw, dp, dq, dr)
+        f_op = ca.vertcat(dx, dy, dz, dphi, dtht, dpsi, du, dv, dw, dp, dq, dr)
         fp = ca.Function('f', [zeta, u], [f_op])
 
         return fp

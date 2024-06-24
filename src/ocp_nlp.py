@@ -12,7 +12,7 @@ def setup_nlp():
     dyn_fp = SysObj.ForwardDynamics()
 
     cost_fn = 0                  # cost function
-    g = ST[:, 0] - P[:n_states]  # constraints in the equation
+    g = ST[:, 0] - P[:n_states]  # equality constraints
     U_hov = np.array([u_hov, u_hov, u_hov, u_hov])
 
     # Formulate OCP as inequality constrained NLP
@@ -21,14 +21,14 @@ def setup_nlp():
         st = ST[:, k]
         U_k = U[:, k]
         cost_fn = cost_fn + ((st - P[n_states:]).T @ Q @ (st - P[n_states:])) + (U_k - U_hov).T @ R @ (U_k - U_hov)
-        st_opt = ST[:, k+1]
-        st_est = Predictor.rk4_explicit(dyn_fp, st, U_k, stepTime)
-        g = ca.vertcat(g, st_opt - st_est)
+        st_k = ST[:, k+1]
+        st_k1 = Predictor.rk4_explicit(dyn_fp, st, U_k, stepTime)
+        g = ca.vertcat(g, st_k - st_k1)
 
-    # Path inequality constraint (obstacle avoidance)
-    for k in range(hznLen +1):
-        euclid = (ST[0: 3, k] - obst_st[0:3])
-        g = ca.vertcat(g , ((euclid.T @ euclid) -( rob_rad + obst_rad)))
+    # # Path inequality constraint (obstacle avoidance)
+    # for k in range(hznLen +1):
+    #     euclid = (ST[0: 3, k] - obst_st[0:3])
+    #     g = ca.vertcat(g , ((euclid.T @ euclid) -( rob_rad + obst_rad)))
 
     OPT_variables = ca.vertcat( ST.reshape((-1, 1)),  U.reshape((-1, 1)) )
     nlp_prob = {'f': cost_fn, 'x': OPT_variables, 'g': g, 'p': P }
@@ -77,14 +77,14 @@ def setup_nlp():
 
     # Bounds on constraints
     # Initial value,   Path,
-    lbg = ca.DM.zeros((st_size )+ (hznLen+1))
-    ubg = ca.DM.zeros((st_size )+ (hznLen+1))
+    lbg = ca.DM.zeros((st_size ))#+ (hznLen+1))
+    ubg = ca.DM.zeros((st_size ))#+ (hznLen+1))
 
     # Initial value constraints: pred_st - optim_st = 0
     lbg[0 : st_size] = 0;                           ubg[0 : st_size] = 0
 
     # Path constraints: 0 < Euclidian - sum(radii) < inf
-    lbg[st_size : st_size + (hznLen+1)]   = 0;      ubg[st_size  : st_size+ (hznLen+1)] = ca.inf
+    # lbg[st_size : st_size + (hznLen+1)]   = 0;      ubg[st_size  : st_size+ (hznLen+1)] = ca.inf
 
     args = {    'lbg': lbg,                    # constraints lower bound
                 'ubg': ubg,                    # constraints upper bound
